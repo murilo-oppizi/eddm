@@ -232,7 +232,7 @@ function StepCard({ index, active, numbered = false }: { index: number; active: 
       <div className="p-6 lg:[@media(max-height:820px)]:p-5">
         {numbered && <p className="mb-1 text-sm font-semibold text-brand">Step {index + 1}</p>}
         <h3 className="text-lg font-semibold">{step.title}</h3>
-        <p className="mt-1 text-muted-foreground">{step.body}</p>
+        <p className="mt-1 text-sm text-muted-foreground">{step.body}</p>
       </div>
     </article>
   );
