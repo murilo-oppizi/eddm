@@ -294,8 +294,8 @@ function RouteMap({ mode, ai, onChoose }: { mode: Mode; ai: AiState; onChoose: (
               >
                 <DotOrb className="size-9 shrink-0" />
                 <div>
-                  <p className="text-xs text-muted-foreground">Oppizi AI</p>
-                  <p className="text-sm font-medium">
+                  <p className="text-sm font-semibold text-foreground">Oppizi AI</p>
+                  <p className="text-xs">
                     <span className="animate-shimmer text-shimmer motion-reduce:animate-none">
                       Finding the best routes…
                     </span>
