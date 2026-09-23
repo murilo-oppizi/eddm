@@ -253,8 +253,8 @@ export function AiPlanning() {
                 <span className="grid size-10 place-items-center rounded-lg bg-brand-subtle text-brand">
                   <Icon className="size-5" aria-hidden />
                 </span>
-                <h3 className="mt-4 font-semibold">{cap.title}</h3>
-                <p className="mt-1 text-sm text-muted-foreground">{cap.body}</p>
+                <h3 className="mt-4 text-lg font-semibold">{cap.title}</h3>
+                <p className="mt-1 text-muted-foreground">{cap.body}</p>
               </li>
             );
           })}

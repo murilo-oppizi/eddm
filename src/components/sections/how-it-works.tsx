@@ -8,6 +8,7 @@ export function HowItWorks() {
         <SectionHeading
           eyebrow="How it works"
           title="From map to mailbox in three steps"
+          body="Launch a neighborhood campaign in minutes. We handle printing and USPS delivery."
         />
         <ol className="grid gap-6 md:grid-cols-3">
           {steps.map((step, i) => (
@@ -15,8 +16,8 @@ export function HowItWorks() {
               <span className="grid size-10 place-items-center rounded-full bg-brand-subtle font-heading font-bold text-brand-subtle-foreground">
                 {i + 1}
               </span>
-              <h3 className="mt-5 text-xl font-semibold">{step.title}</h3>
-              <p className="mt-2 text-muted-foreground">{step.body}</p>
+              <h3 className="mt-5 text-lg font-semibold">{step.title}</h3>
+              <p className="mt-1 text-muted-foreground">{step.body}</p>
             </li>
           ))}
         </ol>

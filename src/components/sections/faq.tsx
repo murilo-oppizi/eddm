@@ -10,8 +10,12 @@ import { faqs } from "@/content/site";
 export function Faq() {
   return (
     <section id="faq" className="scroll-mt-20 py-20">
-      <div className="container-page max-w-3xl space-y-10">
-        <SectionHeading eyebrow="FAQ" title="Questions, answered" />
+      <div className="container-page max-w-3xl space-y-12">
+        <SectionHeading
+          eyebrow="FAQ"
+          title="Questions, answered"
+          body="Everything you need to know before your first campaign."
+        />
         <Accordion>
           {faqs.map((item) => (
             <AccordionItem key={item.q} value={item.q}>
