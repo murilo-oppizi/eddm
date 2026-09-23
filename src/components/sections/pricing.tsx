@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CheckIcon } from "lucide-react";
+import { IconCheck } from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
 import { SectionHeading } from "@/components/sections/section-heading";
@@ -44,7 +44,7 @@ export function Pricing() {
             <ul className="mt-4 space-y-3 text-sm">
               {pricing.included.map((item) => (
                 <li key={item} className="flex items-start gap-2.5">
-                  <CheckIcon className="mt-0.5 size-4 shrink-0 text-brand" aria-hidden />
+                  <IconCheck className="mt-0.5 size-4 shrink-0 text-brand" aria-hidden />
                   {item}
                 </li>
               ))}

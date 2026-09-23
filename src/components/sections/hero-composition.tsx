@@ -1,13 +1,13 @@
 "use client";
 
 import {
-  CalendarIcon,
-  CircleDashedIcon,
-  MapPinIcon,
-  PlusIcon,
-  RouteIcon,
-  XIcon,
-} from "lucide-react";
+  IconCalendar,
+  IconCircleDashed,
+  IconMapPin,
+  IconPlus,
+  IconRoute,
+  IconX,
+} from "@tabler/icons-react";
 import { useState } from "react";
 import { MotionConfig, motion } from "motion/react";
 
@@ -161,9 +161,9 @@ const selectionLabel: Record<SelectionMode, { title: string; homes: string }> = 
   area: { title: "0.3 mi radius", homes: "1,126 homes" },
 };
 
-const modes: { mode: SelectionMode; label: string; Icon: typeof RouteIcon }[] = [
-  { mode: "route", label: "Route", Icon: RouteIcon },
-  { mode: "area", label: "Area", Icon: CircleDashedIcon },
+const modes: { mode: SelectionMode; label: string; Icon: typeof IconRoute }[] = [
+  { mode: "route", label: "Route", Icon: IconRoute },
+  { mode: "area", label: "Area", Icon: IconCircleDashed },
 ];
 
 function RouteMap() {
@@ -238,7 +238,7 @@ function SelectedRoutesCard() {
             className="flex flex-col gap-5 rounded-lg border bg-background p-4"
           >
             <p className="flex items-center gap-1 text-sm font-medium text-foreground">
-              <MapPinIcon className="size-4.5" /> {route.place}
+              <IconMapPin className="size-4.5" /> {route.place}
             </p>
             <dl className="flex gap-5">
               <Stat label="Routes" value={route.routes} />
@@ -270,7 +270,7 @@ function AudienceCard() {
       <div className="flex items-center justify-between">
         <p className="text-sm font-medium text-foreground">Audience</p>
         <p className="flex items-center gap-1 text-xs text-muted-foreground">
-          <CalendarIcon className="size-3.5" /> Delivers in 2–5 days
+          <IconCalendar className="size-3.5" /> Delivers in 2–5 days
         </p>
       </div>
       <div className="flex flex-wrap gap-2">
@@ -280,12 +280,12 @@ function AudienceCard() {
             className="flex h-8 items-center gap-1 rounded-lg bg-foreground py-1 pr-2 pl-3 text-xs font-medium text-background"
           >
             {filter}
-            <XIcon className="size-4" />
+            <IconX className="size-4" />
           </span>
         ))}
         <span className="flex h-8 items-center gap-1 rounded-lg border border-dashed py-1 pr-2 pl-3 text-xs font-medium text-muted-foreground">
           Add filter
-          <PlusIcon className="size-4" />
+          <IconPlus className="size-4" />
         </span>
       </div>
     </Card>

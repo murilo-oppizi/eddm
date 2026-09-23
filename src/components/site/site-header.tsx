@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { MenuIcon } from "lucide-react";
+import { IconMenu2 } from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -41,7 +41,7 @@ export function SiteHeader() {
         {/* Mobile menu */}
         <Sheet>
           <SheetTrigger render={<Button variant="ghost" size="icon" className="md:hidden" aria-label="Open menu" />}>
-            <MenuIcon />
+            <IconMenu2 />
           </SheetTrigger>
           <SheetContent side="right">
             <SheetHeader>

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MailIcon } from "lucide-react";
+import { IconMail } from "@tabler/icons-react";
 
 import { site } from "@/content/site";
 
@@ -8,7 +8,7 @@ export function Logo() {
   return (
     <Link href="/" className="flex items-center gap-2 font-heading text-lg font-bold">
       <span className="grid size-8 place-items-center rounded-lg bg-brand text-brand-foreground">
-        <MailIcon className="size-4" />
+        <IconMail className="size-4" />
       </span>
       {site.name}
     </Link>

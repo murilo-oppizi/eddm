@@ -1,23 +1,23 @@
 import {
-  ChartColumnIcon,
-  MapIcon,
-  PrinterIcon,
-  SparklesIcon,
-  TruckIcon,
-  UsersIcon,
-  type LucideIcon,
-} from "lucide-react";
+  IconChartBar,
+  IconMap,
+  IconPrinter,
+  IconSparkles,
+  IconTruck,
+  IconUsers,
+  type TablerIcon,
+} from "@tabler/icons-react";
 
 import { SectionHeading } from "@/components/sections/section-heading";
 import { features } from "@/content/site";
 
-const icons: Record<(typeof features)[number]["icon"], LucideIcon> = {
-  map: MapIcon,
-  users: UsersIcon,
-  printer: PrinterIcon,
-  truck: TruckIcon,
-  chart: ChartColumnIcon,
-  sparkles: SparklesIcon,
+const icons: Record<(typeof features)[number]["icon"], TablerIcon> = {
+  map: IconMap,
+  users: IconUsers,
+  printer: IconPrinter,
+  truck: IconTruck,
+  chart: IconChartBar,
+  sparkles: IconSparkles,
 };
 
 export function Features() {

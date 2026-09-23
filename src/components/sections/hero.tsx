@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRightIcon, CircleCheckIcon } from "lucide-react";
+import { IconArrowRight, IconCircleCheck } from "@tabler/icons-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,7 @@ export function Hero() {
           <ul className="flex flex-wrap gap-x-6 gap-y-2">
             {hero.checks.map((item) => (
               <li key={item} className="flex items-center gap-2 text-sm font-medium">
-                <CircleCheckIcon className="size-4 text-brand" aria-hidden />
+                <IconCircleCheck className="size-4 text-brand" aria-hidden />
                 {item}
               </li>
             ))}
@@ -25,7 +25,7 @@ export function Hero() {
           <div className="flex flex-wrap gap-3">
             <Button size="xl" nativeButton={false} render={<Link href={site.primaryCta.href} />}>
               {site.primaryCta.label}
-              <ArrowRightIcon data-icon="inline-end" />
+              <IconArrowRight data-icon="inline-end" />
             </Button>
             <Button size="xl" variant="outline" nativeButton={false} render={<Link href={site.secondaryCta.href} />}>
               {site.secondaryCta.label}

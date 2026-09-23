@@ -2,25 +2,25 @@
 
 import { useEffect, useState, useSyncExternalStore } from "react";
 import {
-  ArrowUpIcon,
-  CalendarIcon,
-  CalendarRangeIcon,
-  CheckIcon,
-  CircleIcon,
-  CoffeeIcon,
-  DumbbellIcon,
-  LoaderCircleIcon,
-  MapPinIcon,
-  PaletteIcon,
-  PaperclipIcon,
-  ReceiptIcon,
-  RotateCcwIcon,
-  RouteIcon,
-  SparklesIcon,
-  UsersIcon,
-  UtensilsCrossedIcon,
-  type LucideIcon,
-} from "lucide-react";
+  IconArrowUp,
+  IconBarbell,
+  IconCalendar,
+  IconCalendarStats,
+  IconCheck,
+  IconCircle,
+  IconCoffee,
+  IconLoader2,
+  IconMapPin,
+  IconPalette,
+  IconPaperclip,
+  IconReceipt,
+  IconRotate,
+  IconRoute,
+  IconSparkles,
+  IconToolsKitchen2,
+  IconUsers,
+  type TablerIcon,
+} from "@tabler/icons-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
 import { Button } from "@/components/ui/button";
@@ -28,17 +28,17 @@ import { SectionHeading } from "@/components/sections/section-heading";
 import { aiPlanning } from "@/content/site";
 import { cn } from "@/lib/utils";
 
-const icons: Record<string, LucideIcon> = {
-  route: RouteIcon,
-  users: UsersIcon,
-  calendar: CalendarIcon,
-  receipt: ReceiptIcon,
-  pin: MapPinIcon,
-  planning: CalendarRangeIcon,
-  palette: PaletteIcon,
-  coffee: CoffeeIcon,
-  dumbbell: DumbbellIcon,
-  utensils: UtensilsCrossedIcon,
+const icons: Record<string, TablerIcon> = {
+  route: IconRoute,
+  users: IconUsers,
+  calendar: IconCalendar,
+  receipt: IconReceipt,
+  pin: IconMapPin,
+  planning: IconCalendarStats,
+  palette: IconPalette,
+  coffee: IconCoffee,
+  dumbbell: IconBarbell,
+  utensils: IconToolsKitchen2,
 };
 
 // One card that changes in place, like an AI composer: the brief types itself into the
@@ -282,7 +282,7 @@ function Composer({ phase, text }: { phase: Phase; text: string }) {
 
       <div className="flex items-center justify-between gap-3">
         <span className="grid size-9 place-items-center rounded-lg border text-muted-foreground">
-          <PaperclipIcon className="size-4" />
+          <IconPaperclip className="size-4" />
         </span>
         <span
           className={cn(
@@ -291,7 +291,7 @@ function Composer({ phase, text }: { phase: Phase; text: string }) {
             phase === "submitting" && "scale-90",
           )}
         >
-          <ArrowUpIcon className="size-5" />
+          <IconArrowUp className="size-5" />
         </span>
       </div>
     </div>
@@ -332,7 +332,7 @@ function Response({
       {/* Agent status: the current step while working, then a one-line summary */}
       <div aria-hidden className="mt-5 flex items-center gap-2.5">
         <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground">
-          <SparklesIcon className="size-3.5" />
+          <IconSparkles className="size-3.5" />
         </span>
         {working ? (
           <span className="animate-shimmer text-sm font-medium text-shimmer motion-reduce:animate-none">
@@ -359,11 +359,11 @@ function Response({
               )}
             >
               {i < step ? (
-                <CheckIcon className="size-4 text-brand" />
+                <IconCheck className="size-4 text-brand" />
               ) : i === step ? (
-                <LoaderCircleIcon className="size-4 animate-spin" />
+                <IconLoader2 className="size-4 animate-spin" />
               ) : (
-                <CircleIcon className="size-4" />
+                <IconCircle className="size-4" />
               )}
               {label}
             </li>
@@ -398,7 +398,7 @@ function Response({
                 size="lg"
                 onClick={onRunAgain}
               >
-                <RotateCcwIcon data-icon="inline-start" /> Run again
+                <IconRotate data-icon="inline-start" /> Run again
               </Button>
             </Reveal>
           )}
