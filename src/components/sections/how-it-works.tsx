@@ -60,7 +60,7 @@ function Heading() {
     <SectionHeading
       eyebrow="How it works"
       title="From map to mailbox in four steps"
-      body="Launch a neighborhood campaign in minutes. We handle printing and USPS delivery."
+      body="We handle printing and USPS delivery for you."
     />
   );
 }
@@ -100,9 +100,9 @@ function PinnedJourney() {
   return (
     // ~70vh of scrolling per step. Hidden below lg, where the vertical timeline takes over.
     <div ref={outer} className="relative -mt-20 hidden lg:block" style={{ height: `${N * 70}vh` }}>
-      <div className="sticky top-16 flex h-[calc(100vh-4rem)] flex-col justify-center gap-10 overflow-hidden [@media(max-height:820px)]:gap-6">
+      <div className="sticky top-16 flex h-[calc(100vh-4rem)] flex-col justify-center gap-8 overflow-hidden [@media(max-height:820px)]:gap-6">
         {/* Short laptop screens get tighter spacing and shorter visuals so it all fits. */}
-        <div className="container-page space-y-10 [@media(max-height:820px)]:space-y-6">
+        <div className="container-page space-y-8 [@media(max-height:820px)]:space-y-6">
           <Heading />
           <Timeline progress={travel} active={active} />
         </div>
@@ -208,7 +208,7 @@ function StillGrid() {
       <ol className="grid gap-6 md:grid-cols-2">
         {steps.map((step, i) => (
           <li key={step.title}>
-            <StepCard index={i} active />
+            <StepCard index={i} active numbered />
           </li>
         ))}
       </ol>
@@ -218,19 +218,20 @@ function StillGrid() {
 
 /* ------------------------------ Step cards ------------------------------ */
 
-function StepCard({ index, active }: { index: number; active: boolean }) {
+/** `numbered`: show a "Step N" label — only needed where no timeline numbers the steps. */
+function StepCard({ index, active, numbered = false }: { index: number; active: boolean; numbered?: boolean }) {
   const step = steps[index];
   return (
     <article className="overflow-hidden rounded-2xl border bg-card shadow-sm">
-      <div aria-hidden className="relative h-56 overflow-hidden border-b bg-muted/60 lg:[@media(max-height:820px)]:h-40">
+      <div aria-hidden className="relative h-56 overflow-hidden border-b bg-muted/60 lg:[@media(max-height:820px)]:h-48">
         {index === 0 && <RoutesVisual active={active} />}
         {index === 1 && <DesignVisual active={active} />}
         {index === 2 && <DeliveryVisual active={active} />}
         {index === 3 && <ResultsVisual active={active} />}
       </div>
       <div className="p-6 lg:[@media(max-height:820px)]:p-5">
-        <p className="text-sm font-semibold text-brand">Step {index + 1}</p>
-        <h3 className="mt-1 text-lg font-semibold">{step.title}</h3>
+        {numbered && <p className="mb-1 text-sm font-semibold text-brand">Step {index + 1}</p>}
+        <h3 className="text-lg font-semibold">{step.title}</h3>
         <p className="mt-1 text-muted-foreground">{step.body}</p>
       </div>
     </article>
@@ -267,7 +268,7 @@ function RoutesVisual({ active }: { active: boolean }) {
 
 function DesignVisual({ active }: { active: boolean }) {
   return (
-    <div className="flex h-full items-center justify-center gap-4 p-6">
+    <div className="flex h-full items-center justify-center gap-4 p-5">
       {/* Start from a template, or upload your own */}
       <div className="flex flex-col gap-2">
         {[IconLayoutGrid, IconUpload].map((Icon, i) => (
@@ -277,7 +278,8 @@ function DesignVisual({ active }: { active: boolean }) {
         ))}
       </div>
       {/* The postcard */}
-      <div className="relative aspect-[9/6.25] w-60 rounded-lg border bg-card p-4 shadow-md">
+      {/* Sized to always fit its box: by width on phones, by height on desktop. */}
+      <div className="relative aspect-[9/6.25] w-full max-w-60 min-w-0 rounded-lg border bg-card p-4 shadow-md lg:h-full lg:max-h-44 lg:w-auto lg:max-w-none">
         <div className="flex h-full w-[58%] flex-col justify-between rounded-md bg-brand-subtle p-3">
           <span className="h-2 w-14 rounded-full bg-primary/60" />
           <p className="font-heading text-base leading-tight font-bold">Grand opening Saturday</p>
