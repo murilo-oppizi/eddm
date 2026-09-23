@@ -150,8 +150,13 @@
     @apply font-sans scroll-smooth;
   }
   h1, h2, h3, h4 {
-    @apply font-heading tracking-tight;
+    @apply font-heading;
     text-wrap: balance;
+  }
+  /* shadcn tightens tracking on titles only; small headings (card titles, accordion
+     questions) keep normal spacing, like its CardTitle and AccordionTrigger. */
+  h1, h2 {
+    @apply tracking-tight;
   }
 }
 /* Standard page width + side gutters. Use on every section's inner wrapper. */
