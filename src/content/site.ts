@@ -63,6 +63,7 @@ export const pricing = {
   noFees: "No mailing lists, data fees or setup fees.",
 }
 
+// Facts checked against oppizi.com and eddm.com (Sept 2026).
 export const faqs = [
   {
     q: "What is Every Door Direct Mail?",
@@ -74,22 +75,22 @@ export const faqs = [
   },
   {
     q: "How fast is EDDM delivery?",
-    a: "Printing usually takes 2–3 business days. Once we drop your mail at the post office, carriers typically deliver it within 2–5 business days, so most campaigns land in mailboxes about a week after you order.",
+    a: "Most campaigns land in mailboxes within 7–14 business days nationally, and 2–5 business days for highly local campaigns. Once your campaign goes live, printing and USPS submission are handled automatically, and you can follow every step in your dashboard.",
   },
   {
     q: "Can I choose who receives my mail?",
-    a: "You choose carrier routes, not individual people. You can filter routes by demographics like household income and age to focus on the right neighborhoods.",
+    a: "You choose carrier routes, not individual people. Filter routes by demographics like age, income and household size, or describe your ideal customer and our AI agents suggest the best routes for you.",
   },
   {
     q: "Can EDDM campaign results be tracked?",
-    a: "Yes. Add a unique QR code, phone number or promo code to your postcard and every scan, call or redemption is tied back to your campaign, so you can see which neighborhoods respond best and where to mail next.",
+    a: "Yes. Add a QR code, promo code, dedicated landing page or call tracking number to your postcard, and every scan, visit, call or redemption is tied back to your campaign. Your dashboard shows delivery status and results by neighborhood, so you know where to mail next.",
   },
   {
     q: "Who should use Every Door Direct Mail?",
-    a: "Any business that serves a local area: restaurants, home services, real estate agents, dentists, gyms, retail stores and more. It also works well for grand openings, local events and community announcements.",
+    a: "Any business that serves a local area: restaurants, real estate agents, salons, florists, gyms, retail stores and home service providers. It works especially well for grand openings, limited-time offers and building awareness in a new neighborhood.",
   },
   {
     q: "Do I need a design?",
-    a: "No. You can start from one of our templates, upload your own artwork, or have our design team create one for you.",
+    a: "No. Start from a USPS-compliant template in our design tool, which gives AI suggestions as you go, or upload your own artwork. Either way, we check it meets USPS requirements before it prints.",
   },
 ]
