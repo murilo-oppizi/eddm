@@ -76,33 +76,20 @@ function Heading() {
 // Stops sit at the centre of four equal columns, so they line up with their labels.
 const stopAt = (i: number) => (i + 0.5) / N;
 
-/**
- * Scroll progress (0–1) → marker position in stops (0 … N−1). The scroll is split into
- * equal slices that alternate "rest at a stop" and "travel to the next one", so the
- * marker pauses at every stop and eases between them.
- */
-function markerPosition(t: number) {
-  const slice = 1 / (2 * N - 1);
-  const k = Math.min(N - 1, Math.floor(t / (2 * slice)));
-  const within = t - k * 2 * slice;
-  if (k === N - 1 || within <= slice) return k; // resting at stop k
-  const x = (within - slice) / slice; // 0 → 1 while travelling to stop k + 1
-  return k + x * x * (3 - 2 * x); // ease in and out of the stops
-}
-
 function PinnedStage() {
   const outer = useRef<HTMLDivElement>(null);
   const [step, setStep] = useState(0);
 
   const { scrollYProgress } = useScroll({ target: outer, offset: ["start start", "end end"] });
-  // Marker position along the route, 0 (first stop) → 1 (last stop).
-  const route = useTransform(scrollYProgress, (t) => markerPosition(t) / (N - 1));
+  // Marker position along the route, 0 (first stop) → 1 (last stop): moves smoothly with
+  // the scroll, and reaches the last stop a little early so step 4 has time on screen.
+  const route = useTransform(scrollYProgress, [0.05, 0.8], [0, 1], { clamp: true });
   // Card, counter, stops and marker icon all switch when the marker arrives at a stop.
   useMotionValueEvent(route, "change", (r) => setStep(Math.floor(r * (N - 1) + 0.001)));
 
   return (
-    // ~85vh of scrolling per step. Hidden below lg, where the vertical timeline takes over.
-    <div ref={outer} className="relative -mt-20 hidden lg:block" style={{ height: `${N * 85}vh` }}>
+    // ~75vh of scrolling per step. Hidden below lg, where the vertical timeline takes over.
+    <div ref={outer} className="relative -mt-20 hidden lg:block" style={{ height: `${N * 75}vh` }}>
       <div className="sticky top-16 flex h-[calc(100vh-4rem)] flex-col justify-center overflow-hidden">
         {/* Short laptop screens get tighter spacing and a shorter stage so it all fits. */}
         <div className="container-page space-y-8 [@media(max-height:820px)]:space-y-6">
