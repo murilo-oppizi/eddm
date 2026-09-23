@@ -63,6 +63,29 @@ export const steps = [
   },
 ]
 
+// "AI planning" section. Capabilities are Oppizi's real AI features (oppizi.com, Sept
+// 2026); the brief and the plan are an illustrative example. Cost = 4,820 × $0.31.
+export const aiPlanning = {
+  eyebrow: "AI planning",
+  title: "Tell us your goal. Our agents plan the campaign.",
+  body: "Describe your business in plain words and get routes, timing and budget in seconds.",
+  brief:
+    "I run a coffee shop in Williamsburg. I want young families within walking distance. Budget around $1,500.",
+  button: "Plan my campaign",
+  plan: [
+    { icon: "route", label: "Routes", value: "6 routes · 4,820 homes" },
+    { icon: "users", label: "Audience match", value: "Age 25–44 · families" },
+    { icon: "calendar", label: "Best timing", value: "Lands Thursday, before the weekend" },
+    { icon: "receipt", label: "Estimated cost", value: "$1,494" },
+  ],
+  tips: ["Put the offer in the headline", "Make the QR code larger"],
+  capabilities: [
+    { icon: "pin", title: "AI-optimized routes", body: "Our agents suggest the best routes for the audience you describe." },
+    { icon: "planning", title: "Agentic planning", body: "Recommendations for targeting, timing and spend, before you launch." },
+    { icon: "palette", title: "AI creative review", body: "Creative Studio checks your design and suggests fixes before it prints." },
+  ],
+} as const
+
 // Facts checked against oppizi.com and eddm.com (Sept 2026).
 export const features = [
   { icon: "map", title: "Map-based targeting", body: "Choose exactly which streets and neighborhoods hear from you." },

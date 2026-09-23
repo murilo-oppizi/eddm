@@ -1,3 +1,4 @@
+import { AiPlanning } from "@/components/sections/ai-planning";
 import { Cta } from "@/components/sections/cta";
 import { Faq } from "@/components/sections/faq";
 import { Features } from "@/components/sections/features";
@@ -12,6 +13,7 @@ export default function Home() {
       <Hero />
       <TrustRow />
       <HowItWorks />
+      <AiPlanning />
       <Features />
       <Pricing />
       <Faq />
