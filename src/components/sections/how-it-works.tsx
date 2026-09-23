@@ -18,12 +18,16 @@ import {
 import {
   AnimatePresence,
   MotionConfig,
+  animate,
   motion,
+  useMotionValue,
+  useInView,
   useMotionValueEvent,
   useReducedMotion,
   useScroll,
   useTransform,
   type MotionValue,
+  type Variants,
 } from "motion/react";
 
 import { IllustratedMap } from "@/components/sections/illustrated-map";
@@ -165,6 +169,9 @@ const ease = [0.22, 1, 0.36, 1] as const;
 /** One card that stays put while its text and visual cross-fade from step to step. */
 function Stage({ active }: { active: number }) {
   const step = steps[active];
+  // The first step is on screen before you scroll to it, so its visual waits until it's seen.
+  const visual = useRef<HTMLDivElement>(null);
+  const inView = useInView(visual, { amount: 0.6 });
   return (
     <div className="mx-auto grid max-w-5xl grid-cols-[1fr_1.35fr] overflow-hidden rounded-2xl border bg-card shadow-lg">
       <div className="flex flex-col justify-center gap-6 p-10 [@media(max-height:820px)]:p-8">
@@ -200,7 +207,7 @@ function Stage({ active }: { active: number }) {
         </AnimatePresence>
       </div>
 
-      <div aria-hidden className="relative h-80 overflow-hidden border-l bg-muted/60 [@media(max-height:820px)]:h-64">
+      <div ref={visual} aria-hidden className="relative h-80 overflow-hidden border-l bg-muted/60 [@media(max-height:820px)]:h-64">
         <AnimatePresence initial={false}>
           <motion.div
             key={active}
@@ -210,7 +217,7 @@ function Stage({ active }: { active: number }) {
             exit={{ opacity: 0, scale: 1.02 }}
             transition={{ duration: 0.5, ease }}
           >
-            <StepVisual index={active} active />
+            <StepVisual index={active} active={inView} />
           </motion.div>
         </AnimatePresence>
       </div>
@@ -340,10 +347,14 @@ function StillGrid() {
 /** `numbered`: show a "Step N" label — only needed where no timeline numbers the steps. */
 function StepCard({ index, active, numbered = false }: { index: number; active: boolean; numbered?: boolean }) {
   const step = steps[index];
+  // Visuals play once they're on screen (and replay when you come back to them).
+  const reduce = useReducedMotion();
+  const visual = useRef<HTMLDivElement>(null);
+  const inView = useInView(visual, { amount: 0.6 });
   return (
     <article className="overflow-hidden rounded-2xl border bg-card shadow-sm">
-      <div aria-hidden className="relative h-56 overflow-hidden border-b bg-muted/60 lg:[@media(max-height:820px)]:h-48">
-        <StepVisual index={index} active={active} />
+      <div ref={visual} aria-hidden className="relative h-56 overflow-hidden border-b bg-muted/60 lg:[@media(max-height:820px)]:h-48">
+        <StepVisual index={index} active={active && (reduce || inView)} />
       </div>
       <div className="p-6 lg:[@media(max-height:820px)]:p-5">
         {numbered && <p className="mb-1 text-sm font-semibold text-brand">Step {index + 1}</p>}
@@ -361,63 +372,151 @@ function StepVisual({ index, active }: { index: number; active: boolean }) {
   return <ResultsVisual active={active} />;
 }
 
-/** Small card floating over a visual; slides in when its step becomes active. */
-function Chip({ active, className, children }: { active: boolean; className?: string; children: React.ReactNode }) {
+/* ------------------------------ Step visuals ------------------------------ */
+
+// Each visual plays a short entrance whenever its step becomes active (the desktop stage
+// remounts it per step; the phone timeline flips `active` as you scroll) and rewinds
+// when it's left. Children pick up the "off" → "on" variants from the visual's root.
+// With reduced motion they simply render finished.
+
+/** Motion props for a visual's root: play the entrance while `active`. */
+function usePlay(active: boolean) {
+  const reduce = useReducedMotion();
+  return { initial: reduce ? false : "off", animate: active ? "on" : "off" } as const;
+}
+
+/** Fade up into place, after `custom` seconds. */
+const rise: Variants = {
+  off: { opacity: 0, y: 8 },
+  on: (delay: number = 0) => ({ opacity: 1, y: 0, transition: { delay, duration: 0.5, ease } }),
+};
+
+/** Pop in with a little spring, after `custom` seconds. */
+const pop: Variants = {
+  off: { opacity: 0, scale: 0.6 },
+  on: (delay: number = 0) => ({ opacity: 1, scale: 1, transition: { delay, type: "spring", stiffness: 420, damping: 22 } }),
+};
+
+/** A number that counts up from 0 while `active`. */
+function CountUp({ to, active, delay = 0, duration = 1 }: { to: number; active: boolean; delay?: number; duration?: number }) {
+  const reduce = useReducedMotion();
+  const value = useMotionValue(0);
+  const text = useTransform(value, (v) => Math.round(v).toLocaleString("en-US"));
+  useEffect(() => {
+    if (!active) return value.set(0);
+    if (reduce) return value.set(to);
+    const controls = animate(value, to, { delay, duration, ease });
+    return () => controls.stop();
+  }, [active, to, delay, duration, reduce, value]);
+  return <motion.span className="tabular-nums">{text}</motion.span>;
+}
+
+/** Small card floating over a visual; rises in `delay` seconds into the entrance. */
+function Chip({ delay = 0, className, children }: { delay?: number; className?: string; children: React.ReactNode }) {
   return (
-    <div
-      className={cn(
-        "absolute rounded-lg border bg-card px-3 py-2 text-sm shadow-md transition-all duration-500",
-        active ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0",
-        className
-      )}
+    <motion.div
+      custom={delay}
+      variants={rise}
+      className={cn("absolute rounded-lg border bg-card px-3 py-2 text-sm shadow-md", className)}
     >
       {children}
-    </div>
+    </motion.div>
   );
 }
 
 // The visuals use illustrative numbers.
+
+/** The map settles, the route traces itself along the streets, the pin drops, and the count comes in. */
 function RoutesVisual({ active }: { active: boolean }) {
   return (
-    <>
-      <IllustratedMap mode="route" cover />
-      <Chip active={active} className="top-4 left-4">
+    <motion.div className="absolute inset-0" {...usePlay(active)}>
+      <motion.div
+        className="absolute inset-0"
+        variants={{ off: { scale: 1.08 }, on: { scale: 1, transition: { duration: 1.6, ease } } }}
+      >
+        <IllustratedMap mode="route" cover draw />
+      </motion.div>
+      <Chip delay={1} className="top-4 left-4">
         <p className="text-xs text-muted-foreground">3 routes selected</p>
-        <p className="font-semibold">1,540 homes</p>
+        <p className="font-semibold">
+          <CountUp to={1540} active={active} delay={1} duration={0.9} /> homes
+        </p>
       </Chip>
-    </>
+    </motion.div>
   );
 }
 
+/** A template gets picked, the postcard lands and builds itself, the EDDM indicia is stamped, then the check passes. */
 function DesignVisual({ active }: { active: boolean }) {
   return (
-    <div className="flex h-full items-center justify-center gap-4 p-5">
-      {/* Start from a template, or upload your own */}
+    <motion.div className="flex h-full items-center justify-center gap-4 p-5" {...usePlay(active)}>
+      {/* Start from a template (picked), or upload your own */}
       <div className="flex flex-col gap-2">
         {[IconLayoutGrid, IconUpload].map((Icon, i) => (
-          <span key={i} className="grid size-11 place-items-center rounded-lg border bg-card text-muted-foreground">
-            <Icon className="size-5" />
-          </span>
+          <motion.span
+            key={i}
+            className="relative grid size-11 place-items-center rounded-lg border bg-card text-muted-foreground"
+            variants={i === 0 ? { on: { scale: [1, 0.9, 1], transition: { delay: 0.15, duration: 0.35 } } } : undefined}
+          >
+            {i === 0 && (
+              <motion.span
+                className="absolute -inset-px rounded-lg bg-brand-subtle ring-2 ring-primary/50"
+                variants={{ off: { opacity: 0 }, on: { opacity: 1, transition: { delay: 0.2, duration: 0.3 } } }}
+              />
+            )}
+            <Icon className="relative size-5" />
+            {i === 0 && (
+              <motion.span
+                className="absolute inset-0 grid place-items-center text-brand"
+                variants={{ off: { opacity: 0 }, on: { opacity: 1, transition: { delay: 0.2, duration: 0.3 } } }}
+              >
+                <Icon className="size-5" />
+              </motion.span>
+            )}
+          </motion.span>
         ))}
       </div>
       {/* The postcard */}
       {/* Sized to always fit its box: by width on phones, by height on desktop. */}
-      <div className="relative aspect-[9/6.25] w-full max-w-60 min-w-0 rounded-lg border bg-card p-4 shadow-md lg:h-full lg:max-h-44 lg:w-auto lg:max-w-none">
+      <motion.div
+        className="relative aspect-[9/6.25] w-full max-w-60 min-w-0 rounded-lg border bg-card p-4 shadow-md lg:h-full lg:max-h-44 lg:w-auto lg:max-w-none"
+        variants={{
+          off: { opacity: 0, y: 18, rotate: -4, scale: 0.96 },
+          on: { opacity: 1, y: 0, rotate: 0, scale: 1, transition: { delay: 0.35, type: "spring", stiffness: 170, damping: 20 } },
+        }}
+      >
         <div className="flex h-full w-[58%] flex-col justify-between rounded-md bg-brand-subtle p-3">
-          <span className="h-2 w-14 rounded-full bg-primary/60" />
-          <p className="font-heading text-base leading-tight font-bold">Grand opening Saturday</p>
-          <IconQrcode className="size-5 text-brand" />
+          <motion.span
+            className="h-2 w-14 origin-left rounded-full bg-primary/60"
+            variants={{ off: { scaleX: 0 }, on: { scaleX: 1, transition: { delay: 0.7, duration: 0.45, ease } } }}
+          />
+          <motion.p custom={0.8} variants={rise} className="font-heading text-base leading-tight font-bold">
+            Grand opening Saturday
+          </motion.p>
+          <motion.span custom={0.95} variants={pop} className="w-fit">
+            <IconQrcode className="size-5 text-brand" />
+          </motion.span>
         </div>
-        <div className="absolute top-4 right-4 w-12 border border-foreground/60 py-0.5 text-center text-[7px] leading-tight font-semibold text-foreground/70">
+        {/* The EDDM indicia, stamped on */}
+        <motion.div
+          className="absolute top-4 right-4 w-12 border border-foreground/60 py-0.5 text-center text-[7px] leading-tight font-semibold text-foreground/70"
+          variants={{
+            off: { opacity: 0, scale: 1.5, rotate: -10 },
+            on: { opacity: 1, scale: 1, rotate: 0, transition: { delay: 1.1, type: "spring", stiffness: 520, damping: 24 } },
+          }}
+        >
           ECRWSS
           <br />
           EDDM
-        </div>
-      </div>
-      <Chip active={active} className="right-4 bottom-4 flex items-center gap-1.5 font-medium">
-        <IconCircleCheck className="size-4 text-success" /> USPS size check passed
+        </motion.div>
+      </motion.div>
+      <Chip delay={1.4} className="right-4 bottom-4 flex items-center gap-1.5 font-medium">
+        <motion.span custom={1.55} variants={pop}>
+          <IconCircleCheck className="size-4 text-success" />
+        </motion.span>
+        USPS size check passed
       </Chip>
-    </div>
+    </motion.div>
   );
 }
 
@@ -476,31 +575,38 @@ const results = [
   { area: "Bushwick", scans: 61 },
 ];
 
+/** The total counts up while each neighborhood's bar grows in turn, its number keeping pace. */
 function ResultsVisual({ active }: { active: boolean }) {
   const max = Math.max(...results.map((r) => r.scans));
   const total = results.reduce((sum, r) => sum + r.scans, 0);
+  const barDelay = (i: number) => 0.35 + i * 0.15;
   return (
-    <div className="flex h-full flex-col justify-center gap-4 px-8">
-      <div className="flex items-baseline justify-between">
+    <motion.div className="flex h-full flex-col justify-center gap-4 px-8" {...usePlay(active)}>
+      <motion.div custom={0.1} variants={rise} className="flex items-baseline justify-between">
         <p className="text-sm font-medium">Scans by neighborhood</p>
-        <p className="font-heading text-2xl font-bold tabular-nums">{total}</p>
-      </div>
+        <p className="font-heading text-2xl font-bold tracking-tight">
+          <CountUp to={total} active={active} delay={0.35} duration={1.3} />
+        </p>
+      </motion.div>
       <ul className="space-y-3">
         {results.map((r, i) => (
-          <li key={r.area} className="space-y-1">
+          <motion.li key={r.area} custom={0.15 + i * 0.1} variants={rise} className="space-y-1">
             <div className="flex justify-between text-xs text-muted-foreground">
               <span>{r.area}</span>
-              <span className="tabular-nums">{r.scans}</span>
+              <CountUp to={r.scans} active={active} delay={barDelay(i)} duration={0.9} />
             </div>
             <div className="h-2.5 overflow-hidden rounded-full bg-card">
-              <div
-                className="h-full origin-left rounded-full bg-primary transition-transform duration-700 ease-out"
-                style={{ transform: `scaleX(${active ? r.scans / max : 0})`, transitionDelay: `${i * 120}ms` }}
+              <motion.div
+                className="h-full origin-left rounded-full bg-primary"
+                variants={{
+                  off: { scaleX: 0 },
+                  on: { scaleX: r.scans / max, transition: { delay: barDelay(i), duration: 0.9, ease } },
+                }}
               />
             </div>
-          </li>
+          </motion.li>
         ))}
       </ul>
-    </div>
+    </motion.div>
   );
 }
