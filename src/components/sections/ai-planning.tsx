@@ -13,16 +13,14 @@ import {
   IconPaperclip,
   IconReceipt,
   IconRocket,
-  IconRotate,
   IconRoute,
   IconSparkles,
   IconTrendingUp,
   IconUsers,
   type TablerIcon,
 } from "@tabler/icons-react";
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
+import { AnimatePresence, motion, useMotionValueEvent, useReducedMotion, useScroll } from "motion/react";
 
-import { Button } from "@/components/ui/button";
 import { IllustratedMap, RANKED_FOCUS } from "@/components/sections/illustrated-map";
 import { SectionHeading } from "@/components/sections/section-heading";
 import { aiPlanning } from "@/content/site";
@@ -78,7 +76,7 @@ const SUBMIT_MS = 450; // the button press
 const STEP_MS = 1100; // per agent step — slower than the rest so each step can be read
 const ROW_MS = 330; // between answer lines
 const STEPS = 4; // every example has four agent steps…
-const ROWS = 4 + 1; // …and four plan lines, plus the "Run again" button
+const ROWS = 4; // …and four answer lines (plan rows, or the map and its three routes)
 
 const noop = () => () => {};
 /** false during SSR and hydration, true afterwards. */
@@ -147,11 +145,25 @@ export function AiPlanning() {
     return () => clearTimeout(timer);
   }, [animated, state, typedCount, stepCount, rowCount, scenario.brief.length, choice]);
 
+  // Once you're back above the section (it's entirely below the screen), rewind to the
+  // empty prompt box, so coming down again replays the selected example. Scrolling on
+  // past it leaves the demo running.
+  const section = useRef<HTMLElement>(null);
+  const { scrollYProgress } = useScroll({ target: section, offset: ["start end", "end start"] });
+  useMotionValueEvent(scrollYProgress, "change", (p) => {
+    if (p > 0 || state === "composing") return;
+    setTyped(0);
+    setStep(0);
+    setRows(0);
+    setPicked(null);
+    setPhase("composing");
+  });
+
   const composing =
     phase === "composing" || phase === "typing" || phase === "submitting";
 
   return (
-    <section id="ai" className="scroll-mt-20 py-20">
+    <section ref={section} id="ai" className="scroll-mt-20 py-20">
       <div className="container-page space-y-12">
         <div className="space-y-8">
           <SectionHeading
@@ -189,9 +201,6 @@ export function AiPlanning() {
                       aria-hidden
                     />
                     {s.chip}
-                    <span className="hidden font-normal text-muted-foreground lg:inline">
-                      · {s.area}
-                    </span>
                   </button>
                 );
               })}
@@ -218,11 +227,12 @@ export function AiPlanning() {
             transition={{
               layout: { duration: 0.35, ease: [0.22, 1, 0.36, 1] },
             }}
-            // Starts the demo the first time the card is mostly on screen.
+            // Plays the selected example when the card is mostly on screen — the first
+            // time, and again after you've scrolled back above the section (see above).
             onViewportEnter={() =>
-              animated && state === "composing" && typedCount === 0 && play(0)
+              animated && state === "composing" && play(scenarioIndex)
             }
-            viewport={{ once: true, amount: 0.5 }}
+            viewport={{ amount: 0.5 }}
             className="overflow-hidden rounded-2xl border bg-card shadow-lg"
           >
             {/* The card is exactly as tall as the finished plan: an invisible copy of it sits in
@@ -235,7 +245,6 @@ export function AiPlanning() {
                   step={STEPS}
                   rows={ROWS}
                   picked={pick ?? (choice ? recommendedOf(choice) : null)}
-                  onRunAgain={animated ? () => {} : undefined}
                 />
               </div>
               <div className="[grid-area:1/1]">
@@ -270,9 +279,6 @@ export function AiPlanning() {
                         rows={rows}
                         picked={pick}
                         onChoose={animated ? choose : undefined}
-                        onRunAgain={
-                          animated ? () => play(scenarioIndex) : undefined
-                        }
                       />
                     </motion.div>
                   )}
@@ -329,7 +335,6 @@ function Response({
   rows,
   picked,
   onChoose,
-  onRunAgain,
 }: {
   scenario: Scenario;
   phase: Phase;
@@ -338,7 +343,6 @@ function Response({
   /** The option the visitor picked, for examples that offer a choice. */
   picked: number | null;
   onChoose?: (index: number) => void;
-  onRunAgain?: () => void;
 }) {
   const working = phase === "working";
   const choosing = phase === "choosing";
@@ -348,8 +352,6 @@ function Response({
   const choice = choiceOf(scenario);
   const plan = planOf(scenario, picked);
   const map = mapOf(scenario);
-  // Lines revealed one by one: the plan rows, or the map and then each ranked route.
-  const lines = map ? map.matches.length + 1 : plan.length;
 
   return (
     <div className="flex h-full flex-col p-5 sm:p-6">
@@ -459,21 +461,6 @@ function Response({
               );
             })}
           </dl>
-          )}
-
-          {onRunAgain && (
-            <Reveal
-              visible={visible(lines)}
-              className="mt-auto flex justify-center pt-6"
-            >
-              <Button
-                variant="outline"
-                size="lg"
-                onClick={onRunAgain}
-              >
-                <IconRotate data-icon="inline-start" /> Run again
-              </Button>
-            </Reveal>
           )}
         </>
       )}
