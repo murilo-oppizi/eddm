@@ -101,7 +101,7 @@ export function IllustratedMap({
             width={AVENUE_GAP - STREET_W - (isMajorAvenue(x / AVENUE_GAP) ? 1.5 : 0)}
             height={STREET_GAP - STREET_W}
             rx="1.5"
-            className={park ? "fill-success-subtle" : "fill-subtle"}
+            className={park ? "fill-success-subtle" : "fill-subtle/70"}
           />
         ))}
 
