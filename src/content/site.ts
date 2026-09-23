@@ -97,9 +97,10 @@ export const aiPlanning = {
       chip: "Find routes",
       icon: "mapSearch",
       area: "Bay Ridge",
-      brief: "I run a dental clinic in Bay Ridge. Which routes have the most families nearby?",
-      steps: ["Reading your question", "Profiling patients like yours", "Scoring routes in Bay Ridge", "Ranking the best matches"],
-      summary: "3 routes found",
+      brief:
+        "I only have budget for 3 routes. Which ones near my dental clinic in Bay Ridge have the most families with kids?",
+      steps: ["Reading your question", "Profiling patients like yours", "Scoring routes in Bay Ridge", "Picking the top 3"],
+      summary: "Your best 3 routes",
       // Answered on a map: the three best routes, each with its match score.
       map: {
         homes: "3,940 homes",
