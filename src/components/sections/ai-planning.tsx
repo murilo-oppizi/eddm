@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useState, useSyncExternalStore } from "react";
-import Link from "next/link";
 import {
   ArrowUpIcon,
   CalendarIcon,
   CalendarRangeIcon,
   CheckIcon,
   CircleIcon,
+  CoffeeIcon,
+  DumbbellIcon,
   LoaderCircleIcon,
   MapPinIcon,
   PaletteIcon,
@@ -17,13 +18,14 @@ import {
   RouteIcon,
   SparklesIcon,
   UsersIcon,
+  UtensilsCrossedIcon,
   type LucideIcon,
 } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
 import { Button } from "@/components/ui/button";
 import { SectionHeading } from "@/components/sections/section-heading";
-import { aiPlanning, site } from "@/content/site";
+import { aiPlanning } from "@/content/site";
 import { cn } from "@/lib/utils";
 
 const icons: Record<string, LucideIcon> = {
@@ -34,6 +36,9 @@ const icons: Record<string, LucideIcon> = {
   pin: MapPinIcon,
   planning: CalendarRangeIcon,
   palette: PaletteIcon,
+  coffee: CoffeeIcon,
+  dumbbell: DumbbellIcon,
+  utensils: UtensilsCrossedIcon,
 };
 
 // One card that changes in place, like an AI composer: the brief types itself into the
@@ -46,11 +51,12 @@ const TYPE_MS = 20; // per character
 const STEP_MS = 550; // per agent step
 const ROW_MS = 220; // between answer lines
 const STEPS = aiPlanning.steps.length;
-const ROWS = aiPlanning.scenarios[0].plan.length + 2; // plan lines + tips + actions
+const ROWS = aiPlanning.scenarios[0].plan.length + 1; // plan lines + the "Run again" button
 
-/** Shared by the prompt box and the reply (≈ the finished plan's height), so swapping
- *  between them doesn't push the rest of the page around. */
-const CARD_MIN_H = "min-h-80 sm:min-h-[27.5rem]";
+/** Shared by the prompt box and the reply, sized to the finished plan (incl. "Run
+ *  again") at each breakpoint, so swapping between them never pushes the page around.
+ *  Measured: ~453px on phones, ~421px on tablets, ~401px on desktop. */
+const CARD_MIN_H = "min-h-[28.5rem] sm:min-h-[26.5rem] lg:min-h-[25.25rem]";
 
 const noop = () => () => {};
 /** false during SSR and hydration, true afterwards. */
@@ -107,7 +113,42 @@ export function AiPlanning() {
   return (
     <section id="ai" className="scroll-mt-20 py-20">
       <div className="container-page space-y-12">
-        <SectionHeading eyebrow={aiPlanning.eyebrow} title={aiPlanning.title} body={aiPlanning.body} />
+        <div className="space-y-8">
+          <SectionHeading eyebrow={aiPlanning.eyebrow} title={aiPlanning.title} body={aiPlanning.body} />
+
+          {/* Example briefs as a segmented control, like the suggestion chips of AI composers. */}
+          {/* Three equal tabs (icon over label) on phones; one pill row from sm up. */}
+          <div className="flex justify-center">
+            <div
+              role="group"
+              aria-label="Example briefs"
+              className="grid w-full grid-cols-3 gap-1 rounded-2xl border bg-muted/60 p-1 sm:inline-flex sm:w-auto sm:rounded-full"
+            >
+              {aiPlanning.scenarios.map((s, i) => {
+                const Icon = icons[s.icon];
+                const active = i === scenarioIndex;
+                return (
+                  <button
+                    key={s.chip}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => (animated ? play(i) : setScenario(i))}
+                    className={cn(
+                      "flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-xs font-medium whitespace-nowrap transition-all outline-none focus-visible:ring-3 focus-visible:ring-ring/50 sm:flex-row sm:gap-2 sm:rounded-full sm:px-4 sm:text-sm",
+                      active
+                        ? "bg-card text-foreground shadow-sm"
+                        : "text-muted-foreground hover:bg-card/60 hover:text-foreground"
+                    )}
+                  >
+                    <Icon className={cn("size-4", active && "text-brand")} aria-hidden />
+                    {s.chip}
+                    <span className="hidden font-normal text-muted-foreground sm:inline">· {s.area}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </div>
 
         <div className="mx-auto max-w-3xl">
           {/* What the card shows, for screen readers (the card itself is visual). */}
@@ -115,7 +156,6 @@ export function AiPlanning() {
             <p>Example brief: {scenario.brief}</p>
             <p>
               Suggested plan: {scenario.plan.map((row) => `${row.label}: ${row.value}`).join(". ")}.
-              Creative tips: {scenario.tips.join(", ")}.
             </p>
           </div>
 
@@ -151,40 +191,13 @@ export function AiPlanning() {
                     phase={phase}
                     step={step}
                     rows={rows}
-                    onNewBrief={
-                      animated
-                        ? () => {
-                            setTyped(0);
-                            setPhase("composing");
-                          }
-                        : undefined
-                    }
+                    onRunAgain={animated ? () => play(scenarioIndex) : undefined}
                   />
                 </motion.div>
               )}
             </AnimatePresence>
           </motion.div>
 
-          {/* Example prompts, like the suggestion chips under AI composers. */}
-          <div className="mt-5 flex flex-wrap items-center justify-center gap-2">
-            <span className="text-sm text-muted-foreground">Try an example:</span>
-            {aiPlanning.scenarios.map((s, i) => (
-              <button
-                key={s.chip}
-                type="button"
-                aria-pressed={i === scenarioIndex}
-                onClick={() => (animated ? play(i) : setScenario(i))}
-                className={cn(
-                  "cursor-pointer rounded-full border px-3 py-1.5 text-sm transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
-                  i === scenarioIndex
-                    ? "border-primary/30 bg-brand-subtle text-brand-subtle-foreground"
-                    : "bg-card text-foreground hover:bg-muted"
-                )}
-              >
-                {s.chip}
-              </button>
-            ))}
-          </div>
         </div>
 
         <ul className="grid gap-4 md:grid-cols-3">
@@ -254,13 +267,13 @@ function Response({
   phase,
   step,
   rows,
-  onNewBrief,
+  onRunAgain,
 }: {
   scenario: Scenario;
   phase: Phase;
   step: number;
   rows: number;
-  onNewBrief?: () => void;
+  onRunAgain?: () => void;
 }) {
   const working = phase === "working";
   const visible = (i: number) => phase === "done" || (phase === "answering" && i < rows);
@@ -326,32 +339,13 @@ function Response({
             })}
           </dl>
 
-          <Reveal
-            visible={visible(scenario.plan.length)}
-            className="mt-4 flex flex-wrap items-center gap-2"
-            aria-hidden
-          >
-            <span className="text-sm text-muted-foreground">Creative check:</span>
-            {scenario.tips.map((tip) => (
-              <span
-                key={tip}
-                className="rounded-full bg-brand-subtle px-2.5 py-1 text-xs font-medium text-brand-subtle-foreground"
-              >
-                {tip}
-              </span>
-            ))}
-          </Reveal>
-
-          <Reveal visible={visible(scenario.plan.length + 1)} className="mt-auto flex flex-wrap gap-2 pt-6">
-            <Button size="lg" nativeButton={false} render={<Link href={site.primaryCta.href} />}>
-              Launch this campaign
-            </Button>
-            {onNewBrief && (
-              <Button size="lg" variant="ghost" onClick={onNewBrief}>
-                <RotateCcwIcon data-icon="inline-start" /> New brief
+          {onRunAgain && (
+            <Reveal visible={visible(scenario.plan.length)} className="mt-auto flex justify-center pt-6">
+              <Button variant="outline" size="lg" className="rounded-full px-4" onClick={onRunAgain}>
+                <RotateCcwIcon data-icon="inline-start" /> Run again
               </Button>
-            )}
-          </Reveal>
+            </Reveal>
+          )}
         </>
       )}
     </div>

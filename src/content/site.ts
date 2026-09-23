@@ -72,7 +72,9 @@ export const aiPlanning = {
   placeholder: "Describe your business, who you want to reach and your budget…",
   scenarios: [
     {
-      chip: "Coffee shop in Williamsburg",
+      chip: "Coffee shop",
+      icon: "coffee",
+      area: "Williamsburg",
       zip: "11211",
       brief:
         "I run a coffee shop in Williamsburg. I want young families within walking distance. Budget around $1,500.",
@@ -82,10 +84,11 @@ export const aiPlanning = {
         { icon: "calendar", label: "Best timing", value: "Lands Thursday, before the weekend" },
         { icon: "receipt", label: "Estimated cost", value: "$1,494" },
       ],
-      tips: ["Put the offer in the headline", "Make the QR code larger"],
     },
     {
-      chip: "Gym opening in Park Slope",
+      chip: "Gym opening",
+      icon: "dumbbell",
+      area: "Park Slope",
       zip: "11215",
       brief:
         "We're opening a gym in Park Slope next month. I want adults 25–40 who live within a mile. Around $2,000.",
@@ -95,10 +98,11 @@ export const aiPlanning = {
         { icon: "calendar", label: "Best timing", value: "Lands the week before opening" },
         { icon: "receipt", label: "Estimated cost", value: "$1,987" },
       ],
-      tips: ["Lead with the opening-week offer", "Add a small map to the address"],
     },
     {
-      chip: "Fall menu in Astoria",
+      chip: "Fall menu",
+      icon: "utensils",
+      area: "Astoria",
       zip: "11103",
       brief:
         "My restaurant in Astoria has a new fall menu. I want couples and families nearby. Budget about $1,000.",
@@ -108,7 +112,6 @@ export const aiPlanning = {
         { icon: "calendar", label: "Best timing", value: "Lands Friday, ahead of dinner plans" },
         { icon: "receipt", label: "Estimated cost", value: "$986" },
       ],
-      tips: ["Show a dish, not the logo", "Add a first-visit discount code"],
     },
   ],
   steps: ["Reading your brief", "Finding routes in {zip}", "Matching demographics", "Estimating cost and timing"],
