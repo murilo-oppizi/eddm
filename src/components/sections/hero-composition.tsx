@@ -60,8 +60,9 @@ export function HeroComposition() {
               y={20}
               w={400}
               delay={0}
-              float={{ distance: 4, duration: 8 }}
             >
+              {/* The map (with its toolbar, pin and route label) is the anchor: it only
+                  fades in and never moves. The two cards float over it. */}
               <RouteMap />
             </Piece>
             <Piece
@@ -89,7 +90,8 @@ export function HeroComposition() {
   );
 }
 
-/** Positions a piece, fades it in once, then lets it drift gently up and down forever. */
+/** Positions a piece and fades it in once. With `float`, it also slides in and then
+ *  drifts gently up and down forever; without it, it stays perfectly still. */
 function Piece({
   x,
   y,
@@ -102,14 +104,17 @@ function Piece({
   y: number;
   w: number;
   delay: number;
-  float: { distance: number; duration: number; offset?: number };
+  float?: { distance: number; duration: number; offset?: number };
   children: React.ReactNode;
 }) {
   return (
     // The fade-in is plain CSS so it plays as soon as the page paints; a JS-driven
     // one would keep the cards at opacity 0 until the scripts load (seconds on slow networks).
     <div
-      className="absolute animate-in fill-mode-both fade-in slide-in-from-bottom-4 animation-duration-600 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:animate-none"
+      className={cn(
+        "absolute animate-in fill-mode-both fade-in animation-duration-600 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:animate-none",
+        float && "slide-in-from-bottom-4"
+      )}
       style={
         {
           left: px(x),
@@ -119,18 +124,22 @@ function Piece({
         } as React.CSSProperties
       }
     >
-      {/* Separate element so the float and the fade-in don't fight over `transform`. */}
-      <motion.div
-        animate={{ y: [0, -float.distance, 0] }}
-        transition={{
-          duration: float.duration,
-          delay: delay + 0.6 + (float.offset ?? 0),
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-      >
-        {children}
-      </motion.div>
+      {float ? (
+        // Separate element so the float and the fade-in don't fight over `transform`.
+        <motion.div
+          animate={{ y: [0, -float.distance, 0] }}
+          transition={{
+            duration: float.duration,
+            delay: delay + 0.6 + (float.offset ?? 0),
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        >
+          {children}
+        </motion.div>
+      ) : (
+        children
+      )}
     </div>
   );
 }
