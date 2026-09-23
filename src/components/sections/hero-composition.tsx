@@ -346,12 +346,10 @@ function RouteMap({
                 onClick={() => onChoose(m)}
                 className={cn(
                   "flex h-9 cursor-pointer items-center gap-1.5 px-3 text-sm font-medium text-foreground transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset",
-                  on && m === "ai" && "bg-brand-subtle text-brand-subtle-foreground",
-                  on && m !== "ai" && "bg-muted",
-                  !on && "hover:bg-muted/50"
+                  on ? "bg-muted" : "hover:bg-muted/50"
                 )}
               >
-                <Icon className={cn("size-4.5", m === "ai" && "text-brand")} /> {text}
+                <Icon className="size-4.5" /> {text}
               </button>
             );
           })}
