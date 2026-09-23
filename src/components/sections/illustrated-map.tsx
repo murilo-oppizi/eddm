@@ -55,7 +55,8 @@ export type SelectionMode = "route" | "area";
 /** Radius of the "Area" selection, sized to cover about the same ground as the route. */
 const AREA_RADIUS = 74;
 
-export function IllustratedMap({ mode }: { mode: SelectionMode }) {
+/** `thinking`: the selection breathes while the AI is working on it. */
+export function IllustratedMap({ mode, thinking = false }: { mode: SelectionMode; thinking?: boolean }) {
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="absolute inset-0 size-full" aria-hidden>
       {/* Streets are the background; blocks are drawn on top with gaps between them. */}
@@ -81,7 +82,7 @@ export function IllustratedMap({ mode }: { mode: SelectionMode }) {
             mounted and cross-fade, so switching modes is smooth. */}
         <polygon
           points={routePoints}
-          className={cn(selectionClass, mode === "route" ? "opacity-100" : "scale-90 opacity-0")}
+          className={cn(selectionClass, mode === "route" ? (thinking ? "animate-pulse" : "opacity-100") : "scale-90 opacity-0")}
           strokeWidth="2.5"
           strokeLinejoin="round"
         />
