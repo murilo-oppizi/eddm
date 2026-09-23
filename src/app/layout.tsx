@@ -24,11 +24,20 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  // The live domain, so share images and links resolve to absolute URLs.
+  metadataBase: new URL("https://eddm.com"),
   title: {
     default: `${site.name} — ${site.tagline}`,
     template: `%s · ${site.name}`,
   },
   description: site.description,
+  // How links look when shared; the image is app/opengraph-image.tsx.
+  openGraph: {
+    type: "website",
+    siteName: `${site.name} by Oppizi`,
+    locale: "en_US",
+  },
+  twitter: { card: "summary_large_image" },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
