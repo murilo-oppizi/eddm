@@ -11,7 +11,6 @@ import {
   type TablerIcon,
 } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
-import { MotionConfig, motion } from "motion/react";
 
 import { DotOrb } from "@/components/sections/dot-orb";
 import { IllustratedMap, ROUTE_CENTER } from "@/components/sections/illustrated-map";
@@ -102,42 +101,40 @@ export function HeroComposition() {
   const optimized = ai === "done";
 
   return (
-    // "user": honour the OS reduce-motion setting by skipping movement (floats, pulse
-    // growth) while keeping the same markup on server and client.
-    <MotionConfig reducedMotion="user">
-      {/* One wrapper, so the composition and its credit stay in the same grid cell. */}
-      <div className="w-full">
-        <div
-          className="@container relative mx-auto w-full max-w-[640px] select-none"
-          style={{ aspectRatio: `${CANVAS.w} / ${CANVAS.h}` }}
-        >
-          <p className="sr-only">
-            The EDDM campaign builder: a map with a highlighted carrier route,
-            audience filters, and selected routes with household counts and costs.
-          </p>
-          <p className="sr-only" aria-live="polite">
-            {loading ? "Optimizing with AI…" : optimized ? "AI optimized: 14 routes and 7,380 homes in Williamsburg, plus Greenpoint." : ""}
-          </p>
-          <div className="absolute inset-0" style={scaled}>
-            <Piece x={70} y={20} w={MAP_W} delay={0}>
-              {/* The map (with its toolbar, pin and route label) is the anchor: it only
-                  fades in and never moves. The two cards float over it. */}
-              <RouteMap mode={mode} source={source} ai={ai} onChoose={choose} />
-            </Piece>
-            <Piece x={340} y={96} w={300} delay={0.15} float={{ distance: 8, duration: 6, offset: 1.2 }}>
-              <AiFrame active={loading}>
-                <SelectedRoutesCard ai={ai} step={step} />
-              </AiFrame>
-            </Piece>
-            <Piece x={0} y={338} w={330} delay={0.3} float={{ distance: 7, duration: 7, offset: 2.4 }}>
-              <AiFrame active={loading}>
-                <AudienceCard ai={ai} />
-              </AiFrame>
-            </Piece>
-          </div>
+    // All motion here is CSS, so the OS reduce-motion setting is honoured with
+    // motion-reduce: variants, and the markup is the same on server and client.
+    // One wrapper, so the composition and its credit stay in the same grid cell.
+    <div className="w-full">
+      <div
+        className="@container relative mx-auto w-full max-w-[640px] select-none"
+        style={{ aspectRatio: `${CANVAS.w} / ${CANVAS.h}` }}
+      >
+        <p className="sr-only">
+          The EDDM campaign builder: a map with a highlighted carrier route,
+          audience filters, and selected routes with household counts and costs.
+        </p>
+        <p className="sr-only" aria-live="polite">
+          {loading ? "Optimizing with AI…" : optimized ? "AI optimized: 14 routes and 7,380 homes in Williamsburg, plus Greenpoint." : ""}
+        </p>
+        <div className="absolute inset-0" style={scaled}>
+          <Piece x={70} y={20} w={MAP_W} delay={0}>
+            {/* The map (with its toolbar, pin and route label) is the anchor: it only
+                fades in and never moves. The two cards float over it. */}
+            <RouteMap mode={mode} source={source} ai={ai} onChoose={choose} />
+          </Piece>
+          <Piece x={340} y={96} w={300} delay={0.15} float={{ distance: 8, duration: 6, offset: 1.2 }}>
+            <AiFrame active={loading}>
+              <SelectedRoutesCard ai={ai} step={step} />
+            </AiFrame>
+          </Piece>
+          <Piece x={0} y={338} w={330} delay={0.3} float={{ distance: 7, duration: 7, offset: 2.4 }}>
+            <AiFrame active={loading}>
+              <AudienceCard ai={ai} />
+            </AiFrame>
+          </Piece>
         </div>
       </div>
-    </MotionConfig>
+    </div>
   );
 }
 
@@ -177,17 +174,20 @@ function Piece({
     >
       {float ? (
         // Separate element so the float and the fade-in don't fight over `transform`.
-        <motion.div
-          animate={{ y: [0, -float.distance, 0] }}
-          transition={{
-            duration: float.duration,
-            delay: delay + 0.6 + (float.offset ?? 0),
-            repeat: Infinity,
-            ease: "easeInOut",
-          }}
+        // A CSS animation (float-y in globals.css), so the bob runs on the compositor
+        // instead of costing main-thread work every frame.
+        <div
+          className="animate-[float-y_var(--float-duration)_ease-in-out_infinite] motion-reduce:animate-none"
+          style={
+            {
+              "--float-distance": `${float.distance}px`,
+              "--float-duration": `${float.duration}s`,
+              animationDelay: `${delay + 0.6 + (float.offset ?? 0)}s`,
+            } as React.CSSProperties
+          }
         >
           {children}
-        </motion.div>
+        </div>
       ) : (
         children
       )}
@@ -195,7 +195,9 @@ function Piece({
   );
 }
 
-/** While `active`, a pink-to-indigo arc circles the card, with a soft halo behind it. */
+/** While `active`, a pink-to-indigo arc circles the card, with a soft halo behind it.
+ *  The spin is paused the rest of the time: it's invisible then, and animating the
+ *  gradient angle costs a style recalculation every frame. */
 function AiFrame({ active, children }: { active: boolean; children: React.ReactNode }) {
   return (
     <div className="relative">
@@ -203,14 +205,14 @@ function AiFrame({ active, children }: { active: boolean; children: React.ReactN
         aria-hidden
         className={cn(
           "absolute -inset-0.5 rounded-[calc(var(--radius)*1.4+2px)] ai-glow opacity-0 blur-md transition-opacity duration-500",
-          active && "opacity-50"
+          active ? "opacity-50" : "[animation-play-state:paused]"
         )}
       />
       <span
         aria-hidden
         className={cn(
           "absolute -inset-0.5 rounded-[calc(var(--radius)*1.4+2px)] ai-glow opacity-0 transition-opacity duration-500",
-          active && "opacity-100"
+          active ? "opacity-100" : "[animation-play-state:paused]"
         )}
       />
       <div className="relative">{children}</div>

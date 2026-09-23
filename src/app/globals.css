@@ -82,6 +82,14 @@
   }
 }
 
+/* The hero cards' gentle bob (see hero-composition.tsx). Animating `translate` in CSS
+   keeps it on the compositor: no main-thread work per frame. */
+@keyframes float-y {
+  50% {
+    translate: 0 calc(-1 * var(--float-distance));
+  }
+}
+
 /* "AI is working" ring: a pink-to-indigo arc that circles an element. Put it on a
    layer just behind the element (see hero-composition.tsx). */
 @property --glow-angle {

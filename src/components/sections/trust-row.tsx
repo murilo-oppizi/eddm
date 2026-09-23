@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import Image from "next/image";
-import { motion, useAnimationFrame, useMotionValue, useReducedMotion } from "motion/react";
+import { motion, useInView, useMotionValue, useReducedMotion } from "motion/react";
 
 import { trust } from "@/content/site";
 import { cn } from "@/lib/utils";
@@ -50,6 +50,9 @@ export function TrustRow() {
  */
 function LogoMarquee() {
   const reduceMotion = useReducedMotion();
+  const rootRef = useRef<HTMLDivElement>(null);
+  // The strip only moves while it's on screen; off screen it would just burn frames.
+  const onScreen = useInView(rootRef);
   const trackRef = useRef<HTMLDivElement>(null);
   const x = useMotionValue(0);
   const half = useRef(0); // width of one copy of the list = one loop
@@ -72,13 +75,26 @@ function LogoMarquee() {
     return h ? (((value % h) - h) % h) : value;
   };
 
-  useAnimationFrame((_, delta) => {
-    if (reduceMotion !== false || drag.current || !half.current) return;
-    const base = half.current / LOOP_SECONDS;
-    const target = hovered.current ? base / 2 : base;
-    speed.current += (target - speed.current) * Math.min(1, delta / EASE_MS);
-    x.set(wrap(x.get() - (speed.current * delta) / 1000));
-  });
+  // Our own frame loop, so it can stop completely while the strip is off screen (a
+  // running loop keeps the browser drawing frames even when nothing changes).
+  useEffect(() => {
+    if (reduceMotion !== false || !onScreen) return;
+    let frame = 0;
+    let last = performance.now();
+    const tick = (now: number) => {
+      const delta = Math.min(now - last, 100); // no jump after the tab was in the background
+      last = now;
+      if (!drag.current && half.current) {
+        const base = half.current / LOOP_SECONDS;
+        const target = hovered.current ? base / 2 : base;
+        speed.current += (target - speed.current) * Math.min(1, delta / EASE_MS);
+        x.set(wrap(x.get() - (speed.current * delta) / 1000));
+      }
+      frame = requestAnimationFrame(tick);
+    };
+    frame = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(frame);
+  }, [reduceMotion, onScreen, x]);
 
   const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
     if (reduceMotion !== false) return;
@@ -106,6 +122,7 @@ function LogoMarquee() {
 
   return (
     <div
+      ref={rootRef}
       onPointerEnter={(e) => e.pointerType === "mouse" && (hovered.current = true)}
       onPointerLeave={() => (hovered.current = false)}
       onPointerDown={onPointerDown}
