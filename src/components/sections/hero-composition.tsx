@@ -222,9 +222,9 @@ function Pin({ x, y }: { x: number; y: number }) {
 // "Selected routes" panel from the Campaign Builder (Figma node 2522:48598), minus
 // the delete buttons — nothing is removable in a hero picture.
 const selectedRoutes = [
-  // Costs = homes × $0.29, the Starter price in src/content/site.ts (placeholder pricing).
-  { place: "Williamsburg, NY 11211", routes: "17", homes: "8,746", cost: "$ 2,536.34" },
-  { place: "Park Slope, NY 11215", routes: "12", homes: "6,204", cost: "$ 1,799.16" },
+  // Costs = homes × pricing.perPiece ($0.31) from src/content/site.ts.
+  { place: "Williamsburg, NY 11211", routes: "17", homes: "8,746", cost: "$ 2,711.26" },
+  { place: "Park Slope, NY 11215", routes: "12", homes: "6,204", cost: "$ 1,923.24" },
 ];
 
 function SelectedRoutesCard() {

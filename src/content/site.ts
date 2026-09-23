@@ -47,32 +47,30 @@ export const features = [
   { icon: "sparkles", title: "AI-optimized routes", body: "Describe your ideal customer and our AI agents suggest the best routes to reach them." },
 ] as const
 
-export const plans = [
-  {
-    name: "Starter",
-    price: "$0.29",
-    unit: "per postcard",
-    description: "For testing a single neighborhood.",
-    features: ["6.25″ × 9″ postcard", "Up to 2,500 homes", "Template designs", "Email support"],
-    highlighted: false,
-  },
-  {
-    name: "Growth",
-    price: "$0.24",
-    unit: "per postcard",
-    description: "For local businesses mailing every month.",
-    features: ["6.25″ × 11″ postcard", "Up to 20,000 homes", "Custom design review", "QR code tracking", "Priority support"],
-    highlighted: true,
-  },
-  {
-    name: "Scale",
-    price: "Custom",
-    unit: "volume pricing",
-    description: "For franchises and multi-location brands.",
-    features: ["Any EDDM size", "Unlimited homes", "Dedicated designer", "Multi-location reporting"],
-    highlighted: false,
-  },
-]
+// Source: oppizi.com EDDM page ("$0.31 USD per piece · all-in", "$4,650 for ~15,000
+// addresses", USPS postage $0.260/piece per Notice 123, July 2026) and the sizes on
+// eddm.com/pricing. TO CONFIRM with marketing: eddm.com still says "from 7¢/piece",
+// and whether $0.31 applies to every size.
+export const pricing = {
+  perPiece: "$0.31",
+  example: { homes: "15,000", total: "$4,650" },
+  included: [
+    "Printing through 700+ local print partners",
+    "USPS postage and post office drop-off",
+    "Route selection with demographic filters",
+    "Design tool with USPS-ready templates",
+    "Delivery and scan tracking dashboard",
+  ],
+  noFees: "No mailing lists, data fees or setup fees.",
+  // Width × height in inches; drawn to scale in the pricing section.
+  sizes: [
+    { name: "Small", w: 4.25, h: 11 },
+    { name: "Standard", w: 6.25, h: 9, bestSeller: true },
+    { name: "Large", w: 6.25, h: 11 },
+    { name: "Jumbo", w: 8.25, h: 11 },
+    { name: "Oversized", w: 15, h: 12 },
+  ],
+}
 
 export const faqs = [
   {
@@ -81,7 +79,7 @@ export const faqs = [
   },
   {
     q: "How much does Every Door Direct Mail cost?",
-    a: "You pay per postcard, and the price includes printing, preparation and USPS postage. Plans start at $0.29 per postcard and get cheaper as you mail to more homes. There are no setup fees or contracts, and you see the full cost before you order.",
+    a: "You pay per piece, all-in: printing, USPS postage and delivery are included, with no mailing list or data fees. Campaigns start from $0.31 per piece, so reaching 15,000 homes costs about $4,650. You see the full price before you order.",
   },
   {
     q: "How fast is EDDM delivery?",
