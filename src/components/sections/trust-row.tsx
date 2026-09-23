@@ -113,7 +113,7 @@ function LogoMarquee() {
       onPointerUp={onPointerEnd}
       onPointerCancel={onPointerEnd}
       // pan-y: vertical swipes still scroll the page on touch screens.
-      className="relative cursor-grab touch-pan-y overflow-hidden select-none [mask-image:linear-gradient(to_right,transparent,black_12%,black_88%,transparent)] active:cursor-grabbing motion-reduce:cursor-auto motion-reduce:[mask-image:none]"
+      className="relative touch-pan-y overflow-hidden select-none [mask-image:linear-gradient(to_right,transparent,black_12%,black_88%,transparent)] motion-reduce:[mask-image:none]"
     >
       <motion.div ref={trackRef} style={{ x }} className="flex w-max motion-reduce:w-full">
         <LogoList />
