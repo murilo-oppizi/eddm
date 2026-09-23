@@ -121,8 +121,11 @@
 }
 
 /* shadcn's token names, bound to Oppizi's Layer 3 (semantic, mode-aware) tokens.
-   Light/dark comes from oppizi-tokens.css — set data-theme="dark" on <html> to flip. */
-:root {
+   Light/dark comes from oppizi-tokens.css — set data-theme="dark" on <html> to flip.
+   Re-declared on every [data-theme] element so a dark (or light) island inside the
+   page picks up its own values instead of inheriting the page's. */
+:root,
+[data-theme] {
   --brand: var(--ds-action-primary);                 /* #ef2b55 */
   --brand-foreground: var(--ds-action-primary-foreground);
 
