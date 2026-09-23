@@ -166,6 +166,9 @@
   }
   body {
     @apply bg-background text-foreground;
+    /* Safety net: nothing may widen the page sideways. `clip` (not `hidden`) keeps the
+       pinned "How it works" sticky. */
+    overflow-x: clip;
   }
   html {
     @apply font-sans scroll-smooth;

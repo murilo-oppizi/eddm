@@ -127,12 +127,12 @@ export function AiPlanning() {
           />
 
           {/* Example briefs as a segmented control, like the suggestion chips of AI composers. */}
-          {/* Three equal tabs (icon over label) on phones; one pill row from sm up. */}
+          {/* Three equal tabs (icon over label) on phones; one pill row from md up. */}
           <div className="flex justify-center">
             <div
               role="group"
               aria-label="Example briefs"
-              className="grid w-full grid-cols-3 gap-1 rounded-lg border bg-muted/60 p-1 sm:inline-flex sm:w-auto"
+              className="grid w-full grid-cols-3 gap-1 rounded-lg border bg-muted/60 p-1 md:inline-flex md:w-auto"
             >
               {aiPlanning.scenarios.map((s, i) => {
                 const Icon = icons[s.icon];
@@ -144,7 +144,7 @@ export function AiPlanning() {
                     aria-pressed={active}
                     onClick={() => (animated ? play(i) : setScenario(i))}
                     className={cn(
-                      "flex cursor-pointer flex-col items-center justify-center gap-1 rounded-md px-2 py-2 text-xs font-medium whitespace-nowrap transition-all outline-none focus-visible:ring-3 focus-visible:ring-ring/50 sm:flex-row sm:gap-2 sm:px-4 sm:text-sm",
+                      "flex cursor-pointer flex-col items-center justify-center gap-1 rounded-md px-2 py-2 text-xs font-medium whitespace-nowrap transition-all outline-none focus-visible:ring-3 focus-visible:ring-ring/50 md:flex-row md:gap-2 md:px-4 md:text-sm",
                       active
                         ? "bg-card text-foreground shadow-sm"
                         : "text-muted-foreground hover:bg-card/60 hover:text-foreground",
@@ -155,7 +155,7 @@ export function AiPlanning() {
                       aria-hidden
                     />
                     {s.chip}
-                    <span className="hidden font-normal text-muted-foreground sm:inline">
+                    <span className="hidden font-normal text-muted-foreground md:inline">
                       · {s.area}
                     </span>
                   </button>
