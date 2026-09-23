@@ -349,7 +349,10 @@ function RouteMap({
                   on ? "bg-muted" : "hover:bg-muted/50"
                 )}
               >
-                <Icon className={cn("size-4.5", m === "ai" && "text-brand")} /> {text}
+                <Icon className={cn("size-4.5", m === "ai" && "text-brand")} />
+                {/* Trim the text box to the capital letters so they centre exactly at any
+                    scale; otherwise rounding at some widths nudges them toward the top. */}
+                <span className="[text-box:trim-both_cap_alphabetic]">{text}</span>
               </button>
             );
           })}
