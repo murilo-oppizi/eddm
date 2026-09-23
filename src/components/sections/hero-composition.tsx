@@ -62,9 +62,12 @@ const data = {
       { place: "Greenpoint, NY 11222", routes: "9", homes: "4,960", cost: "$ 1,537.60" },
     ],
   },
+  // Real filters of the EDDM route picker, combined from its brackets (e.g. Age 35–54 =
+  // 35-44 + 45-54; 3+ residents = Household size 3, 4 and 5+; Homeowners =
+  // Owner-Occupied). There's no "families" or "kids" filter, so don't use one.
   audience: {
     base: ["Age 35–54", "Income $60K–115K", "Homeowners"],
-    ai: ["Age 25–44", "Income $75K–150K", "Families"],
+    ai: ["Age 25–44", "Income $91K–150K", "3+ residents"],
   },
 };
 

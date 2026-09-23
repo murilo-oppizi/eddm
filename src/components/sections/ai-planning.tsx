@@ -455,8 +455,9 @@ function Response({
                   className="flex items-center gap-3 px-4 py-3 text-sm"
                 >
                   <Icon className="size-4 shrink-0 text-brand" />
-                  <dt className="flex-1 text-muted-foreground">{row.label}</dt>
-                  <dd className="text-right font-medium">{row.value}</dd>
+                  {/* The label stays on one line; a long value wraps instead. */}
+                  <dt className="shrink-0 text-muted-foreground">{row.label}</dt>
+                  <dd className="flex-1 text-right font-medium">{row.value}</dd>
                 </Reveal>
               );
             })}

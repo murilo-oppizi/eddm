@@ -91,7 +91,7 @@ export const aiPlanning = {
       summary: "Plan ready",
       plan: [
         { icon: "route", label: "Routes", value: "6 routes · 4,820 homes" },
-        { icon: "users", label: "Audience match", value: "Age 25–44 · families" },
+        { icon: "users", label: "Audience match", value: "Age 25–44 · 3+ residents" },
         { icon: "calendar", label: "Best timing", value: "Lands Thursday, before the weekend" },
         { icon: "receipt", label: "Estimated cost", value: "$1,494" },
       ],
@@ -107,7 +107,7 @@ export const aiPlanning = {
       // Answered on a map: the three best routes, each with its match score.
       map: {
         homes: "3,940 homes",
-        caption: "Match with families with kids, age 30–50",
+        caption: "Match with households of 3+ residents, age 25–54",
         matches: ["92%", "84%", "78%"],
       },
     },
@@ -139,7 +139,7 @@ export const aiPlanning = {
             meta: "6 routes · 4,700 homes · $1,457",
             recommended: false,
             plan: [
-              { icon: "trending", label: "What worked", value: "Families 30–44 scanned most" },
+              { icon: "trending", label: "What worked", value: "Bigger households scanned most" },
               { icon: "route", label: "Next mailing", value: "6 routes in Long Island City" },
               { icon: "flask", label: "Keep testing", value: "Same postcard, a new QR code" },
               { icon: "receipt", label: "Estimated cost", value: "4,700 homes · $1,457" },
