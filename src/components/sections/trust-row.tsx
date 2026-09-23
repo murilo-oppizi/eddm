@@ -3,7 +3,8 @@ import Image from "next/image";
 import { trust } from "@/content/site";
 import { cn } from "@/lib/utils";
 
-/** Logos are drawn at this share of their SVG's natural size — their viewBoxes are already balanced against each other. */
+/** Logos are drawn at this share of their SVG's natural size — their viewBoxes are already balanced against each other.
+ *  Shown at full strength (their near-black #121527 matches the stats below); hover dims them slightly. */
 const LOGO_SCALE = 0.72;
 
 export function TrustRow() {
@@ -57,7 +58,7 @@ function LogoList({ className, ...props }: React.ComponentProps<"ul">) {
             unoptimized
             // Tiny SVGs that slide in from off-screen; lazy loading would make them pop in.
             loading="eager"
-            className="opacity-60 transition-opacity duration-300 hover:opacity-100"
+            className="transition-opacity duration-300 hover:opacity-70"
             style={{ width: client.width * LOGO_SCALE, height: "auto" }}
           />
         </li>
