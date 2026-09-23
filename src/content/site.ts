@@ -26,7 +26,7 @@ export const hero = {
 // Client logos and numbers from oppizi.com (Sept 2026). The numbers are Oppizi-wide,
 // across all offline channels, not EDDM only. Logos: oppizi.com/brand/clients/*.svg.
 export const trust = {
-  label: "Trusted by 1,000+ companies",
+  label: "Trusted by growth teams at",
   clients: [
     { name: "DoorDash", src: "/brand/clients/doordash.svg", width: 241, height: 29 },
     { name: "Uber Eats", src: "/brand/clients/uber.svg", width: 160, height: 28 }, // the file is the Uber Eats wordmark
