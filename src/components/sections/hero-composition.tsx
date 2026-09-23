@@ -67,7 +67,7 @@ const data = {
 };
 
 // Status lines while the AI works, shown with the same shimmer as the AI planning section.
-const AI_STEPS = ["Analyzing routes in Williamsburg", "Matching your audience", "Optimizing for cost"];
+const AI_STEPS = ["Analyzing routes", "Matching your audience", "Optimizing for cost"];
 const AI_STEP_MS = 900;
 
 export function HeroComposition() {
@@ -349,7 +349,7 @@ function RouteMap({
                   on ? "bg-muted" : "hover:bg-muted/50"
                 )}
               >
-                <Icon className="size-4.5" /> {text}
+                <Icon className={cn("size-4.5", m === "ai" && "text-brand")} /> {text}
               </button>
             );
           })}
