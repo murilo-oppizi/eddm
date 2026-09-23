@@ -48,11 +48,11 @@ const icons: Record<string, LucideIcon> = {
 type Phase =
   "composing" | "typing" | "submitting" | "working" | "answering" | "done";
 
-// 1.5× the original pacing, so each stage can be read (≈ 9s end to end).
+// 1.5× the original pacing (agent steps a bit longer), so each stage can be read (≈ 10s).
 const TYPE_MS = 30; // per character
 const PAUSE_MS = 525; // after the brief is typed
 const SUBMIT_MS = 450; // the button press
-const STEP_MS = 825; // per agent step
+const STEP_MS = 1100; // per agent step — slower than the rest so each step can be read
 const ROW_MS = 330; // between answer lines
 const STEPS = aiPlanning.steps.length;
 const ROWS = aiPlanning.scenarios[0].plan.length + 1; // plan lines + the "Run again" button
