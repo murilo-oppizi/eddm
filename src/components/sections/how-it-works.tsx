@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import {
   IconCheck,
   IconCircleCheck,
-  IconLayoutGrid,
   IconChartBar,
   IconMapPin,
   IconPencil,
@@ -12,7 +11,6 @@ import {
   IconPrinter,
   IconQrcode,
   IconTruckDelivery,
-  IconUpload,
   type TablerIcon,
 } from "@tabler/icons-react";
 import {
@@ -374,10 +372,11 @@ function StepVisual({ index, active }: { index: number; active: boolean }) {
 
 /* ------------------------------ Step visuals ------------------------------ */
 
-// Each visual plays a short entrance whenever its step becomes active (the desktop stage
-// remounts it per step; the phone timeline flips `active` as you scroll) and rewinds
-// when it's left. Children pick up the "off" → "on" variants from the visual's root.
-// With reduced motion they simply render finished.
+// The visuals sit ready; only the detail that tells the step's story animates, and
+// quickly (all done in under a second), so it's seen even when scrolling fast. Each
+// plays when its step becomes active (the desktop stage remounts it per step; the phone
+// timeline flips `active` as you scroll) and rewinds when it's left. Children pick up
+// the "off" → "on" variants from the visual's root. With reduced motion they render finished.
 
 /** Motion props for a visual's root: play the entrance while `active`. */
 function usePlay(active: boolean) {
@@ -388,17 +387,17 @@ function usePlay(active: boolean) {
 /** Fade up into place, after `custom` seconds. */
 const rise: Variants = {
   off: { opacity: 0, y: 8 },
-  on: (delay: number = 0) => ({ opacity: 1, y: 0, transition: { delay, duration: 0.5, ease } }),
+  on: (delay: number = 0) => ({ opacity: 1, y: 0, transition: { delay, duration: 0.35, ease } }),
 };
 
 /** Pop in with a little spring, after `custom` seconds. */
 const pop: Variants = {
-  off: { opacity: 0, scale: 0.6 },
-  on: (delay: number = 0) => ({ opacity: 1, scale: 1, transition: { delay, type: "spring", stiffness: 420, damping: 22 } }),
+  off: { opacity: 0, scale: 0.5 },
+  on: (delay: number = 0) => ({ opacity: 1, scale: 1, transition: { delay, type: "spring", stiffness: 500, damping: 22 } }),
 };
 
 /** A number that counts up from 0 while `active`. */
-function CountUp({ to, active, delay = 0, duration = 1 }: { to: number; active: boolean; delay?: number; duration?: number }) {
+function CountUp({ to, active, delay = 0, duration = 0.6 }: { to: number; active: boolean; delay?: number; duration?: number }) {
   const reduce = useReducedMotion();
   const value = useMotionValue(0);
   const text = useTransform(value, (v) => Math.round(v).toLocaleString("en-US"));
@@ -411,8 +410,8 @@ function CountUp({ to, active, delay = 0, duration = 1 }: { to: number; active: 
   return <motion.span className="tabular-nums">{text}</motion.span>;
 }
 
-/** Small card floating over a visual; rises in `delay` seconds into the entrance. */
-function Chip({ delay = 0, className, children }: { delay?: number; className?: string; children: React.ReactNode }) {
+/** Small card floating over a visual; rises in `delay` seconds after the step appears. */
+function Chip({ delay = 0.15, className, children }: { delay?: number; className?: string; children: React.ReactNode }) {
   return (
     <motion.div
       custom={delay}
@@ -426,92 +425,41 @@ function Chip({ delay = 0, className, children }: { delay?: number; className?: 
 
 // The visuals use illustrative numbers.
 
-/** The map settles, the route traces itself along the streets, the pin drops, and the count comes in. */
+/** The route is already picked; the selection card rises in with its count. */
 function RoutesVisual({ active }: { active: boolean }) {
   return (
     <motion.div className="absolute inset-0" {...usePlay(active)}>
-      <motion.div
-        className="absolute inset-0"
-        variants={{ off: { scale: 1.08 }, on: { scale: 1, transition: { duration: 1.6, ease } } }}
-      >
-        <IllustratedMap mode="route" cover draw />
-      </motion.div>
-      <Chip delay={1} className="top-4 left-4">
+      <IllustratedMap mode="route" cover />
+      <Chip className="top-4 left-4">
         <p className="text-xs text-muted-foreground">3 routes selected</p>
         <p className="font-semibold">
-          <CountUp to={1540} active={active} delay={1} duration={0.9} /> homes
+          <CountUp to={1540} active={active} delay={0.2} /> homes
         </p>
       </Chip>
     </motion.div>
   );
 }
 
-/** A template gets picked, the postcard lands and builds itself, the EDDM indicia is stamped, then the check passes. */
+/** The postcard is ready; the USPS check comes in and ticks. */
 function DesignVisual({ active }: { active: boolean }) {
   return (
-    <motion.div className="flex h-full items-center justify-center gap-4 p-5" {...usePlay(active)}>
-      {/* Start from a template (picked), or upload your own */}
-      <div className="flex flex-col gap-2">
-        {[IconLayoutGrid, IconUpload].map((Icon, i) => (
-          <motion.span
-            key={i}
-            className="relative grid size-11 place-items-center rounded-lg border bg-card text-muted-foreground"
-            variants={i === 0 ? { on: { scale: [1, 0.9, 1], transition: { delay: 0.15, duration: 0.35 } } } : undefined}
-          >
-            {i === 0 && (
-              <motion.span
-                className="absolute -inset-px rounded-lg bg-brand-subtle ring-2 ring-primary/50"
-                variants={{ off: { opacity: 0 }, on: { opacity: 1, transition: { delay: 0.2, duration: 0.3 } } }}
-              />
-            )}
-            <Icon className="relative size-5" />
-            {i === 0 && (
-              <motion.span
-                className="absolute inset-0 grid place-items-center text-brand"
-                variants={{ off: { opacity: 0 }, on: { opacity: 1, transition: { delay: 0.2, duration: 0.3 } } }}
-              >
-                <Icon className="size-5" />
-              </motion.span>
-            )}
-          </motion.span>
-        ))}
-      </div>
+    <motion.div className="flex h-full items-center justify-center p-5" {...usePlay(active)}>
       {/* The postcard */}
       {/* Sized to always fit its box: by width on phones, by height on desktop. */}
-      <motion.div
-        className="relative aspect-[9/6.25] w-full max-w-60 min-w-0 rounded-lg border bg-card p-4 shadow-md lg:h-full lg:max-h-44 lg:w-auto lg:max-w-none"
-        variants={{
-          off: { opacity: 0, y: 18, rotate: -4, scale: 0.96 },
-          on: { opacity: 1, y: 0, rotate: 0, scale: 1, transition: { delay: 0.35, type: "spring", stiffness: 170, damping: 20 } },
-        }}
-      >
+      <div className="relative aspect-[9/6.25] w-full max-w-60 min-w-0 rounded-lg border bg-card p-4 shadow-md lg:h-full lg:max-h-44 lg:w-auto lg:max-w-none">
         <div className="flex h-full w-[58%] flex-col justify-between rounded-md bg-brand-subtle p-3">
-          <motion.span
-            className="h-2 w-14 origin-left rounded-full bg-primary/60"
-            variants={{ off: { scaleX: 0 }, on: { scaleX: 1, transition: { delay: 0.7, duration: 0.45, ease } } }}
-          />
-          <motion.p custom={0.8} variants={rise} className="font-heading text-base leading-tight font-bold">
-            Grand opening Saturday
-          </motion.p>
-          <motion.span custom={0.95} variants={pop} className="w-fit">
-            <IconQrcode className="size-5 text-brand" />
-          </motion.span>
+          <span className="h-2 w-14 rounded-full bg-primary/60" />
+          <p className="font-heading text-base leading-tight font-bold">Grand opening Saturday</p>
+          <IconQrcode className="size-5 text-brand" />
         </div>
-        {/* The EDDM indicia, stamped on */}
-        <motion.div
-          className="absolute top-4 right-4 w-12 border border-foreground/60 py-0.5 text-center text-[7px] leading-tight font-semibold text-foreground/70"
-          variants={{
-            off: { opacity: 0, scale: 1.5, rotate: -10 },
-            on: { opacity: 1, scale: 1, rotate: 0, transition: { delay: 1.1, type: "spring", stiffness: 520, damping: 24 } },
-          }}
-        >
+        <div className="absolute top-4 right-4 w-12 border border-foreground/60 py-0.5 text-center text-[7px] leading-tight font-semibold text-foreground/70">
           ECRWSS
           <br />
           EDDM
-        </motion.div>
-      </motion.div>
-      <Chip delay={1.4} className="right-4 bottom-4 flex items-center gap-1.5 font-medium">
-        <motion.span custom={1.55} variants={pop}>
+        </div>
+      </div>
+      <Chip className="right-4 bottom-4 flex items-center gap-1.5 font-medium">
+        <motion.span custom={0.35} variants={pop}>
           <IconCircleCheck className="size-4 text-success" />
         </motion.span>
         USPS size check passed
@@ -527,18 +475,22 @@ const delivery = [
   { label: "Delivered", when: "Fri–Mon", Icon: IconCheck },
 ];
 
+const TICK_MS = 220;
+
+/** Each stage ticks off in turn, the last one ("Delivered") included. */
 function DeliveryVisual({ active }: { active: boolean }) {
-  // Stages tick off one after another while the step is active.
+  const reduce = useReducedMotion();
   const [ticks, setTicks] = useState(0);
   useEffect(() => {
-    if (!active) return;
-    const timer = setInterval(() => setTicks((n) => n + 1), 450);
+    if (!active || reduce) return;
+    const timer = setInterval(() => setTicks((n) => Math.min(n + 1, delivery.length)), TICK_MS);
     return () => {
       clearInterval(timer);
       setTicks(0); // replay from the start next time the step comes back
     };
-  }, [active]);
-  const reached = active ? Math.min(ticks, delivery.length - 1) : 0;
+  }, [active, reduce]);
+  // How many stages are checked off; the next one is in progress.
+  const done = !active ? 0 : reduce ? delivery.length : ticks;
 
   return (
     <div className="flex h-full items-center px-8">
@@ -547,18 +499,18 @@ function DeliveryVisual({ active }: { active: boolean }) {
           <li
             key={label}
             className={cn(
-              "flex items-center gap-3 rounded-lg border bg-card px-3 py-1.5 text-sm transition-all duration-500",
-              i > reached && "opacity-50",
-              i === reached && "ring-2 ring-primary/30"
+              "flex items-center gap-3 rounded-lg border bg-card px-3 py-1.5 text-sm transition-all duration-300",
+              i > done && "opacity-50",
+              i === done && "ring-2 ring-primary/30"
             )}
           >
             <span
               className={cn(
-                "grid size-7 place-items-center rounded-md transition-colors duration-500",
-                i < reached ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                "grid size-7 place-items-center rounded-md transition-colors duration-300",
+                i < done ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
               )}
             >
-              {i < reached ? <IconCheck className="size-4" /> : <Icon className="size-4" />}
+              {i < done ? <IconCheck className="size-4" /> : <Icon className="size-4" />}
             </span>
             <span className="flex-1 font-medium">{label}</span>
             <span className="text-xs text-muted-foreground">{when}</span>
@@ -579,32 +531,32 @@ const results = [
 function ResultsVisual({ active }: { active: boolean }) {
   const max = Math.max(...results.map((r) => r.scans));
   const total = results.reduce((sum, r) => sum + r.scans, 0);
-  const barDelay = (i: number) => 0.35 + i * 0.15;
+  const barDelay = (i: number) => 0.1 + i * 0.08;
   return (
     <motion.div className="flex h-full flex-col justify-center gap-4 px-8" {...usePlay(active)}>
-      <motion.div custom={0.1} variants={rise} className="flex items-baseline justify-between">
+      <div className="flex items-baseline justify-between">
         <p className="text-sm font-medium">Scans by neighborhood</p>
         <p className="font-heading text-2xl font-bold tracking-tight">
-          <CountUp to={total} active={active} delay={0.35} duration={1.3} />
+          <CountUp to={total} active={active} delay={0.1} duration={0.75} />
         </p>
-      </motion.div>
+      </div>
       <ul className="space-y-3">
         {results.map((r, i) => (
-          <motion.li key={r.area} custom={0.15 + i * 0.1} variants={rise} className="space-y-1">
+          <li key={r.area} className="space-y-1">
             <div className="flex justify-between text-xs text-muted-foreground">
               <span>{r.area}</span>
-              <CountUp to={r.scans} active={active} delay={barDelay(i)} duration={0.9} />
+              <CountUp to={r.scans} active={active} delay={barDelay(i)} />
             </div>
             <div className="h-2.5 overflow-hidden rounded-full bg-card">
               <motion.div
                 className="h-full origin-left rounded-full bg-primary"
                 variants={{
                   off: { scaleX: 0 },
-                  on: { scaleX: r.scans / max, transition: { delay: barDelay(i), duration: 0.9, ease } },
+                  on: { scaleX: r.scans / max, transition: { delay: barDelay(i), duration: 0.6, ease } },
                 }}
               />
             </div>
-          </motion.li>
+          </li>
         ))}
       </ul>
     </motion.div>

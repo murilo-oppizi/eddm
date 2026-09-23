@@ -7,8 +7,6 @@
 // lives in one group rotated like Williamsburg's grid, centred on the route, so the
 // route outline can sit exactly on street centrelines.
 
-import { motion } from "motion/react";
-
 import { cn } from "@/lib/utils";
 
 const W = 400;
@@ -77,7 +75,6 @@ export function IllustratedMap({
   optimized = false,
   cover = false,
   width = W,
-  draw = false,
 }: {
   mode: SelectionMode;
   thinking?: boolean;
@@ -87,9 +84,6 @@ export function IllustratedMap({
   /** Design width of the map. Wider maps show more streets to the right; the route
    *  and pin stay put, since they're positioned from the left. */
   width?: number;
-  /** Route mode only: trace the route along the streets and drop a pin, playing the
-   *  "off" → "on" variants of the nearest motion parent. */
-  draw?: boolean;
 }) {
   const route = mode === "route";
   return (
@@ -120,35 +114,15 @@ export function IllustratedMap({
 
         {/* The selection: a street-following route (original or the AI's pick), or a
             radius around the pin. All stay mounted and cross-fade, so switching is smooth. */}
-        {draw && route ? (
-          <motion.polygon
-            points={routePoints}
-            className="fill-primary/20 stroke-primary"
-            strokeWidth="2.5"
-            strokeLinejoin="round"
-            variants={{
-              off: { pathLength: 0, fillOpacity: 0 },
-              on: {
-                pathLength: 1,
-                fillOpacity: 1,
-                transition: {
-                  pathLength: { delay: 0.25, duration: 0.9, ease: "easeInOut" },
-                  fillOpacity: { delay: 0.95, duration: 0.4 },
-                },
-              },
-            }}
-          />
-        ) : (
-          <polygon
-            points={routePoints}
-            className={cn(
-              selectionClass,
-              route && !optimized ? (thinking ? "animate-pulse" : "opacity-100") : "scale-90 opacity-0"
-            )}
-            strokeWidth="2.5"
-            strokeLinejoin="round"
-          />
-        )}
+        <polygon
+          points={routePoints}
+          className={cn(
+            selectionClass,
+            route && !optimized ? (thinking ? "animate-pulse" : "opacity-100") : "scale-90 opacity-0"
+          )}
+          strokeWidth="2.5"
+          strokeLinejoin="round"
+        />
         <polygon
           points={aiRoutePoints}
           className={cn(selectionClass, "duration-500", route && optimized ? "opacity-100" : "scale-90 opacity-0")}
@@ -162,17 +136,6 @@ export function IllustratedMap({
           strokeDasharray="7 5"
         />
       </g>
-
-      {draw && route && (
-        <motion.g
-          variants={{
-            off: { opacity: 0, y: -14 },
-            on: { opacity: 1, y: 0, transition: { delay: 1.05, type: "spring", stiffness: 500, damping: 18 } },
-          }}
-        >
-          <circle cx={ROUTE_CENTER.x} cy={ROUTE_CENTER.y} r="7" className="fill-primary stroke-card" strokeWidth="3" />
-        </motion.g>
-      )}
 
       {/* Kept clear of the toolbar, the route label and the Selected routes card. */}
       <text x="150" y="104" textAnchor="middle" className="fill-muted-foreground text-[10px] font-semibold tracking-[0.25em]">
