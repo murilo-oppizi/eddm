@@ -309,3 +309,26 @@ export const about = {
   ],
 } as const
 
+// Contact page. Email and address from oppizi.com's imprint; the one-business-day
+// reply is Oppizi's contact page promise. Confirm before launch.
+export const contact = {
+  description: "Questions about EDDM, or a campaign in mind? Send us a note and we'll reply within one business day.",
+  eyebrow: "Contact",
+  title: "Let's plan your mailing",
+  body: "Tell us about your business and where you'd like to mail. We'll reply within one business day.",
+  reach: {
+    legend: "How many homes do you want to reach?",
+    options: ["1,000–5,000", "5,000–10,000", "10,000–25,000", "25,000–50,000", "50,000+", "Not sure yet"],
+  },
+  channels: [
+    { icon: "mail", title: "Email us", value: "contact@oppizi.com", href: "mailto:contact@oppizi.com" },
+    { icon: "login", title: "Already a customer?", value: "Log in to your account", href: site.login.href },
+    { icon: "help", title: "Quick answers", value: "Read the FAQ", href: "/#faq" },
+  ],
+  office: { title: "Our US office", lines: ["Oppizi US Inc.", "426 Union Ave", "Brooklyn, NY 11211"] },
+  success: {
+    title: "Thanks, {name}!",
+    body: "Your message is on its way. We'll reply within one business day.",
+    again: "Send another message",
+  },
+} as const
