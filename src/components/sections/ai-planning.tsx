@@ -216,7 +216,6 @@ export function AiPlanning() {
                       <Composer
                         phase={phase}
                         text={scenario.brief.slice(0, typed)}
-                        zip={scenario.zip}
                       />
                     </motion.div>
                   ) : (
@@ -264,16 +263,8 @@ export function AiPlanning() {
   );
 }
 
-/** The prompt box: text on top, toolbar with context chips and a round submit below. */
-function Composer({
-  phase,
-  text,
-  zip,
-}: {
-  phase: Phase;
-  text: string;
-  zip: string;
-}) {
+/** The prompt box: text on top, toolbar with an attach button and submit below. */
+function Composer({ phase, text }: { phase: Phase; text: string }) {
   const empty = text.length === 0;
   return (
     <div aria-hidden className="flex h-full flex-col gap-4 p-5 sm:p-6">
@@ -290,19 +281,9 @@ function Composer({
       </p>
 
       <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <span className="grid size-9 place-items-center rounded-lg border text-muted-foreground">
-            <PaperclipIcon className="size-4" />
-          </span>
-          <span
-            className={cn(
-              "flex h-9 items-center gap-1.5 rounded-lg border px-3 text-sm text-muted-foreground transition-opacity duration-300",
-              empty ? "opacity-0" : "opacity-100",
-            )}
-          >
-            <MapPinIcon className="size-4 text-brand" /> ZIP {zip}
-          </span>
-        </div>
+        <span className="grid size-9 place-items-center rounded-lg border text-muted-foreground">
+          <PaperclipIcon className="size-4" />
+        </span>
         <span
           className={cn(
             "grid size-9 place-items-center rounded-lg bg-primary text-primary-foreground transition-[opacity,scale] duration-150",
@@ -336,7 +317,7 @@ function Response({
   const working = phase === "working";
   const visible = (i: number) =>
     phase === "done" || (phase === "answering" && i < rows);
-  const steps = aiPlanning.steps.map((s) => s.replace("{zip}", scenario.zip));
+  const steps = aiPlanning.steps.map((s) => s.replace("{area}", scenario.area));
 
   return (
     <div className="flex h-full flex-col p-5 sm:p-6">

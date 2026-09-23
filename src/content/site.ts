@@ -75,7 +75,6 @@ export const aiPlanning = {
       chip: "Coffee shop",
       icon: "coffee",
       area: "Williamsburg",
-      zip: "11211",
       brief:
         "I run a coffee shop in Williamsburg. I want young families within walking distance. Budget around $1,500.",
       plan: [
@@ -89,7 +88,6 @@ export const aiPlanning = {
       chip: "Gym opening",
       icon: "dumbbell",
       area: "Park Slope",
-      zip: "11215",
       brief:
         "We're opening a gym in Park Slope next month. I want adults 25–40 who live within a mile. Around $2,000.",
       plan: [
@@ -103,7 +101,6 @@ export const aiPlanning = {
       chip: "Fall menu",
       icon: "utensils",
       area: "Astoria",
-      zip: "11103",
       brief:
         "My restaurant in Astoria has a new fall menu. I want couples and families nearby. Budget about $1,000.",
       plan: [
@@ -114,7 +111,7 @@ export const aiPlanning = {
       ],
     },
   ],
-  steps: ["Reading your brief", "Finding routes in {zip}", "Matching demographics", "Estimating cost and timing"],
+  steps: ["Reading your brief", "Finding routes in {area}", "Matching demographics", "Estimating cost and timing"],
   capabilities: [
     { icon: "pin", title: "AI-optimized routes", body: "Our agents suggest the best routes for the audience you describe." },
     { icon: "planning", title: "Agentic planning", body: "Recommendations for targeting, timing and spend, before you launch." },
