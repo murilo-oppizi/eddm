@@ -69,8 +69,7 @@ export const steps = [
   },
 ]
 
-// "AI planning" section. Capabilities are Oppizi's real AI features (oppizi.com, Sept
-// 2026); the scenarios are illustrative examples. Every cost = homes × $0.31.
+// "AI planning" section. The scenarios are illustrative examples. Every cost = homes × $0.31.
 export const aiPlanning = {
   eyebrow: "AI planning",
   title: "Tell us your goal. Our agents plan the campaign.",
@@ -118,11 +117,6 @@ export const aiPlanning = {
     },
   ],
   steps: ["Reading your brief", "Finding routes in {area}", "Matching demographics", "Estimating cost and timing"],
-  capabilities: [
-    { icon: "pin", title: "AI-optimized routes", body: "Our agents suggest the best routes for the audience you describe." },
-    { icon: "planning", title: "Agentic planning", body: "Recommendations for targeting, timing and spend, before you launch." },
-    { icon: "palette", title: "AI creative review", body: "Creative Studio checks your design and suggests fixes before it prints." },
-  ],
 } as const
 
 // "Who it's for". Industries and use cases from eddm.com / oppizi.com (Sept 2026); the

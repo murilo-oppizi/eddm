@@ -5,13 +5,10 @@ import {
   IconArrowUp,
   IconBarbell,
   IconCalendar,
-  IconCalendarStats,
   IconCheck,
   IconCircle,
   IconCoffee,
   IconLoader2,
-  IconMapPin,
-  IconPalette,
   IconPaperclip,
   IconReceipt,
   IconRotate,
@@ -33,9 +30,6 @@ const icons: Record<string, TablerIcon> = {
   users: IconUsers,
   calendar: IconCalendar,
   receipt: IconReceipt,
-  pin: IconMapPin,
-  planning: IconCalendarStats,
-  palette: IconPalette,
   coffee: IconCoffee,
   dumbbell: IconBarbell,
   utensils: IconToolsKitchen2,
@@ -243,21 +237,6 @@ export function AiPlanning() {
             </div>
           </motion.div>
         </div>
-
-        <ul className="grid gap-4 md:grid-cols-3">
-          {aiPlanning.capabilities.map((cap) => {
-            const Icon = icons[cap.icon];
-            return (
-              <li key={cap.title} className="rounded-xl border bg-card p-5">
-                <span className="grid size-10 place-items-center rounded-lg bg-brand-subtle text-brand">
-                  <Icon className="size-5" aria-hidden />
-                </span>
-                <h3 className="mt-4 text-lg font-semibold">{cap.title}</h3>
-                <p className="mt-1 text-muted-foreground">{cap.body}</p>
-              </li>
-            );
-          })}
-        </ul>
       </div>
     </section>
   );
