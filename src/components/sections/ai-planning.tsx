@@ -1,15 +1,15 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import {
   IconArrowUp,
   IconBan,
   IconCalendar,
-  IconChartBar,
   IconCheck,
   IconCircle,
   IconFlask,
   IconLoader2,
+  IconMapSearch,
   IconPaperclip,
   IconReceipt,
   IconRocket,
@@ -17,13 +17,13 @@ import {
   IconRoute,
   IconSparkles,
   IconTrendingUp,
-  IconUserSearch,
   IconUsers,
   type TablerIcon,
 } from "@tabler/icons-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 
 import { Button } from "@/components/ui/button";
+import { IllustratedMap, RANKED_FOCUS } from "@/components/sections/illustrated-map";
 import { SectionHeading } from "@/components/sections/section-heading";
 import { aiPlanning } from "@/content/site";
 import { cn } from "@/lib/utils";
@@ -37,8 +37,7 @@ const icons: Record<string, TablerIcon> = {
   trending: IconTrendingUp,
   flask: IconFlask,
   rocket: IconRocket,
-  userSearch: IconUserSearch,
-  chart: IconChartBar,
+  mapSearch: IconMapSearch,
 };
 
 type Scenario = (typeof aiPlanning.scenarios)[number];
@@ -47,6 +46,10 @@ type Choice = Extract<Scenario, { choice: unknown }>["choice"];
 /** The options the agent offers, for examples that stop for the visitor to pick. */
 const choiceOf = (s: Scenario): Choice | undefined => ("choice" in s ? s.choice : undefined);
 const recommendedOf = (c: Choice) => Math.max(0, c.options.findIndex((o) => o.recommended));
+type RouteMap = Extract<Scenario, { map: unknown }>["map"];
+/** Examples answered on a map (ranked routes) instead of a plan list. */
+const mapOf = (s: Scenario): RouteMap | undefined => ("map" in s ? s.map : undefined);
+
 /** The plan to show: the example's own, or the one for the option picked. */
 const planOf = (s: Scenario, picked: number | null) => {
   const c = choiceOf(s);
@@ -202,11 +205,11 @@ export function AiPlanning() {
             <p>Example brief: {scenario.brief}</p>
             <p>
               {choice && pick !== null && `${choice.prompt} Picked: ${choice.options[pick].title}. `}
-              Suggested plan:{" "}
-              {planOf(scenario, pick)
-                .map((row) => `${row.label}: ${row.value}`)
-                .join(". ")}
-              .
+              {mapOf(scenario)
+                ? `${scenario.summary}, ${mapOf(scenario)?.homes}. ${mapOf(scenario)?.caption}: ${mapOf(scenario)?.matches.join(", ")}.`
+                : `Suggested plan: ${planOf(scenario, pick)
+                    .map((row) => `${row.label}: ${row.value}`)
+                    .join(". ")}.`}
             </p>
           </div>
 
@@ -344,6 +347,9 @@ function Response({
   const steps = scenario.steps;
   const choice = choiceOf(scenario);
   const plan = planOf(scenario, picked);
+  const map = mapOf(scenario);
+  // Lines revealed one by one: the plan rows, or the map and then each ranked route.
+  const lines = map ? map.matches.length + 1 : plan.length;
 
   return (
     <div className="flex h-full flex-col p-5 sm:p-6">
@@ -380,7 +386,7 @@ function Response({
           <span className="text-sm font-medium">
             {scenario.summary}{" "}
             <span className="font-normal text-muted-foreground">
-              · {steps.length} steps
+              · {map ? map.homes : `${steps.length} steps`}
             </span>
           </span>
         )}
@@ -434,6 +440,9 @@ function Response({
         </div>
       ) : (
         <>
+          {map ? (
+            <RoutesAnswer map={map} visible={visible} />
+          ) : (
           <dl aria-hidden className="mt-4 divide-y rounded-xl border">
             {plan.map((row, i) => {
               const Icon = icons[row.icon];
@@ -450,10 +459,11 @@ function Response({
               );
             })}
           </dl>
+          )}
 
           {onRunAgain && (
             <Reveal
-              visible={visible(plan.length)}
+              visible={visible(lines)}
               className="mt-auto flex justify-center pt-6"
             >
               <Button
@@ -468,6 +478,43 @@ function Response({
         </>
       )}
     </div>
+  );
+}
+
+/**
+ * The "Find routes" answer: the ranked routes on a map, each fading in with its match
+ * score. The view is framed around them, closer in on narrow cards so they stay legible.
+ */
+function RoutesAnswer({ map, visible }: { map: RouteMap; visible: (line: number) => boolean }) {
+  const box = useRef<HTMLDivElement>(null);
+  const [size, setSize] = useState({ w: 640, h: 208 });
+  useEffect(() => {
+    const el = box.current;
+    if (!el) return;
+    const observer = new ResizeObserver(([entry]) =>
+      setSize({ w: entry.contentRect.width, h: entry.contentRect.height }),
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+  // Pixels per map unit.
+  const zoom = Math.min(1.1, Math.max(0.7, size.w / 560));
+  const w = size.w / zoom;
+  const h = size.h / zoom;
+
+  return (
+    <Reveal aria-hidden visible={visible(0)} className="mt-4">
+      <div ref={box} className="relative h-52 overflow-hidden rounded-xl border">
+        <IllustratedMap
+          mode="route"
+          cover
+          label={null}
+          view={{ x: RANKED_FOCUS.x - w / 2, y: RANKED_FOCUS.y - h / 2, w, h }}
+          ranked={map.matches.map((match, i) => ({ match, visible: visible(i + 1) }))}
+        />
+      </div>
+      <p className="mt-2 text-xs text-muted-foreground">{map.caption}</p>
+    </Reveal>
   );
 }
 

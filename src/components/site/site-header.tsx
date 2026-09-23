@@ -21,7 +21,7 @@ export function SiteHeader() {
       <div className="container-page flex h-16 items-center justify-between gap-6">
         <Logo />
 
-        <nav className="hidden items-center gap-1 md:flex">
+        <nav className="hidden items-center gap-1 lg:flex">
           {site.nav.map((item) => (
             <Button key={item.href} variant="ghost" nativeButton={false} render={<Link href={item.href} />}>
               {item.label}
@@ -29,7 +29,7 @@ export function SiteHeader() {
           ))}
         </nav>
 
-        <div className="hidden items-center gap-2 md:flex">
+        <div className="hidden items-center gap-2 lg:flex">
           <Button variant="outline" size="lg" nativeButton={false} render={<Link href="#" />}>
             Log in
           </Button>
@@ -40,7 +40,7 @@ export function SiteHeader() {
 
         {/* Mobile menu */}
         <Sheet>
-          <SheetTrigger render={<Button variant="ghost" size="icon" className="md:hidden" aria-label="Open menu" />}>
+          <SheetTrigger render={<Button variant="ghost" size="icon" className="lg:hidden" aria-label="Open menu" />}>
             <IconMenu2 />
           </SheetTrigger>
           <SheetContent side="right">

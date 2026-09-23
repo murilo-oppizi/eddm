@@ -75,8 +75,8 @@ export const aiPlanning = {
   title: "Tell us your goal. Our agents plan the campaign.",
   body: "Describe your business in plain words and get routes, timing and budget in seconds.",
   placeholder: "Describe your business, who you want to reach and your budget…",
-  // Three kinds of ask: launching a campaign, asking for advice, and planning the next
-  // mailing from results. The last one stops for the visitor to pick between two options.
+  // Three kinds of ask: launching a campaign, finding routes (answered on a map), and
+  // learning from results. The last one stops for the visitor to pick between two options.
   scenarios: [
     {
       chip: "New campaign",
@@ -94,38 +94,38 @@ export const aiPlanning = {
       ],
     },
     {
-      chip: "Find my audience",
-      icon: "userSearch",
+      chip: "Find routes",
+      icon: "mapSearch",
       area: "Bay Ridge",
-      brief: "I have a dental clinic in Bay Ridge. Who should I be reaching, and where?",
+      brief: "I run a dental clinic in Bay Ridge. Which routes have the most families nearby?",
       steps: ["Reading your question", "Profiling patients like yours", "Scoring routes in Bay Ridge", "Ranking the best matches"],
-      summary: "Audience found",
-      plan: [
-        { icon: "users", label: "Best audience", value: "Families with kids · age 30–50" },
-        { icon: "route", label: "Top routes", value: "5 routes · 3,940 homes" },
-        { icon: "ban", label: "Skip", value: "Waterfront routes · mostly renters" },
-        { icon: "receipt", label: "Suggested start", value: "$1,221 for the top 5" },
-      ],
+      summary: "3 routes found",
+      // Answered on a map: the three best routes, each with its match score.
+      map: {
+        homes: "3,940 homes",
+        caption: "Match with families with kids, age 30–50",
+        matches: ["92%", "84%", "78%"],
+      },
     },
     {
-      chip: "Next mailing",
-      icon: "chart",
+      chip: "Learn from results",
+      icon: "trending",
       area: "Astoria",
-      brief: "My last mailing in Astoria got 212 scans. What should I do next?",
-      steps: ["Reading your results", "Comparing routes in Astoria", "Finding similar routes", "Weighing your options"],
-      summary: "Next mailing planned",
+      brief: "My Astoria mailing got 212 scans. What should I change for the next one?",
+      steps: ["Reading your results", "Comparing routes in Astoria", "Spotting what worked", "Weighing your options"],
+      summary: "Next mailing optimized",
       choice: {
-        prompt: "Two ways to go. Which do you prefer?",
+        prompt: "Two ways to improve it. Which do you prefer?",
         options: [
           {
             title: "Double down",
-            detail: "Resend your 3 best routes, plus 4 similar ones.",
+            detail: "Mail your 3 best routes again, plus 4 similar ones.",
             meta: "7 routes · 5,120 homes · $1,587",
             recommended: true,
             plan: [
               { icon: "trending", label: "What worked", value: "3 routes drove 70% of scans" },
-              { icon: "route", label: "Next drop", value: "Your 3 best + 4 similar routes" },
-              { icon: "ban", label: "Skip", value: "2 routes with no scans" },
+              { icon: "ban", label: "Drop", value: "2 routes with no scans" },
+              { icon: "route", label: "Next mailing", value: "Your 3 best + 4 similar routes" },
               { icon: "receipt", label: "Estimated cost", value: "5,120 homes · $1,587" },
             ],
           },
@@ -136,7 +136,7 @@ export const aiPlanning = {
             recommended: false,
             plan: [
               { icon: "trending", label: "What worked", value: "Families 30–44 scanned most" },
-              { icon: "route", label: "Next drop", value: "6 routes in Long Island City" },
+              { icon: "route", label: "Next mailing", value: "6 routes in Long Island City" },
               { icon: "flask", label: "Keep testing", value: "Same postcard, a new QR code" },
               { icon: "receipt", label: "Estimated cost", value: "4,700 homes · $1,457" },
             ],
