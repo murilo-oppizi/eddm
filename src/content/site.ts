@@ -80,12 +80,24 @@ export const faqs = [
     a: "EDDM is a USPS service that lets you send mail to every address on a carrier route without buying a mailing list. It's one of the most affordable ways to reach a local area.",
   },
   {
-    q: "How long does delivery take?",
-    a: "Printing usually takes 2–3 business days. After we drop your mail at the post office, delivery typically happens within 2–5 business days.",
+    q: "How much does Every Door Direct Mail cost?",
+    a: "You pay per postcard, and the price includes printing, preparation and USPS postage. Plans start at $0.29 per postcard and get cheaper as you mail to more homes. There are no setup fees or contracts, and you see the full cost before you order.",
+  },
+  {
+    q: "How fast is EDDM delivery?",
+    a: "Printing usually takes 2–3 business days. Once we drop your mail at the post office, carriers typically deliver it within 2–5 business days, so most campaigns land in mailboxes about a week after you order.",
   },
   {
     q: "Can I choose who receives my mail?",
     a: "You choose carrier routes, not individual people. You can filter routes by demographics like household income and age to focus on the right neighborhoods.",
+  },
+  {
+    q: "Can EDDM campaign results be tracked?",
+    a: "Yes. Add a unique QR code, phone number or promo code to your postcard and every scan, call or redemption is tied back to your campaign, so you can see which neighborhoods respond best and where to mail next.",
+  },
+  {
+    q: "Who should use Every Door Direct Mail?",
+    a: "Any business that serves a local area: restaurants, home services, real estate agents, dentists, gyms, retail stores and more. It also works well for grand openings, local events and community announcements.",
   },
   {
     q: "Do I need a design?",
