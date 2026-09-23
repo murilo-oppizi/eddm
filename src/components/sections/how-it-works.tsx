@@ -76,30 +76,39 @@ function Heading() {
 // Stops sit at the centre of four equal columns, so they line up with their labels.
 const stopAt = (i: number) => (i + 0.5) / N;
 
+/**
+ * Scroll progress (0–1) → marker position in stops (0 … N−1). The scroll is split into
+ * equal slices that alternate "rest at a stop" and "travel to the next one", so the
+ * marker pauses at every stop and eases between them.
+ */
+function markerPosition(t: number) {
+  const slice = 1 / (2 * N - 1);
+  const k = Math.min(N - 1, Math.floor(t / (2 * slice)));
+  const within = t - k * 2 * slice;
+  if (k === N - 1 || within <= slice) return k; // resting at stop k
+  const x = (within - slice) / slice; // 0 → 1 while travelling to stop k + 1
+  return k + x * x * (3 - 2 * x); // ease in and out of the stops
+}
+
 function PinnedStage() {
   const outer = useRef<HTMLDivElement>(null);
-  const [active, setActive] = useState(0);
-  const [reached, setReached] = useState(0);
+  const [step, setStep] = useState(0);
 
-  // 0 → 1 while the pinned area scrolls past; the ends hold on the first and last step.
   const { scrollYProgress } = useScroll({ target: outer, offset: ["start start", "end end"] });
-  const travel = useTransform(scrollYProgress, [0.06, 0.94], [0, 1], { clamp: true });
-  // The step shown is the stop the postcard is closest to.
-  useMotionValueEvent(travel, "change", (t) => {
-    setActive(Math.round(t * (N - 1)));
-    // Stops light up only once the postcard has actually got there.
-    setReached(Math.floor(t * (N - 1) + 0.001));
-  });
+  // Marker position along the route, 0 (first stop) → 1 (last stop).
+  const route = useTransform(scrollYProgress, (t) => markerPosition(t) / (N - 1));
+  // Card, counter, stops and marker icon all switch when the marker arrives at a stop.
+  useMotionValueEvent(route, "change", (r) => setStep(Math.floor(r * (N - 1) + 0.001)));
 
   return (
-    // ~70vh of scrolling per step. Hidden below lg, where the vertical timeline takes over.
-    <div ref={outer} className="relative -mt-20 hidden lg:block" style={{ height: `${N * 70}vh` }}>
+    // ~85vh of scrolling per step. Hidden below lg, where the vertical timeline takes over.
+    <div ref={outer} className="relative -mt-20 hidden lg:block" style={{ height: `${N * 85}vh` }}>
       <div className="sticky top-16 flex h-[calc(100vh-4rem)] flex-col justify-center overflow-hidden">
         {/* Short laptop screens get tighter spacing and a shorter stage so it all fits. */}
         <div className="container-page space-y-8 [@media(max-height:820px)]:space-y-6">
           <Heading />
-          <RouteRail progress={travel} active={active} reached={reached} />
-          <Stage active={active} />
+          <RouteRail progress={route} current={step} />
+          <Stage active={step} />
         </div>
       </div>
     </div>
@@ -110,7 +119,7 @@ function PinnedStage() {
  * A dashed mail route with four stops. A postcard marker travels along it with the
  * scroll, the route fills in behind it, and each stop lights up as it's passed.
  */
-function RouteRail({ progress, active, reached }: { progress: MotionValue<number>; active: number; reached: number }) {
+function RouteRail({ progress, current }: { progress: MotionValue<number>; current: number }) {
   const first = stopAt(0);
   const span = stopAt(N - 1) - first;
   // The marker moves continuously from the first stop to the last.
@@ -134,7 +143,7 @@ function RouteRail({ progress, active, reached }: { progress: MotionValue<number
             key={step.title}
             className={cn(
               "absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 transition-colors duration-500",
-              i <= reached ? "border-primary bg-primary" : "border-border bg-background"
+              i <= current ? "border-primary bg-primary" : "border-border bg-background"
             )}
             style={{ left: `${stopAt(i) * 100}%` }}
           />
@@ -144,7 +153,7 @@ function RouteRail({ progress, active, reached }: { progress: MotionValue<number
           className="absolute top-1/2 grid size-10 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-xl bg-primary text-primary-foreground shadow-lg shadow-primary/30"
           style={{ left }}
         >
-          <MarkerIcon step={active} className="size-5" />
+          <MarkerIcon step={current} className="size-5" />
         </motion.span>
       </div>
       <ol className="mt-3 grid grid-cols-4 text-center">
@@ -153,7 +162,7 @@ function RouteRail({ progress, active, reached }: { progress: MotionValue<number
             key={step.title}
             className={cn(
               "text-sm font-medium transition-colors duration-500",
-              i === active ? "text-foreground" : "text-muted-foreground"
+              i === current ? "text-foreground" : "text-muted-foreground"
             )}
           >
             {step.title}
