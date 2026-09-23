@@ -5,6 +5,7 @@ import {
   IconCheck,
   IconCircleCheck,
   IconLayoutGrid,
+  IconMail,
   IconMailFast,
   IconPrinter,
   IconQrcode,
@@ -12,6 +13,7 @@ import {
   IconUpload,
 } from "@tabler/icons-react";
 import {
+  AnimatePresence,
   MotionConfig,
   motion,
   useMotionValueEvent,
@@ -26,10 +28,10 @@ import { SectionHeading } from "@/components/sections/section-heading";
 import { steps } from "@/content/site";
 import { cn } from "@/lib/utils";
 
-// "How it works" as a journey from map to mailbox, told sideways. On desktop the
-// section pins and scrolling moves four step cards horizontally, while a timeline on
-// top fills from step to step. Phones get a vertical timeline whose line fills as you
-// scroll. With reduced motion, a still grid.
+// "How it works" as the mail's journey from map to mailbox. On desktop the section
+// pins: a postcard travels a dashed mail route past four stops as you scroll, and one
+// stage card below cross-fades to each step's text and visual. Phones get a vertical
+// timeline whose line fills as you scroll. With reduced motion, a still grid.
 
 const N = steps.length;
 
@@ -38,7 +40,7 @@ export function HowItWorks() {
   return (
     <MotionConfig reducedMotion="user">
       <section id="how-it-works" className="scroll-mt-20 border-y bg-muted/40 py-20">
-        {/* On desktop the heading lives inside the pinned area instead (see PinnedJourney). */}
+        {/* On desktop the heading lives inside the pinned area instead (see PinnedStage). */}
         <div className={cn("container-page", !reduceMotion && "lg:hidden")}>
           <Heading />
         </div>
@@ -46,7 +48,7 @@ export function HowItWorks() {
           <StillGrid />
         ) : (
           <>
-            <PinnedJourney />
+            <PinnedStage />
             <VerticalTimeline />
           </>
         )}
@@ -65,95 +67,153 @@ function Heading() {
   );
 }
 
-/** Left/right inset that lines the strip up with .container-page (72rem, 1.5rem gutters). */
-const GUTTER = "max(1.5rem, calc((100vw - 72rem) / 2 + 1.5rem))";
-
 /* ------------------------------ Desktop (lg+) ------------------------------ */
 
-function PinnedJourney() {
+// Stops sit at the centre of four equal columns, so they line up with their labels.
+const stopAt = (i: number) => (i + 0.5) / N;
+
+function PinnedStage() {
   const outer = useRef<HTMLDivElement>(null);
-  const viewport = useRef<HTMLDivElement>(null);
-  const track = useRef<HTMLOListElement>(null);
-  const [distance, setDistance] = useState(0);
   const [active, setActive] = useState(0);
+  const [reached, setReached] = useState(0);
 
-  // How far the track must travel so its last card ends flush with the container.
-  useEffect(() => {
-    const measure = () => {
-      if (!viewport.current || !track.current) return;
-      setDistance(Math.max(0, track.current.scrollWidth - viewport.current.clientWidth));
-    };
-    measure();
-    const observer = new ResizeObserver(measure);
-    if (track.current) observer.observe(track.current);
-    if (viewport.current) observer.observe(viewport.current);
-    return () => observer.disconnect();
-  }, []);
-
-  // 0 → 1 while the pinned area scrolls past.
+  // 0 → 1 while the pinned area scrolls past; the ends hold on the first and last step.
   const { scrollYProgress } = useScroll({ target: outer, offset: ["start start", "end end"] });
-  // Hold the first card for a moment and settle on the last one before un-pinning.
-  const travel = useTransform(scrollYProgress, [0.08, 0.92], [0, 1], { clamp: true });
-  const x = useTransform(travel, (t) => -t * distance);
-  useMotionValueEvent(travel, "change", (t) => setActive(Math.min(N - 1, Math.round(t * (N - 1)))));
+  const travel = useTransform(scrollYProgress, [0.06, 0.94], [0, 1], { clamp: true });
+  // The step shown is the stop the postcard is closest to.
+  useMotionValueEvent(travel, "change", (t) => {
+    setActive(Math.round(t * (N - 1)));
+    // Stops light up only once the postcard has actually got there.
+    setReached(Math.floor(t * (N - 1) + 0.001));
+  });
 
   return (
     // ~70vh of scrolling per step. Hidden below lg, where the vertical timeline takes over.
     <div ref={outer} className="relative -mt-20 hidden lg:block" style={{ height: `${N * 70}vh` }}>
-      <div className="sticky top-16 flex h-[calc(100vh-4rem)] flex-col justify-center gap-8 overflow-hidden [@media(max-height:820px)]:gap-6">
-        {/* Short laptop screens get tighter spacing and shorter visuals so it all fits. */}
+      <div className="sticky top-16 flex h-[calc(100vh-4rem)] flex-col justify-center overflow-hidden">
+        {/* Short laptop screens get tighter spacing and a shorter stage so it all fits. */}
         <div className="container-page space-y-8 [@media(max-height:820px)]:space-y-6">
           <Heading />
-          <Timeline progress={travel} active={active} />
-        </div>
-        {/* Full-bleed strip: cards run to the screen edge but start and end in line
-            with the page container. */}
-        <div ref={viewport} className="overflow-hidden">
-          <motion.ol
-            ref={track}
-            style={{ x, paddingLeft: GUTTER, paddingRight: GUTTER }}
-            className="flex w-max gap-6"
-          >
-            {steps.map((step, i) => (
-              <li
-                key={step.title}
-                className={cn(
-                  "w-[min(34rem,58vw)] shrink-0 transition-opacity duration-500",
-                  i !== active && "opacity-45"
-                )}
-              >
-                <StepCard index={i} active={i === active} />
-              </li>
-            ))}
-          </motion.ol>
+          <RouteRail progress={travel} active={active} reached={reached} />
+          <Stage active={active} />
         </div>
       </div>
     </div>
   );
 }
 
-/** Four numbered nodes joined by a line that fills as you scroll. */
-function Timeline({ progress, active }: { progress: MotionValue<number>; active: number }) {
+/**
+ * A dashed mail route with four stops. A postcard marker travels along it with the
+ * scroll, the route fills in behind it, and each stop lights up as it's passed.
+ */
+function RouteRail({ progress, active, reached }: { progress: MotionValue<number>; active: number; reached: number }) {
+  const first = stopAt(0);
+  const span = stopAt(N - 1) - first;
+  // The marker moves continuously from the first stop to the last.
+  const left = useTransform(progress, (t) => `${(first + t * span) * 100}%`);
+
   return (
     <div className="relative mx-auto max-w-4xl" aria-hidden>
-      <div className="absolute top-4 right-[12.5%] left-[12.5%] h-0.5 rounded-full bg-border">
-        <motion.div className="h-full origin-left rounded-full bg-primary" style={{ scaleX: progress }} />
-      </div>
-      <ol className="relative grid grid-cols-4">
+      <div className="relative h-10">
+        {/* Route: dashed ahead, solid pink behind the marker */}
+        <div
+          className="absolute top-1/2 -translate-y-1/2 border-t-2 border-dashed border-border"
+          style={{ left: `${first * 100}%`, right: `${first * 100}%` }}
+        />
+        <motion.div
+          className="absolute top-1/2 h-0.5 origin-left -translate-y-1/2 rounded-full bg-primary"
+          style={{ left: `${first * 100}%`, width: `${span * 100}%`, scaleX: progress }}
+        />
+        {/* Stops */}
         {steps.map((step, i) => (
-          <li key={step.title} className="flex flex-col items-center gap-2 text-center">
-            <StepNode index={i} active={active} />
-            <span
-              className={cn(
-                "text-sm font-medium transition-colors duration-500",
-                i === active ? "text-foreground" : "text-muted-foreground"
-              )}
-            >
-              {step.title}
-            </span>
+          <span
+            key={step.title}
+            className={cn(
+              "absolute top-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 transition-colors duration-500",
+              i <= reached ? "border-primary bg-primary" : "border-border bg-background"
+            )}
+            style={{ left: `${stopAt(i) * 100}%` }}
+          />
+        ))}
+        {/* The postcard, travelling the route */}
+        <motion.span
+          className="absolute top-1/2 grid size-10 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-xl bg-primary text-primary-foreground shadow-lg shadow-primary/30"
+          style={{ left }}
+        >
+          <IconMail className="size-5" />
+        </motion.span>
+      </div>
+      <ol className="mt-3 grid grid-cols-4 text-center">
+        {steps.map((step, i) => (
+          <li
+            key={step.title}
+            className={cn(
+              "text-sm font-medium transition-colors duration-500",
+              i === active ? "text-foreground" : "text-muted-foreground"
+            )}
+          >
+            {step.title}
           </li>
         ))}
       </ol>
+    </div>
+  );
+}
+
+const ease = [0.22, 1, 0.36, 1] as const;
+
+/** One card that stays put while its text and visual cross-fade from step to step. */
+function Stage({ active }: { active: number }) {
+  const step = steps[active];
+  return (
+    <div className="mx-auto grid max-w-5xl grid-cols-[1fr_1.35fr] overflow-hidden rounded-2xl border bg-card shadow-lg">
+      <div className="flex flex-col justify-center gap-6 p-10 [@media(max-height:820px)]:p-8">
+        {/* Rolling step counter */}
+        <p className="flex items-center gap-1 font-heading text-sm leading-5 font-semibold text-muted-foreground tabular-nums">
+          <span className="relative block h-5 w-5 overflow-hidden text-brand">
+            <AnimatePresence initial={false} mode="popLayout">
+              <motion.span
+                key={active}
+                className="absolute inset-0"
+                initial={{ y: "100%" }}
+                animate={{ y: 0 }}
+                exit={{ y: "-100%" }}
+                transition={{ duration: 0.4, ease }}
+              >
+                {String(active + 1).padStart(2, "0")}
+              </motion.span>
+            </AnimatePresence>
+          </span>
+          / {String(N).padStart(2, "0")}
+        </p>
+        <AnimatePresence initial={false} mode="wait">
+          <motion.div
+            key={active}
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.35, ease }}
+          >
+            <h3 className="font-heading text-2xl font-bold tracking-tight">{step.title}</h3>
+            <p className="mt-2 text-muted-foreground">{step.body}</p>
+          </motion.div>
+        </AnimatePresence>
+      </div>
+
+      <div aria-hidden className="relative h-80 overflow-hidden border-l bg-muted/60 [@media(max-height:820px)]:h-64">
+        <AnimatePresence initial={false}>
+          <motion.div
+            key={active}
+            className="absolute inset-0"
+            initial={{ opacity: 0, scale: 0.97 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 1.02 }}
+            transition={{ duration: 0.5, ease }}
+          >
+            <StepVisual index={active} active />
+          </motion.div>
+        </AnimatePresence>
+      </div>
     </div>
   );
 }
@@ -224,10 +284,7 @@ function StepCard({ index, active, numbered = false }: { index: number; active: 
   return (
     <article className="overflow-hidden rounded-2xl border bg-card shadow-sm">
       <div aria-hidden className="relative h-56 overflow-hidden border-b bg-muted/60 lg:[@media(max-height:820px)]:h-48">
-        {index === 0 && <RoutesVisual active={active} />}
-        {index === 1 && <DesignVisual active={active} />}
-        {index === 2 && <DeliveryVisual active={active} />}
-        {index === 3 && <ResultsVisual active={active} />}
+        <StepVisual index={index} active={active} />
       </div>
       <div className="p-6 lg:[@media(max-height:820px)]:p-5">
         {numbered && <p className="mb-1 text-sm font-semibold text-brand">Step {index + 1}</p>}
@@ -236,6 +293,13 @@ function StepCard({ index, active, numbered = false }: { index: number; active: 
       </div>
     </article>
   );
+}
+
+function StepVisual({ index, active }: { index: number; active: boolean }) {
+  if (index === 0) return <RoutesVisual active={active} />;
+  if (index === 1) return <DesignVisual active={active} />;
+  if (index === 2) return <DeliveryVisual active={active} />;
+  return <ResultsVisual active={active} />;
 }
 
 /** Small card floating over a visual; slides in when its step becomes active. */
