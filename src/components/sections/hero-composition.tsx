@@ -72,10 +72,13 @@ const AI_STEP_MS = 900;
 
 export function HeroComposition() {
   const [mode, setMode] = useState<Mode>("route");
+  // The shape the AI starts from (whatever was selected before AI), shown while it works.
+  const [source, setSource] = useState<"route" | "area">("route");
   const [ai, setAi] = useState<AiState>("idle");
   const [step, setStep] = useState(0);
 
   const choose = (m: Mode) => {
+    if (m === "ai" && mode !== "ai") setSource(mode);
     setMode(m);
     setStep(0);
     // Choosing AI (again) runs the optimization; Route/Area show the original cards.
@@ -116,7 +119,7 @@ export function HeroComposition() {
             <Piece x={70} y={20} w={400} delay={0}>
               {/* The map (with its toolbar, pin and route label) is the anchor: it only
                   fades in and never moves. The two cards float over it. */}
-              <RouteMap mode={mode} ai={ai} onChoose={choose} />
+              <RouteMap mode={mode} source={source} ai={ai} onChoose={choose} />
             </Piece>
             <Piece x={340} y={96} w={300} delay={0.15} float={{ distance: 8, duration: 6, offset: 1.2 }}>
               <AiFrame active={loading}>
@@ -271,14 +274,30 @@ const modes: { mode: Mode; label: string; Icon: TablerIcon }[] = [
   { mode: "ai", label: "AI", Icon: IconSparkles },
 ];
 
-function RouteMap({ mode, ai, onChoose }: { mode: Mode; ai: AiState; onChoose: (m: Mode) => void }) {
+function RouteMap({
+  mode,
+  source,
+  ai,
+  onChoose,
+}: {
+  mode: Mode;
+  source: "route" | "area";
+  ai: AiState;
+  onChoose: (m: Mode) => void;
+}) {
   const label = data.label[mode];
   const loading = ai === "loading";
 
   return (
     <Card className="relative h-110 overflow-hidden">
       {/* AI works on routes, so the map keeps showing the route outline in that mode. */}
-      <IllustratedMap mode={mode === "area" ? "area" : "route"} thinking={loading} optimized={ai === "done"} />
+      {/* In AI mode the map keeps the starting shape (route or area) while the AI works,
+          then swaps to the optimized route. */}
+      <IllustratedMap
+        mode={mode === "ai" ? (ai === "done" ? "route" : source) : mode}
+        thinking={loading}
+        optimized={mode === "ai" && ai === "done"}
+      />
 
       <div className="pointer-events-none absolute inset-0 p-4">
         {/* Decorative overlays; the pin sits on the selection's centre. */}

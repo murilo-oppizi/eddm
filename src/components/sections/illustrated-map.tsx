@@ -127,7 +127,7 @@ export function IllustratedMap({
         />
         <circle
           r={AREA_RADIUS}
-          className={cn(selectionClass, mode === "area" ? "opacity-100" : "scale-75 opacity-0")}
+          className={cn(selectionClass, mode === "area" ? (thinking ? "animate-pulse" : "opacity-100") : "scale-75 opacity-0")}
           strokeWidth="2.5"
           strokeDasharray="7 5"
         />
