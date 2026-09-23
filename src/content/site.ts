@@ -30,7 +30,7 @@ export const trust = {
   clients: [
     { name: "DoorDash", src: "/brand/clients/doordash.svg", width: 241, height: 29 },
     { name: "Uber Eats", src: "/brand/clients/uber.svg", width: 160, height: 28 }, // the file is the Uber Eats wordmark
-    { name: "Chipotle", src: "/brand/clients/chipotle.svg", width: 170, height: 24 }, // wordmark only: badge removed from Oppizi's file
+    { name: "Chipotle", src: "/brand/clients/chipotle.svg", width: 191, height: 37 },
     { name: "Sephora", src: "/brand/clients/sephora.svg", width: 163, height: 20 },
     { name: "TikTok", src: "/brand/clients/tiktok.svg", width: 157, height: 42 },
     { name: "Uniqlo", src: "/brand/clients/uniqlo.svg", width: 50, height: 49 },
