@@ -1,26 +1,133 @@
+/* Oppizi Design System tokens (--ds-*). Copied verbatim from the Component Library
+   Navigator — do not edit that file here; replace it with a newer export instead. */
+@import "../styles/oppizi-tokens.css";
 @import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-sans);
   --font-mono: var(--font-geist-mono);
+  --color-brand: var(--brand);
+  --color-brand-foreground: var(--brand-foreground);
+  --color-brand-subtle: var(--ds-brand-subtle);
+  --color-brand-subtle-foreground: var(--ds-brand-subtle-foreground);
+  --color-canvas: var(--ds-surface-canvas);
+  --color-subtle: var(--ds-neutral-subtle);
+  --color-success: var(--ds-status-success-solid);
+  --color-success-subtle: var(--ds-status-success-subtle);
+  --color-success-subtle-foreground: var(--ds-status-success-subtle-foreground);
+  --color-warning: var(--ds-status-warning-solid);
+  --color-warning-subtle: var(--ds-status-warning-subtle);
+  --color-warning-subtle-foreground: var(--ds-status-warning-subtle-foreground);
+  --color-info: var(--ds-status-info-solid);
+  --color-info-subtle: var(--ds-status-info-subtle);
+  --color-info-subtle-foreground: var(--ds-status-info-subtle-foreground);
+  --font-heading: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* shadcn's token names, bound to Oppizi's Layer 3 (semantic, mode-aware) tokens.
+   Light/dark comes from oppizi-tokens.css — set data-theme="dark" on <html> to flip. */
+:root {
+  --brand: var(--ds-action-primary);                 /* #ef2b55 */
+  --brand-foreground: var(--ds-action-primary-foreground);
+
+  --background: var(--ds-surface-background);
+  --foreground: var(--ds-surface-foreground);
+  --card: var(--ds-surface-card);
+  --card-foreground: var(--ds-surface-card-foreground);
+  --popover: var(--ds-surface-popover);
+  --popover-foreground: var(--ds-surface-popover-foreground);
+  --primary: var(--ds-action-primary);
+  --primary-foreground: var(--ds-action-primary-foreground);
+  --secondary: var(--ds-action-secondary);
+  --secondary-foreground: var(--ds-action-secondary-foreground);
+  --muted: var(--ds-neutral-muted);
+  --muted-foreground: var(--ds-neutral-muted-foreground);
+  --accent: var(--ds-neutral-accent);
+  --accent-foreground: var(--ds-neutral-accent-foreground);
+  --destructive: var(--ds-action-destructive);
+  --border: var(--ds-interaction-border);
+  --input: var(--ds-interaction-input);
+  --ring: var(--ds-interaction-ring);
+  --chart-1: var(--ds-action-primary);
+  --chart-2: var(--ds-status-info-solid);
+  --chart-3: var(--ds-status-success-solid);
+  --chart-4: var(--ds-status-warning-solid);
+  --chart-5: var(--ds-status-ai-solid);
+  --radius: var(--ds-radius-lg);                     /* 10px → sm 6, md 8, lg 10, xl 14 */
+  --sidebar: var(--ds-surface-canvas);
+  --sidebar-foreground: var(--ds-surface-foreground);
+  --sidebar-primary: var(--ds-action-primary);
+  --sidebar-primary-foreground: var(--ds-action-primary-foreground);
+  --sidebar-accent: var(--ds-neutral-accent);
+  --sidebar-accent-foreground: var(--ds-neutral-accent-foreground);
+  --sidebar-border: var(--ds-interaction-border);
+  --sidebar-ring: var(--ds-interaction-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans scroll-smooth;
+  }
+  h1, h2, h3, h4 {
+    @apply font-heading tracking-tight;
+    text-wrap: balance;
   }
 }
-
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+/* Standard page width + side gutters. Use on every section's inner wrapper. */
+@utility container-page {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 72rem;
+  padding-inline: 1rem;
+  @media (width >= 40rem) {
+    padding-inline: 1.5rem;
+  }
 }

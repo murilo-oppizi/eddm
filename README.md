@@ -1,36 +1,36 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# eddm.com
 
-## Getting Started
+Marketing site for EDDM (Every Door Direct Mail), built by Oppizi.
 
-First, run the development server:
+**Stack:** Next.js 16 · React 19 · TypeScript · Tailwind CSS 4 · shadcn/ui (Base UI) · Lucide icons
+
+## Run it locally
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install      # first time only
+npm run dev -- --port 3100
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3100. The styleguide is at http://localhost:3100/styleguide.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Where things live
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| What | File |
+|------|------|
+| Oppizi Design System tokens (source of truth, don't hand-edit) | `src/styles/oppizi-tokens.css` |
+| How those tokens map onto shadcn names | `src/app/globals.css` (`:root` block) |
+| Fonts | `src/app/layout.tsx` |
+| All homepage copy | `src/content/site.ts` |
+| Homepage sections (hero, pricing, FAQ…) | `src/components/sections/` |
+| Header, footer, logo | `src/components/site/` |
+| shadcn components | `src/components/ui/` (add more with `npx shadcn@latest add <name>`) |
+| Pages | `src/app/` (a folder = a URL, e.g. `src/app/about/page.tsx` → `/about`) |
 
-## Learn More
+## Design system
 
-To learn more about Next.js, take a look at the following resources:
+Colors, radius and dark mode come from the Oppizi Design System export (`oppizi-tokens.css`, from the Component Library Navigator). To update, replace that file with a newer export. Dark mode: set `data-theme="dark"` on `<html>`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Notes for backend devs
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Front-end only for now. The ZIP form in `src/components/sections/cta.tsx` doesn't submit anywhere yet.
+- Prices, stats and claims in `src/content/site.ts` are placeholders.

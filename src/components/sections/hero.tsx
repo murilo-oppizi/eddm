@@ -1,0 +1,40 @@
+import Link from "next/link";
+import { ArrowRightIcon, CircleCheckIcon } from "lucide-react";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { HeroStreet } from "@/components/sections/hero-street";
+import { hero, site } from "@/content/site";
+
+export function Hero() {
+  return (
+    <section className="relative overflow-hidden">
+      <div className="container-page grid items-center gap-12 py-16 md:py-24 lg:grid-cols-2">
+        <div className="space-y-6">
+          <Badge variant="secondary">{hero.eyebrow}</Badge>
+          <h1 className="text-4xl font-bold sm:text-5xl lg:text-6xl">{hero.title}</h1>
+          <p className="max-w-xl text-lg text-muted-foreground">{hero.body}</p>
+          <ul className="flex flex-wrap gap-x-6 gap-y-2">
+            {hero.checks.map((item) => (
+              <li key={item} className="flex items-center gap-2 text-sm font-medium">
+                <CircleCheckIcon className="size-4 text-brand" aria-hidden />
+                {item}
+              </li>
+            ))}
+          </ul>
+          <div className="flex flex-wrap gap-3">
+            <Button size="xl" nativeButton={false} render={<Link href={site.primaryCta.href} />}>
+              {site.primaryCta.label}
+              <ArrowRightIcon data-icon="inline-end" />
+            </Button>
+            <Button size="xl" variant="outline" nativeButton={false} render={<Link href={site.secondaryCta.href} />}>
+              {site.secondaryCta.label}
+            </Button>
+          </div>
+        </div>
+
+        <HeroStreet />
+      </div>
+    </section>
+  );
+}

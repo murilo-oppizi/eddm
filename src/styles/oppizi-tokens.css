@@ -1,0 +1,901 @@
+/* =============================================================================
+   Oppizi Design System — tokens, typography, elevation
+   v1.0.0 · generated 2026-08-04
+   Source: Figma "Oppizi Component Library" (8uo5A29L8oaQLiGHELFvr4)
+            + Design Tokens export (Oppizi Tokens/Design Tokens)
+
+   HOW TO USE THIS FILE
+   - Copy the whole file, or lift a single section. Section banners mark the
+     boundaries. Every section below Layer 3 depends only on Layer 1-3.
+   - All custom properties are namespaced --ds-* and all classes .ds-* so this
+     can be pasted into a project that already has its own tokens.
+   - Plain CSS. No build step, no @import, no external requests.
+
+   COLOUR: 3 LAYERS. Components use LAYER 3 ONLY.
+     Layer 1  --ds-tw-*      Tailwind v4 palette. Raw. Single value.
+     Layer 2  --ds-theme-*   Oppizi primitives, in -light / -dark pairs.
+     Layer 3  --ds-<group>-* Semantic, mode-aware. THIS is the component API.
+   Binding a component to Layer 1 or 2 freezes it in one mode — it will not
+   flip in dark. (Conventions doc, Rule 2.)
+
+   DARK MODE: set data-theme="dark" on <html> or any ancestor.
+   Auto-switching by OS preference is intentionally NOT enabled; see the
+   commented @media block at the end of Layer 3.
+
+   FONT: Inter is referenced by name, not imported. Install it in the host
+   project or change --ds-font-sans.
+   ============================================================================= */
+
+
+/* =============================================================================
+   LAYER 1 · Tailwind v4 palette — raw values, single mode
+   Do not bind components to these.
+   ============================================================================= */
+:root {
+  /* amber */
+  --ds-tw-amber-50: #fffbeb;
+  --ds-tw-amber-100: #fef3c6;
+  --ds-tw-amber-200: #fee685;
+  --ds-tw-amber-300: #ffd230;
+  --ds-tw-amber-400: #ffb900;
+  --ds-tw-amber-500: #fe9a00;
+  --ds-tw-amber-600: #e17100;
+  --ds-tw-amber-700: #bb4d00;
+  --ds-tw-amber-800: #973c00;
+  --ds-tw-amber-900: #7b3306;
+  --ds-tw-amber-950: #461901;
+  /* blue */
+  --ds-tw-blue-50: #eff6ff;
+  --ds-tw-blue-100: #dbeafe;
+  --ds-tw-blue-200: #bedbff;
+  --ds-tw-blue-300: #8ec5ff;
+  --ds-tw-blue-400: #51a2ff;
+  --ds-tw-blue-500: #2b7fff;
+  --ds-tw-blue-600: #155dfc;
+  --ds-tw-blue-700: #1447e6;
+  --ds-tw-blue-800: #193cb8;
+  --ds-tw-blue-900: #1c398e;
+  --ds-tw-blue-950: #162456;
+  /* cyan */
+  --ds-tw-cyan-50: #ecfeff;
+  --ds-tw-cyan-100: #cefafe;
+  --ds-tw-cyan-200: #a2f4fd;
+  --ds-tw-cyan-300: #53eafd;
+  --ds-tw-cyan-400: #00d3f2;
+  --ds-tw-cyan-500: #00b8db;
+  --ds-tw-cyan-600: #0092b8;
+  --ds-tw-cyan-700: #007595;
+  --ds-tw-cyan-800: #005f78;
+  --ds-tw-cyan-900: #104e64;
+  --ds-tw-cyan-950: #053345;
+  /* emerald */
+  --ds-tw-emerald-50: #ecfdf5;
+  --ds-tw-emerald-100: #d0fae5;
+  --ds-tw-emerald-200: #a4f4cf;
+  --ds-tw-emerald-300: #5ee9b5;
+  --ds-tw-emerald-400: #00d492;
+  --ds-tw-emerald-500: #00bc7d;
+  --ds-tw-emerald-600: #009966;
+  --ds-tw-emerald-700: #007a55;
+  --ds-tw-emerald-800: #006045;
+  --ds-tw-emerald-900: #004f3b;
+  --ds-tw-emerald-950: #002c22;
+  /* fuchsia */
+  --ds-tw-fuchsia-50: #fdf4ff;
+  --ds-tw-fuchsia-100: #fae8ff;
+  --ds-tw-fuchsia-200: #f6cfff;
+  --ds-tw-fuchsia-300: #f4a8ff;
+  --ds-tw-fuchsia-400: #ed6aff;
+  --ds-tw-fuchsia-500: #e12afb;
+  --ds-tw-fuchsia-600: #c800de;
+  --ds-tw-fuchsia-700: #a800b7;
+  --ds-tw-fuchsia-800: #8a0194;
+  --ds-tw-fuchsia-900: #721378;
+  --ds-tw-fuchsia-950: #4b004f;
+  /* gray */
+  --ds-tw-gray-50: #f9fafb;
+  --ds-tw-gray-100: #f3f4f6;
+  --ds-tw-gray-200: #e5e7eb;
+  --ds-tw-gray-300: #d1d5dc;
+  --ds-tw-gray-400: #99a1af;
+  --ds-tw-gray-500: #6a7282;
+  --ds-tw-gray-600: #4a5565;
+  --ds-tw-gray-700: #364153;
+  --ds-tw-gray-800: #1e2939;
+  --ds-tw-gray-900: #101828;
+  --ds-tw-gray-950: #030712;
+  /* green */
+  --ds-tw-green-50: #f0fdf4;
+  --ds-tw-green-100: #dcfce7;
+  --ds-tw-green-200: #b9f8cf;
+  --ds-tw-green-300: #7bf1a8;
+  --ds-tw-green-400: #05df72;
+  --ds-tw-green-500: #00c950;
+  --ds-tw-green-600: #00a63e;
+  --ds-tw-green-700: #008236;
+  --ds-tw-green-800: #016630;
+  --ds-tw-green-900: #0d542b;
+  --ds-tw-green-950: #032e15;
+  /* indigo */
+  --ds-tw-indigo-50: #eef2ff;
+  --ds-tw-indigo-100: #e0e7ff;
+  --ds-tw-indigo-200: #c6d2ff;
+  --ds-tw-indigo-300: #a3b3ff;
+  --ds-tw-indigo-400: #7c86ff;
+  --ds-tw-indigo-500: #615fff;
+  --ds-tw-indigo-600: #4f39f6;
+  --ds-tw-indigo-700: #432dd7;
+  --ds-tw-indigo-800: #372aac;
+  --ds-tw-indigo-900: #312c85;
+  --ds-tw-indigo-950: #1e1a4d;
+  /* lime */
+  --ds-tw-lime-50: #f7fee7;
+  --ds-tw-lime-100: #ecfcca;
+  --ds-tw-lime-200: #d8f999;
+  --ds-tw-lime-300: #bbf451;
+  --ds-tw-lime-400: #9ae600;
+  --ds-tw-lime-500: #7ccf00;
+  --ds-tw-lime-600: #5ea500;
+  --ds-tw-lime-700: #497d00;
+  --ds-tw-lime-800: #3c6300;
+  --ds-tw-lime-900: #35530e;
+  --ds-tw-lime-950: #192e03;
+  /* mauve */
+  --ds-tw-mauve-50: #fafafa;
+  --ds-tw-mauve-100: #f3f1f3;
+  --ds-tw-mauve-200: #e7e4e7;
+  --ds-tw-mauve-300: #d7d0d7;
+  --ds-tw-mauve-400: #a89ea9;
+  --ds-tw-mauve-500: #79697b;
+  --ds-tw-mauve-600: #594c5b;
+  --ds-tw-mauve-700: #463947;
+  --ds-tw-mauve-800: #2a212c;
+  --ds-tw-mauve-900: #1d161e;
+  --ds-tw-mauve-950: #0c090c;
+  /* mist */
+  --ds-tw-mist-50: #f9fbfb;
+  --ds-tw-mist-100: #f1f3f3;
+  --ds-tw-mist-200: #e3e7e8;
+  --ds-tw-mist-300: #d0d6d8;
+  --ds-tw-mist-400: #9ca8ab;
+  --ds-tw-mist-500: #67787c;
+  --ds-tw-mist-600: #4b585b;
+  --ds-tw-mist-700: #394447;
+  --ds-tw-mist-800: #22292b;
+  --ds-tw-mist-900: #161b1d;
+  --ds-tw-mist-950: #090b0c;
+  /* neutral */
+  --ds-tw-neutral-50: #fafafa;
+  --ds-tw-neutral-100: #f5f5f5;
+  --ds-tw-neutral-200: #e5e5e5;
+  --ds-tw-neutral-300: #d4d4d4;
+  --ds-tw-neutral-400: #a1a1a1;
+  --ds-tw-neutral-500: #737373;
+  --ds-tw-neutral-600: #525252;
+  --ds-tw-neutral-700: #404040;
+  --ds-tw-neutral-800: #262626;
+  --ds-tw-neutral-900: #171717;
+  --ds-tw-neutral-950: #0a0a0a;
+  /* olive */
+  --ds-tw-olive-50: #fbfbf9;
+  --ds-tw-olive-100: #f4f4f0;
+  --ds-tw-olive-200: #e8e8e3;
+  --ds-tw-olive-300: #d8d8d0;
+  --ds-tw-olive-400: #abab9c;
+  --ds-tw-olive-500: #7c7c67;
+  --ds-tw-olive-600: #5b5b4b;
+  --ds-tw-olive-700: #474739;
+  --ds-tw-olive-800: #2b2b22;
+  --ds-tw-olive-900: #1d1d16;
+  --ds-tw-olive-950: #0c0c09;
+  /* orange */
+  --ds-tw-orange-50: #fff7ed;
+  --ds-tw-orange-100: #ffedd4;
+  --ds-tw-orange-200: #ffd6a7;
+  --ds-tw-orange-300: #ffb86a;
+  --ds-tw-orange-400: #ff8904;
+  --ds-tw-orange-500: #ff6900;
+  --ds-tw-orange-600: #f54900;
+  --ds-tw-orange-700: #ca3500;
+  --ds-tw-orange-800: #9f2d00;
+  --ds-tw-orange-900: #7e2a0c;
+  --ds-tw-orange-950: #441306;
+  /* pink */
+  --ds-tw-pink-50: #fdf2f8;
+  --ds-tw-pink-100: #fce7f3;
+  --ds-tw-pink-200: #fccee8;
+  --ds-tw-pink-300: #fda5d5;
+  --ds-tw-pink-400: #fb64b6;
+  --ds-tw-pink-500: #f6339a;
+  --ds-tw-pink-600: #e60076;
+  --ds-tw-pink-700: #c6005c;
+  --ds-tw-pink-800: #a3004c;
+  --ds-tw-pink-900: #861043;
+  --ds-tw-pink-950: #510424;
+  /* purple */
+  --ds-tw-purple-50: #faf5ff;
+  --ds-tw-purple-100: #f3e8ff;
+  --ds-tw-purple-200: #e9d4ff;
+  --ds-tw-purple-300: #dab2ff;
+  --ds-tw-purple-400: #c27aff;
+  --ds-tw-purple-500: #ad46ff;
+  --ds-tw-purple-600: #9810fa;
+  --ds-tw-purple-700: #8200db;
+  --ds-tw-purple-800: #6e11b0;
+  --ds-tw-purple-900: #59168b;
+  --ds-tw-purple-950: #3c0366;
+  /* red */
+  --ds-tw-red-50: #fef2f2;
+  --ds-tw-red-100: #ffe2e2;
+  --ds-tw-red-200: #ffc9c9;
+  --ds-tw-red-300: #ffa2a2;
+  --ds-tw-red-400: #ff6467;
+  --ds-tw-red-500: #fb2c36;
+  --ds-tw-red-600: #e7000b;
+  --ds-tw-red-700: #c10007;
+  --ds-tw-red-800: #9f0712;
+  --ds-tw-red-900: #82181a;
+  --ds-tw-red-950: #460809;
+  /* rose */
+  --ds-tw-rose-50: #fff1f2;
+  --ds-tw-rose-100: #ffe4e6;
+  --ds-tw-rose-200: #ffccd3;
+  --ds-tw-rose-300: #ffa1ad;
+  --ds-tw-rose-400: #ff637e;
+  --ds-tw-rose-500: #ff2056;
+  --ds-tw-rose-600: #ec003f;
+  --ds-tw-rose-700: #c70036;
+  --ds-tw-rose-800: #a50036;
+  --ds-tw-rose-900: #8b0836;
+  --ds-tw-rose-950: #4d0218;
+  /* sky */
+  --ds-tw-sky-50: #f0f9ff;
+  --ds-tw-sky-100: #dff2fe;
+  --ds-tw-sky-200: #b8e6fe;
+  --ds-tw-sky-300: #74d4ff;
+  --ds-tw-sky-400: #00bcff;
+  --ds-tw-sky-500: #00a6f4;
+  --ds-tw-sky-600: #0084d1;
+  --ds-tw-sky-700: #0069a8;
+  --ds-tw-sky-800: #00598a;
+  --ds-tw-sky-900: #024a70;
+  --ds-tw-sky-950: #052f4a;
+  /* slate */
+  --ds-tw-slate-50: #f8fafc;
+  --ds-tw-slate-100: #f1f5f9;
+  --ds-tw-slate-200: #e2e8f0;
+  --ds-tw-slate-300: #cad5e2;
+  --ds-tw-slate-400: #90a1b9;
+  --ds-tw-slate-500: #62748e;
+  --ds-tw-slate-600: #45556c;
+  --ds-tw-slate-700: #314158;
+  --ds-tw-slate-800: #1d293d;
+  --ds-tw-slate-900: #0f172b;
+  --ds-tw-slate-950: #020618;
+  /* stone */
+  --ds-tw-stone-50: #fafaf9;
+  --ds-tw-stone-100: #f5f5f4;
+  --ds-tw-stone-200: #e7e5e4;
+  --ds-tw-stone-300: #d6d3d1;
+  --ds-tw-stone-400: #a6a09b;
+  --ds-tw-stone-500: #79716b;
+  --ds-tw-stone-600: #57534d;
+  --ds-tw-stone-700: #44403b;
+  --ds-tw-stone-800: #292524;
+  --ds-tw-stone-900: #1c1917;
+  --ds-tw-stone-950: #0c0a09;
+  /* taupe */
+  --ds-tw-taupe-50: #fbfaf9;
+  --ds-tw-taupe-100: #f3f1f1;
+  --ds-tw-taupe-200: #e8e4e3;
+  --ds-tw-taupe-300: #d8d2d0;
+  --ds-tw-taupe-400: #aba09c;
+  --ds-tw-taupe-500: #7c6d67;
+  --ds-tw-taupe-600: #5b4f4b;
+  --ds-tw-taupe-700: #473c39;
+  --ds-tw-taupe-800: #2b2422;
+  --ds-tw-taupe-900: #1d1816;
+  --ds-tw-taupe-950: #0c0a09;
+  /* teal */
+  --ds-tw-teal-50: #f0fdfa;
+  --ds-tw-teal-100: #cbfbf1;
+  --ds-tw-teal-200: #96f7e4;
+  --ds-tw-teal-300: #46ecd5;
+  --ds-tw-teal-400: #00d5be;
+  --ds-tw-teal-500: #00bba7;
+  --ds-tw-teal-600: #009689;
+  --ds-tw-teal-700: #00786f;
+  --ds-tw-teal-800: #005f5a;
+  --ds-tw-teal-900: #0b4f4a;
+  --ds-tw-teal-950: #022f2e;
+  /* violet */
+  --ds-tw-violet-50: #f5f3ff;
+  --ds-tw-violet-100: #ede9fe;
+  --ds-tw-violet-200: #ddd6ff;
+  --ds-tw-violet-300: #c4b4ff;
+  --ds-tw-violet-400: #a684ff;
+  --ds-tw-violet-500: #8e51ff;
+  --ds-tw-violet-600: #7f22fe;
+  --ds-tw-violet-700: #7008e7;
+  --ds-tw-violet-800: #5d0ec0;
+  --ds-tw-violet-900: #4d179a;
+  --ds-tw-violet-950: #2f0d68;
+  /* yellow */
+  --ds-tw-yellow-50: #fefce8;
+  --ds-tw-yellow-100: #fef9c2;
+  --ds-tw-yellow-200: #fff085;
+  --ds-tw-yellow-300: #ffdf20;
+  --ds-tw-yellow-400: #fdc700;
+  --ds-tw-yellow-500: #f0b100;
+  --ds-tw-yellow-600: #d08700;
+  --ds-tw-yellow-700: #a65f00;
+  --ds-tw-yellow-800: #894b00;
+  --ds-tw-yellow-900: #733e0a;
+  --ds-tw-yellow-950: #432004;
+  /* zinc */
+  --ds-tw-zinc-50: #fafafa;
+  --ds-tw-zinc-100: #f4f4f5;
+  --ds-tw-zinc-200: #e4e4e7;
+  --ds-tw-zinc-300: #d4d4d8;
+  --ds-tw-zinc-400: #9f9fa9;
+  --ds-tw-zinc-500: #71717b;
+  --ds-tw-zinc-600: #52525c;
+  --ds-tw-zinc-700: #3f3f46;
+  --ds-tw-zinc-800: #27272a;
+  --ds-tw-zinc-900: #18181b;
+  --ds-tw-zinc-950: #09090b;
+}
+
+/* =============================================================================
+   LAYER 2 · Theme colours — Oppizi primitives as -light / -dark pairs
+   Plumbing. Do not bind components to these either.
+   ============================================================================= */
+:root {
+  --ds-theme-background-light: var(--ds-theme-white);
+  --ds-theme-background-dark: var(--ds-tw-slate-950);
+  --ds-theme-foreground-light: var(--ds-tw-slate-950);
+  --ds-theme-foreground-dark: var(--ds-tw-slate-50);
+  --ds-theme-card-light: var(--ds-theme-white);
+  --ds-theme-card-dark: var(--ds-tw-slate-900);
+  --ds-theme-card-foreground-light: var(--ds-tw-slate-950);
+  --ds-theme-card-foreground-dark: var(--ds-tw-slate-50);
+  --ds-theme-popover-light: var(--ds-theme-white);
+  --ds-theme-popover-dark: var(--ds-tw-slate-800);
+  --ds-theme-popover-foreground-light: var(--ds-tw-slate-950);
+  --ds-theme-popover-foreground-dark: var(--ds-tw-slate-50);
+  --ds-theme-primary: #ef2b55;
+  --ds-theme-primary-foreground-light: var(--ds-tw-slate-50);
+  --ds-theme-primary-foreground-dark: var(--ds-tw-slate-50);
+  --ds-theme-secondary-light: var(--ds-tw-slate-100);
+  --ds-theme-secondary-dark: var(--ds-tw-slate-800);
+  --ds-theme-secondary-foreground-light: var(--ds-tw-slate-900);
+  --ds-theme-secondary-foreground-dark: var(--ds-tw-slate-50);
+  --ds-theme-muted-light: var(--ds-tw-slate-100);
+  --ds-theme-muted-dark: var(--ds-tw-slate-800);
+  --ds-theme-muted-foreground-light: var(--ds-tw-slate-500);
+  --ds-theme-muted-foreground-dark: var(--ds-tw-slate-400);
+  --ds-theme-accent-light: var(--ds-tw-slate-100);
+  --ds-theme-accent-dark: var(--ds-tw-slate-700);
+  --ds-theme-accent-foreground-light: var(--ds-tw-slate-900);
+  --ds-theme-accent-foreground-dark: var(--ds-tw-slate-50);
+  --ds-theme-destructive-light: var(--ds-tw-red-600);
+  --ds-theme-destructive-dark: var(--ds-tw-red-400);
+  --ds-theme-border-light: var(--ds-tw-slate-200);
+  --ds-theme-border-dark: color-mix(in srgb, var(--ds-theme-white) 10%, transparent);
+  --ds-theme-input-light: var(--ds-tw-slate-200);
+  --ds-theme-input-dark: color-mix(in srgb, var(--ds-theme-white) 15%, transparent);
+  --ds-theme-ring-light: var(--ds-tw-slate-400);
+  --ds-theme-ring-dark: var(--ds-tw-slate-500);
+  --ds-theme-white: #ffffff;
+  --ds-theme-black: #000000;
+  --ds-theme-success-light: var(--ds-tw-green-600);
+  --ds-theme-success-dark: var(--ds-tw-green-400);
+  --ds-theme-success-subtle-light: var(--ds-tw-green-50);
+  --ds-theme-success-subtle-dark: var(--ds-tw-green-950);
+  --ds-theme-success-subtle-foreground-light: var(--ds-tw-green-900);
+  --ds-theme-success-subtle-foreground-dark: var(--ds-tw-green-100);
+  --ds-theme-success-border-light: var(--ds-tw-green-200);
+  --ds-theme-success-border-dark: var(--ds-tw-green-800);
+  --ds-theme-warning-light: var(--ds-tw-amber-600);
+  --ds-theme-warning-dark: var(--ds-tw-amber-400);
+  --ds-theme-warning-subtle-light: var(--ds-tw-amber-50);
+  --ds-theme-warning-subtle-dark: var(--ds-tw-amber-950);
+  --ds-theme-warning-subtle-foreground-light: var(--ds-tw-amber-900);
+  --ds-theme-warning-subtle-foreground-dark: var(--ds-tw-amber-100);
+  --ds-theme-warning-border-light: var(--ds-tw-amber-200);
+  --ds-theme-warning-border-dark: var(--ds-tw-amber-800);
+  --ds-theme-info-light: var(--ds-tw-blue-600);
+  --ds-theme-info-dark: var(--ds-tw-blue-400);
+  --ds-theme-info-subtle-light: var(--ds-tw-blue-50);
+  --ds-theme-info-subtle-dark: var(--ds-tw-blue-950);
+  --ds-theme-info-subtle-foreground-light: var(--ds-tw-blue-900);
+  --ds-theme-info-subtle-foreground-dark: var(--ds-tw-blue-100);
+  --ds-theme-info-border-light: var(--ds-tw-blue-200);
+  --ds-theme-info-border-dark: var(--ds-tw-blue-800);
+  --ds-theme-ai-light: var(--ds-tw-indigo-600);
+  --ds-theme-ai-dark: var(--ds-tw-indigo-400);
+  --ds-theme-ai-subtle-light: var(--ds-tw-indigo-50);
+  --ds-theme-ai-subtle-dark: var(--ds-tw-indigo-950);
+  --ds-theme-ai-subtle-foreground-light: var(--ds-tw-indigo-900);
+  --ds-theme-ai-subtle-foreground-dark: var(--ds-tw-indigo-100);
+  --ds-theme-ai-border-light: var(--ds-tw-indigo-200);
+  --ds-theme-ai-border-dark: var(--ds-tw-indigo-800);
+  --ds-theme-destructive-subtle-light: var(--ds-tw-red-50);
+  --ds-theme-destructive-subtle-dark: var(--ds-tw-red-950);
+  --ds-theme-destructive-subtle-foreground-light: var(--ds-tw-red-900);
+  --ds-theme-destructive-subtle-foreground-dark: var(--ds-tw-red-100);
+  --ds-theme-destructive-border-light: var(--ds-tw-red-200);
+  --ds-theme-destructive-border-dark: var(--ds-tw-red-800);
+  --ds-theme-success-foreground-light: var(--ds-theme-white);
+  --ds-theme-success-foreground-dark: var(--ds-theme-white);
+  --ds-theme-warning-foreground-light: var(--ds-theme-white);
+  --ds-theme-warning-foreground-dark: var(--ds-tw-amber-950);
+  --ds-theme-info-foreground-light: var(--ds-theme-white);
+  --ds-theme-info-foreground-dark: var(--ds-theme-white);
+  --ds-theme-ai-foreground-light: var(--ds-theme-white);
+  --ds-theme-ai-foreground-dark: var(--ds-theme-white);
+  --ds-theme-brand-subtle-light: color-mix(in srgb, var(--ds-theme-primary) 10%, transparent);
+  --ds-theme-brand-subtle-dark: color-mix(in srgb, var(--ds-theme-primary) 20%, transparent);
+  --ds-theme-brand-subtle-foreground: var(--ds-theme-primary);
+  --ds-theme-subtle-light: var(--ds-tw-slate-200);
+  --ds-theme-subtle-dark: var(--ds-tw-slate-700);
+  --ds-theme-canvas-light: var(--ds-tw-slate-50);
+  --ds-theme-canvas-dark: var(--ds-tw-slate-950);
+}
+
+/* =============================================================================
+   LAYER 3 · Mode colours — semantic, mode-aware. THE COMPONENT API.
+   ============================================================================= */
+:root,
+[data-theme="light"] {
+
+  /* surface */
+  --ds-surface-background: var(--ds-theme-background-light);
+  --ds-surface-foreground: var(--ds-theme-foreground-light);
+  --ds-surface-card: var(--ds-theme-card-light);
+  --ds-surface-card-foreground: var(--ds-theme-card-foreground-light);
+  --ds-surface-popover: var(--ds-theme-popover-light);
+  --ds-surface-popover-foreground: var(--ds-theme-popover-foreground-light);
+  --ds-surface-canvas: var(--ds-theme-canvas-light);
+
+  /* action */
+  --ds-action-primary: var(--ds-theme-primary);
+  --ds-action-primary-foreground: var(--ds-theme-primary-foreground-light);
+  --ds-action-secondary: var(--ds-theme-secondary-light);
+  --ds-action-secondary-foreground: var(--ds-theme-secondary-foreground-light);
+  --ds-action-destructive: var(--ds-theme-destructive-light);
+  --ds-action-destructive-subtle: var(--ds-theme-destructive-subtle-light);
+  --ds-action-destructive-subtle-foreground: var(--ds-theme-destructive-subtle-foreground-light);
+  --ds-action-destructive-border: var(--ds-theme-destructive-border-light);
+  --ds-action-destructive-foreground: var(--ds-theme-white);
+
+  /* neutral */
+  --ds-neutral-muted: var(--ds-theme-muted-light);
+  --ds-neutral-muted-foreground: var(--ds-theme-muted-foreground-light);
+  --ds-neutral-accent: var(--ds-theme-accent-light);
+  --ds-neutral-accent-foreground: var(--ds-theme-accent-foreground-light);
+  --ds-neutral-subtle: var(--ds-theme-subtle-light);
+
+  /* interaction */
+  --ds-interaction-border: var(--ds-theme-border-light);
+  --ds-interaction-input: var(--ds-theme-input-light);
+  --ds-interaction-ring: var(--ds-theme-ring-light);
+  --ds-interaction-outline-background: var(--ds-theme-white);
+
+  /* utility */
+  --ds-utility-white: var(--ds-theme-white);
+  --ds-utility-black: var(--ds-theme-black);
+
+  /* status */
+  --ds-status-success-solid: var(--ds-theme-success-light);
+  --ds-status-success-subtle: var(--ds-theme-success-subtle-light);
+  --ds-status-success-subtle-foreground: var(--ds-theme-success-subtle-foreground-light);
+  --ds-status-success-border: var(--ds-theme-success-border-light);
+  --ds-status-success-solid-foreground: var(--ds-theme-success-foreground-light);
+  --ds-status-warning-solid: var(--ds-theme-warning-light);
+  --ds-status-warning-subtle: var(--ds-theme-warning-subtle-light);
+  --ds-status-warning-subtle-foreground: var(--ds-theme-warning-subtle-foreground-light);
+  --ds-status-warning-border: var(--ds-theme-warning-border-light);
+  --ds-status-warning-solid-foreground: var(--ds-theme-warning-foreground-light);
+  --ds-status-info-solid: var(--ds-theme-info-light);
+  --ds-status-info-subtle: var(--ds-theme-info-subtle-light);
+  --ds-status-info-subtle-foreground: var(--ds-theme-info-subtle-foreground-light);
+  --ds-status-info-border: var(--ds-theme-info-border-light);
+  --ds-status-info-solid-foreground: var(--ds-theme-info-foreground-light);
+  --ds-status-ai-solid: var(--ds-theme-ai-light);
+  --ds-status-ai-subtle: var(--ds-theme-ai-subtle-light);
+  --ds-status-ai-subtle-foreground: var(--ds-theme-ai-subtle-foreground-light);
+  --ds-status-ai-border: var(--ds-theme-ai-border-light);
+  --ds-status-ai-solid-foreground: var(--ds-theme-ai-foreground-light);
+
+  /* brand */
+  --ds-brand-subtle: var(--ds-theme-brand-subtle-light);
+  --ds-brand-subtle-foreground: var(--ds-theme-brand-subtle-foreground);
+
+  /* alpha */
+  --ds-alpha-transparent-fill: color-mix(in srgb, var(--ds-theme-white) 0.01%, transparent);
+  --ds-alpha-white-5: color-mix(in srgb, var(--ds-theme-white) 5%, transparent);
+  --ds-alpha-white-10: color-mix(in srgb, var(--ds-theme-white) 10%, transparent);
+  --ds-alpha-white-20: color-mix(in srgb, var(--ds-theme-white) 20%, transparent);
+  --ds-alpha-adaptive-5: color-mix(in srgb, var(--ds-theme-black) 5%, transparent);
+  --ds-alpha-adaptive-10: color-mix(in srgb, var(--ds-theme-black) 10%, transparent);
+  --ds-alpha-adaptive-20: color-mix(in srgb, var(--ds-theme-black) 20%, transparent);
+  --ds-alpha-black-5: color-mix(in srgb, var(--ds-theme-black) 5%, transparent);
+  --ds-alpha-black-10: color-mix(in srgb, var(--ds-theme-black) 10%, transparent);
+  --ds-alpha-black-20: color-mix(in srgb, var(--ds-theme-black) 20%, transparent);
+  --ds-alpha-destructive-5: color-mix(in srgb, var(--ds-theme-destructive-light) 5%, transparent);
+  --ds-alpha-destructive-10: color-mix(in srgb, var(--ds-theme-destructive-light) 10%, transparent);
+  --ds-alpha-destructive-20: color-mix(in srgb, var(--ds-theme-destructive-light) 20%, transparent);
+  --ds-alpha-ring-50: color-mix(in srgb, var(--ds-theme-ring-light) 50%, transparent);
+  --ds-alpha-white-15: color-mix(in srgb, var(--ds-theme-white) 15%, transparent);
+  --ds-alpha-white-25: color-mix(in srgb, var(--ds-theme-white) 25%, transparent);
+  --ds-alpha-white-30: color-mix(in srgb, var(--ds-theme-white) 30%, transparent);
+  --ds-alpha-white-40: color-mix(in srgb, var(--ds-theme-white) 40%, transparent);
+  --ds-alpha-white-50: color-mix(in srgb, var(--ds-theme-white) 50%, transparent);
+  --ds-alpha-white-60: color-mix(in srgb, var(--ds-theme-white) 60%, transparent);
+  --ds-alpha-white-70: color-mix(in srgb, var(--ds-theme-white) 70%, transparent);
+  --ds-alpha-white-80: color-mix(in srgb, var(--ds-theme-white) 80%, transparent);
+  --ds-alpha-white-90: color-mix(in srgb, var(--ds-theme-white) 90%, transparent);
+  --ds-alpha-white-0001: color-mix(in srgb, var(--ds-theme-white) 0.01%, transparent);
+  --ds-alpha-white-033: color-mix(in srgb, var(--ds-theme-white) 3.33%, transparent);
+  --ds-alpha-black-15: color-mix(in srgb, var(--ds-theme-black) 15%, transparent);
+  --ds-alpha-black-25: color-mix(in srgb, var(--ds-theme-black) 25%, transparent);
+  --ds-alpha-black-30: color-mix(in srgb, var(--ds-theme-black) 30%, transparent);
+  --ds-alpha-black-40: color-mix(in srgb, var(--ds-theme-black) 40%, transparent);
+  --ds-alpha-black-50: color-mix(in srgb, var(--ds-theme-black) 50%, transparent);
+  --ds-alpha-black-60: color-mix(in srgb, var(--ds-theme-black) 60%, transparent);
+  --ds-alpha-black-70: color-mix(in srgb, var(--ds-theme-black) 70%, transparent);
+  --ds-alpha-black-80: color-mix(in srgb, var(--ds-theme-black) 80%, transparent);
+  --ds-alpha-black-90: color-mix(in srgb, var(--ds-theme-black) 90%, transparent);
+  --ds-alpha-black-0001: color-mix(in srgb, var(--ds-theme-black) 0.01%, transparent);
+  --ds-alpha-black-033: color-mix(in srgb, var(--ds-theme-black) 3.33%, transparent);
+  --ds-alpha-adaptive-15: color-mix(in srgb, var(--ds-theme-black) 15%, transparent);
+  --ds-alpha-adaptive-25: color-mix(in srgb, var(--ds-theme-black) 25%, transparent);
+  --ds-alpha-adaptive-30: color-mix(in srgb, var(--ds-theme-black) 30%, transparent);
+  --ds-alpha-adaptive-40: color-mix(in srgb, var(--ds-theme-black) 40%, transparent);
+  --ds-alpha-adaptive-50: color-mix(in srgb, var(--ds-theme-black) 50%, transparent);
+  --ds-alpha-adaptive-60: color-mix(in srgb, var(--ds-theme-black) 60%, transparent);
+  --ds-alpha-adaptive-70: color-mix(in srgb, var(--ds-theme-black) 70%, transparent);
+  --ds-alpha-adaptive-80: color-mix(in srgb, var(--ds-theme-black) 80%, transparent);
+  --ds-alpha-adaptive-90: color-mix(in srgb, var(--ds-theme-black) 90%, transparent);
+  --ds-alpha-adaptive-0001: color-mix(in srgb, var(--ds-theme-black) 0.01%, transparent);
+  --ds-alpha-adaptive-033: color-mix(in srgb, var(--ds-theme-black) 3.33%, transparent);
+  --ds-alpha-destructive-15: color-mix(in srgb, var(--ds-theme-destructive-light) 15%, transparent);
+  --ds-alpha-destructive-25: color-mix(in srgb, var(--ds-theme-destructive-light) 25%, transparent);
+  --ds-alpha-destructive-30: color-mix(in srgb, var(--ds-theme-destructive-light) 30%, transparent);
+  --ds-alpha-destructive-40: color-mix(in srgb, var(--ds-theme-destructive-light) 40%, transparent);
+  --ds-alpha-destructive-50: color-mix(in srgb, var(--ds-theme-destructive-light) 50%, transparent);
+  --ds-alpha-destructive-60: color-mix(in srgb, var(--ds-theme-destructive-light) 60%, transparent);
+  --ds-alpha-destructive-70: color-mix(in srgb, var(--ds-theme-destructive-light) 70%, transparent);
+  --ds-alpha-destructive-80: color-mix(in srgb, var(--ds-theme-destructive-light) 80%, transparent);
+  --ds-alpha-destructive-90: color-mix(in srgb, var(--ds-theme-destructive-light) 90%, transparent);
+  --ds-alpha-destructive-0001: color-mix(in srgb, var(--ds-theme-destructive-light) 0.01%, transparent);
+  --ds-alpha-destructive-033: color-mix(in srgb, var(--ds-theme-destructive-light) 3.33%, transparent);
+}
+
+[data-theme="dark"] {
+
+  /* surface */
+  --ds-surface-background: var(--ds-theme-background-dark);
+  --ds-surface-foreground: var(--ds-theme-foreground-dark);
+  --ds-surface-card: var(--ds-theme-card-dark);
+  --ds-surface-card-foreground: var(--ds-theme-card-foreground-dark);
+  --ds-surface-popover: var(--ds-theme-popover-dark);
+  --ds-surface-popover-foreground: var(--ds-theme-popover-foreground-dark);
+  --ds-surface-canvas: var(--ds-theme-canvas-dark);
+
+  /* action */
+  --ds-action-primary: var(--ds-theme-primary);
+  --ds-action-primary-foreground: var(--ds-theme-primary-foreground-dark);
+  --ds-action-secondary: var(--ds-theme-secondary-dark);
+  --ds-action-secondary-foreground: var(--ds-theme-secondary-foreground-dark);
+  --ds-action-destructive: var(--ds-theme-destructive-dark);
+  --ds-action-destructive-subtle: var(--ds-theme-destructive-subtle-dark);
+  --ds-action-destructive-subtle-foreground: var(--ds-theme-destructive-subtle-foreground-dark);
+  --ds-action-destructive-border: var(--ds-theme-destructive-border-dark);
+  --ds-action-destructive-foreground: var(--ds-theme-white);
+
+  /* neutral */
+  --ds-neutral-muted: var(--ds-theme-muted-dark);
+  --ds-neutral-muted-foreground: var(--ds-theme-muted-foreground-dark);
+  --ds-neutral-accent: var(--ds-theme-accent-dark);
+  --ds-neutral-accent-foreground: var(--ds-theme-accent-foreground-dark);
+  --ds-neutral-subtle: var(--ds-theme-subtle-dark);
+
+  /* interaction */
+  --ds-interaction-border: var(--ds-theme-border-dark);
+  --ds-interaction-input: var(--ds-theme-input-dark);
+  --ds-interaction-ring: var(--ds-theme-ring-dark);
+  --ds-interaction-outline-background: var(--ds-alpha-white-5);
+
+  /* utility */
+  --ds-utility-white: var(--ds-theme-white);
+  --ds-utility-black: var(--ds-theme-black);
+
+  /* status */
+  --ds-status-success-solid: var(--ds-theme-success-dark);
+  --ds-status-success-subtle: var(--ds-theme-success-subtle-dark);
+  --ds-status-success-subtle-foreground: var(--ds-theme-success-subtle-foreground-dark);
+  --ds-status-success-border: var(--ds-theme-success-border-dark);
+  --ds-status-success-solid-foreground: var(--ds-theme-success-foreground-dark);
+  --ds-status-warning-solid: var(--ds-theme-warning-dark);
+  --ds-status-warning-subtle: var(--ds-theme-warning-subtle-dark);
+  --ds-status-warning-subtle-foreground: var(--ds-theme-warning-subtle-foreground-dark);
+  --ds-status-warning-border: var(--ds-theme-warning-border-dark);
+  --ds-status-warning-solid-foreground: var(--ds-theme-warning-foreground-dark);
+  --ds-status-info-solid: var(--ds-theme-info-dark);
+  --ds-status-info-subtle: var(--ds-theme-info-subtle-dark);
+  --ds-status-info-subtle-foreground: var(--ds-theme-info-subtle-foreground-dark);
+  --ds-status-info-border: var(--ds-theme-info-border-dark);
+  --ds-status-info-solid-foreground: var(--ds-theme-info-foreground-dark);
+  --ds-status-ai-solid: var(--ds-theme-ai-dark);
+  --ds-status-ai-subtle: var(--ds-theme-ai-subtle-dark);
+  --ds-status-ai-subtle-foreground: var(--ds-theme-ai-subtle-foreground-dark);
+  --ds-status-ai-border: var(--ds-theme-ai-border-dark);
+  --ds-status-ai-solid-foreground: var(--ds-theme-ai-foreground-dark);
+
+  /* brand */
+  --ds-brand-subtle: var(--ds-theme-brand-subtle-dark);
+  --ds-brand-subtle-foreground: var(--ds-theme-brand-subtle-foreground);
+
+  /* alpha */
+  --ds-alpha-transparent-fill: color-mix(in srgb, var(--ds-theme-white) 0.01%, transparent);
+  --ds-alpha-white-5: color-mix(in srgb, var(--ds-theme-white) 5%, transparent);
+  --ds-alpha-white-10: color-mix(in srgb, var(--ds-theme-white) 10%, transparent);
+  --ds-alpha-white-20: color-mix(in srgb, var(--ds-theme-white) 20%, transparent);
+  --ds-alpha-adaptive-5: color-mix(in srgb, var(--ds-theme-white) 5%, transparent);
+  --ds-alpha-adaptive-10: color-mix(in srgb, var(--ds-theme-white) 10%, transparent);
+  --ds-alpha-adaptive-20: color-mix(in srgb, var(--ds-theme-white) 20%, transparent);
+  --ds-alpha-black-5: color-mix(in srgb, var(--ds-theme-black) 5%, transparent);
+  --ds-alpha-black-10: color-mix(in srgb, var(--ds-theme-black) 10%, transparent);
+  --ds-alpha-black-20: color-mix(in srgb, var(--ds-theme-black) 20%, transparent);
+  --ds-alpha-destructive-5: color-mix(in srgb, var(--ds-theme-destructive-dark) 5%, transparent);
+  --ds-alpha-destructive-10: color-mix(in srgb, var(--ds-theme-destructive-dark) 10%, transparent);
+  --ds-alpha-destructive-20: color-mix(in srgb, var(--ds-theme-destructive-dark) 20%, transparent);
+  --ds-alpha-ring-50: color-mix(in srgb, var(--ds-theme-ring-dark) 50%, transparent);
+  --ds-alpha-white-15: color-mix(in srgb, var(--ds-theme-white) 15%, transparent);
+  --ds-alpha-white-25: color-mix(in srgb, var(--ds-theme-white) 25%, transparent);
+  --ds-alpha-white-30: color-mix(in srgb, var(--ds-theme-white) 30%, transparent);
+  --ds-alpha-white-40: color-mix(in srgb, var(--ds-theme-white) 40%, transparent);
+  --ds-alpha-white-50: color-mix(in srgb, var(--ds-theme-white) 50%, transparent);
+  --ds-alpha-white-60: color-mix(in srgb, var(--ds-theme-white) 60%, transparent);
+  --ds-alpha-white-70: color-mix(in srgb, var(--ds-theme-white) 70%, transparent);
+  --ds-alpha-white-80: color-mix(in srgb, var(--ds-theme-white) 80%, transparent);
+  --ds-alpha-white-90: color-mix(in srgb, var(--ds-theme-white) 90%, transparent);
+  --ds-alpha-white-0001: color-mix(in srgb, var(--ds-theme-white) 0.01%, transparent);
+  --ds-alpha-white-033: color-mix(in srgb, var(--ds-theme-white) 3.33%, transparent);
+  --ds-alpha-black-15: color-mix(in srgb, var(--ds-theme-black) 15%, transparent);
+  --ds-alpha-black-25: color-mix(in srgb, var(--ds-theme-black) 25%, transparent);
+  --ds-alpha-black-30: color-mix(in srgb, var(--ds-theme-black) 30%, transparent);
+  --ds-alpha-black-40: color-mix(in srgb, var(--ds-theme-black) 40%, transparent);
+  --ds-alpha-black-50: color-mix(in srgb, var(--ds-theme-black) 50%, transparent);
+  --ds-alpha-black-60: color-mix(in srgb, var(--ds-theme-black) 60%, transparent);
+  --ds-alpha-black-70: color-mix(in srgb, var(--ds-theme-black) 70%, transparent);
+  --ds-alpha-black-80: color-mix(in srgb, var(--ds-theme-black) 80%, transparent);
+  --ds-alpha-black-90: color-mix(in srgb, var(--ds-theme-black) 90%, transparent);
+  --ds-alpha-black-0001: color-mix(in srgb, var(--ds-theme-black) 0.01%, transparent);
+  --ds-alpha-black-033: color-mix(in srgb, var(--ds-theme-black) 3.33%, transparent);
+  --ds-alpha-adaptive-15: color-mix(in srgb, var(--ds-theme-white) 15%, transparent);
+  --ds-alpha-adaptive-25: color-mix(in srgb, var(--ds-theme-white) 25%, transparent);
+  --ds-alpha-adaptive-30: color-mix(in srgb, var(--ds-theme-white) 30%, transparent);
+  --ds-alpha-adaptive-40: color-mix(in srgb, var(--ds-theme-white) 40%, transparent);
+  --ds-alpha-adaptive-50: color-mix(in srgb, var(--ds-theme-white) 50%, transparent);
+  --ds-alpha-adaptive-60: color-mix(in srgb, var(--ds-theme-white) 60%, transparent);
+  --ds-alpha-adaptive-70: color-mix(in srgb, var(--ds-theme-white) 70%, transparent);
+  --ds-alpha-adaptive-80: color-mix(in srgb, var(--ds-theme-white) 80%, transparent);
+  --ds-alpha-adaptive-90: color-mix(in srgb, var(--ds-theme-white) 90%, transparent);
+  --ds-alpha-adaptive-0001: color-mix(in srgb, var(--ds-theme-white) 0.01%, transparent);
+  --ds-alpha-adaptive-033: color-mix(in srgb, var(--ds-theme-white) 3.33%, transparent);
+  --ds-alpha-destructive-15: color-mix(in srgb, var(--ds-theme-destructive-dark) 15%, transparent);
+  --ds-alpha-destructive-25: color-mix(in srgb, var(--ds-theme-destructive-dark) 25%, transparent);
+  --ds-alpha-destructive-30: color-mix(in srgb, var(--ds-theme-destructive-dark) 30%, transparent);
+  --ds-alpha-destructive-40: color-mix(in srgb, var(--ds-theme-destructive-dark) 40%, transparent);
+  --ds-alpha-destructive-50: color-mix(in srgb, var(--ds-theme-destructive-dark) 50%, transparent);
+  --ds-alpha-destructive-60: color-mix(in srgb, var(--ds-theme-destructive-dark) 60%, transparent);
+  --ds-alpha-destructive-70: color-mix(in srgb, var(--ds-theme-destructive-dark) 70%, transparent);
+  --ds-alpha-destructive-80: color-mix(in srgb, var(--ds-theme-destructive-dark) 80%, transparent);
+  --ds-alpha-destructive-90: color-mix(in srgb, var(--ds-theme-destructive-dark) 90%, transparent);
+  --ds-alpha-destructive-0001: color-mix(in srgb, var(--ds-theme-destructive-dark) 0.01%, transparent);
+  --ds-alpha-destructive-033: color-mix(in srgb, var(--ds-theme-destructive-dark) 3.33%, transparent);
+}
+
+/* OS-PREFERENCE DARK MODE — off by default, on purpose.
+   Pasting this file into a light-only project must not change its appearance.
+   To opt in, duplicate the [data-theme="dark"] block above inside:
+       @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { ... } }
+   Keep the :not() so an explicit data-theme="light" still wins. */
+
+/* =============================================================================
+   SPACING · 4px base grid
+   ============================================================================= */
+:root {
+  --ds-space-0p5: 2px;   /* Figma: 0,5 */
+  --ds-space-1: 4px;   /* Figma: 1 */
+  --ds-space-1p5: 6px;   /* Figma: 1,5 */
+  --ds-space-2: 8px;   /* Figma: 2 */
+  --ds-space-2p5: 10px;   /* Figma: 2,5 */
+  --ds-space-3: 12px;   /* Figma: 3 */
+  --ds-space-4: 16px;   /* Figma: 4 */
+  --ds-space-5: 20px;   /* Figma: 5 */
+  --ds-space-6: 24px;   /* Figma: 6 */
+  --ds-space-8: 32px;   /* Figma: 8 */
+  --ds-space-10: 40px;   /* Figma: 10 */
+  --ds-space-12: 48px;   /* Figma: 12 */
+  --ds-space-14: 56px;   /* Figma: 14 */
+  --ds-space-16: 64px;   /* Figma: 16 */
+  --ds-space-20: 80px;   /* Figma: 20 */
+  --ds-space-24: 96px;   /* Figma: 24 */
+}
+
+/* =============================================================================
+   RADIUS
+   Note: lg = 10px is a deliberate divergence from shadcn's 8px (conventions doc).
+   ============================================================================= */
+:root {
+  --ds-radius-0: 0px;
+  --ds-radius-xs: 2px;
+  --ds-radius-4px: 4px;
+  --ds-radius-sm: 6px;
+  --ds-radius-md: 8px;
+  --ds-radius-lg: 10px;
+  --ds-radius-xl: 14px;
+  --ds-radius-full: 9999px;
+}
+
+/* =============================================================================
+   BORDER WIDTH
+   ============================================================================= */
+:root {
+  --ds-border-0: 0px;
+  --ds-border-1: 1px;
+  --ds-border-2: 2px;
+}
+
+/* =============================================================================
+   ICON STROKE
+   Tabler icons are drawn on a 24px grid with stroke-width 2. Rendered at any
+   other size the stroke must be rescaled: stroke = 2 * (size / 24). These are
+   those precomputed values, keyed by rendered pixel size.
+   ============================================================================= */
+:root {
+  --ds-icon-stroke-10: 0.8333;   /* icon rendered at 10px */
+  --ds-icon-stroke-12: 1.0;   /* icon rendered at 12px */
+  --ds-icon-stroke-14: 1.1667;   /* icon rendered at 14px */
+  --ds-icon-stroke-16: 1.3333;   /* icon rendered at 16px */
+  --ds-icon-stroke-18: 1.5;   /* icon rendered at 18px */
+  --ds-icon-stroke-20: 1.6667;   /* icon rendered at 20px */
+  --ds-icon-stroke-22: 1.8333;   /* icon rendered at 22px */
+  --ds-icon-stroke-24: 2.0;   /* icon rendered at 24px */
+  --ds-icon-stroke-28: 2.3333;   /* icon rendered at 28px */
+  --ds-icon-stroke-32: 2.6667;   /* icon rendered at 32px */
+}
+
+/* =============================================================================
+   TYPOGRAPHY
+   Naming mirrors the Figma text styles: text-{size}/{variant} -> .ds-text-{size}-{variant}
+   ============================================================================= */
+:root {
+  --ds-font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --ds-text-2xs: 10px;
+  --ds-leading-2xs: 16px;
+  --ds-text-xs: 12px;
+  --ds-leading-xs: 16px;
+  --ds-text-sm: 14px;
+  --ds-leading-sm: 20px;
+  --ds-text-base: 16px;
+  --ds-leading-base: 24px;
+  --ds-text-lg: 18px;
+  --ds-leading-lg: 28px;
+  --ds-text-xl: 20px;
+  --ds-leading-xl: 28px;
+  --ds-text-2xl: 24px;
+  --ds-leading-2xl: 32px;
+  --ds-text-3xl: 30px;
+  --ds-leading-3xl: 36px;
+  --ds-text-4xl: 36px;
+  --ds-leading-4xl: 40px;
+  --ds-weight-regular: 400;
+  --ds-weight-medium: 500;
+  --ds-weight-semibold: 600;
+  --ds-weight-bold: 700;
+}
+
+/* text-2xs — 10/16 · Oppizi-specific — no Tailwind equivalent; 10/16 confirmed 2026-08-04 */
+.ds-text-2xs-regular { font-family: var(--ds-font-sans); font-size: var(--ds-text-2xs); line-height: var(--ds-leading-2xs); font-weight: var(--ds-weight-regular); letter-spacing: 0; }
+.ds-text-2xs-medium { font-family: var(--ds-font-sans); font-size: var(--ds-text-2xs); line-height: var(--ds-leading-2xs); font-weight: var(--ds-weight-medium); letter-spacing: 0; }
+.ds-text-2xs-semibold { font-family: var(--ds-font-sans); font-size: var(--ds-text-2xs); line-height: var(--ds-leading-2xs); font-weight: var(--ds-weight-semibold); letter-spacing: 0; }
+.ds-text-2xs-bold { font-family: var(--ds-font-sans); font-size: var(--ds-text-2xs); line-height: var(--ds-leading-2xs); font-weight: var(--ds-weight-bold); letter-spacing: 0; }
+.ds-text-2xs-underlined { font-family: var(--ds-font-sans); font-size: var(--ds-text-2xs); line-height: var(--ds-leading-2xs); font-weight: var(--ds-weight-regular); letter-spacing: 0; text-decoration: underline; text-underline-offset: 4px; }
+.ds-text-2xs-underlined-md { font-family: var(--ds-font-sans); font-size: var(--ds-text-2xs); line-height: var(--ds-leading-2xs); font-weight: var(--ds-weight-medium); letter-spacing: 0; text-decoration: underline; text-underline-offset: 4px; }
+
+/* text-xs — 12/16 · Tailwind v4 default */
+.ds-text-xs-regular { font-family: var(--ds-font-sans); font-size: var(--ds-text-xs); line-height: var(--ds-leading-xs); font-weight: var(--ds-weight-regular); letter-spacing: 0; }
+.ds-text-xs-medium { font-family: var(--ds-font-sans); font-size: var(--ds-text-xs); line-height: var(--ds-leading-xs); font-weight: var(--ds-weight-medium); letter-spacing: 0; }
+.ds-text-xs-semibold { font-family: var(--ds-font-sans); font-size: var(--ds-text-xs); line-height: var(--ds-leading-xs); font-weight: var(--ds-weight-semibold); letter-spacing: 0; }
+.ds-text-xs-bold { font-family: var(--ds-font-sans); font-size: var(--ds-text-xs); line-height: var(--ds-leading-xs); font-weight: var(--ds-weight-bold); letter-spacing: 0; }
+.ds-text-xs-underlined { font-family: var(--ds-font-sans); font-size: var(--ds-text-xs); line-height: var(--ds-leading-xs); font-weight: var(--ds-weight-regular); letter-spacing: 0; text-decoration: underline; text-underline-offset: 4px; }
+.ds-text-xs-underlined-md { font-family: var(--ds-font-sans); font-size: var(--ds-text-xs); line-height: var(--ds-leading-xs); font-weight: var(--ds-weight-medium); letter-spacing: 0; text-decoration: underline; text-underline-offset: 4px; }
+
+/* text-sm — 14/20 · VERIFIED in Figma (text-sm/medium, text-sm/regular) */
+.ds-text-sm-regular { font-family: var(--ds-font-sans); font-size: var(--ds-text-sm); line-height: var(--ds-leading-sm); font-weight: var(--ds-weight-regular); letter-spacing: 0; }
+.ds-text-sm-medium { font-family: var(--ds-font-sans); font-size: var(--ds-text-sm); line-height: var(--ds-leading-sm); font-weight: var(--ds-weight-medium); letter-spacing: 0; }
+.ds-text-sm-semibold { font-family: var(--ds-font-sans); font-size: var(--ds-text-sm); line-height: var(--ds-leading-sm); font-weight: var(--ds-weight-semibold); letter-spacing: 0; }
+.ds-text-sm-bold { font-family: var(--ds-font-sans); font-size: var(--ds-text-sm); line-height: var(--ds-leading-sm); font-weight: var(--ds-weight-bold); letter-spacing: 0; }
+.ds-text-sm-underlined { font-family: var(--ds-font-sans); font-size: var(--ds-text-sm); line-height: var(--ds-leading-sm); font-weight: var(--ds-weight-regular); letter-spacing: 0; text-decoration: underline; text-underline-offset: 4px; }
+.ds-text-sm-underlined-md { font-family: var(--ds-font-sans); font-size: var(--ds-text-sm); line-height: var(--ds-leading-sm); font-weight: var(--ds-weight-medium); letter-spacing: 0; text-decoration: underline; text-underline-offset: 4px; }
+
+/* text-base — 16/24 · Tailwind v4 default */
+.ds-text-base-regular { font-family: var(--ds-font-sans); font-size: var(--ds-text-base); line-height: var(--ds-leading-base); font-weight: var(--ds-weight-regular); letter-spacing: 0; }
+.ds-text-base-medium { font-family: var(--ds-font-sans); font-size: var(--ds-text-base); line-height: var(--ds-leading-base); font-weight: var(--ds-weight-medium); letter-spacing: 0; }
+.ds-text-base-semibold { font-family: var(--ds-font-sans); font-size: var(--ds-text-base); line-height: var(--ds-leading-base); font-weight: var(--ds-weight-semibold); letter-spacing: 0; }
+.ds-text-base-bold { font-family: var(--ds-font-sans); font-size: var(--ds-text-base); line-height: var(--ds-leading-base); font-weight: var(--ds-weight-bold); letter-spacing: 0; }
+.ds-text-base-underlined { font-family: var(--ds-font-sans); font-size: var(--ds-text-base); line-height: var(--ds-leading-base); font-weight: var(--ds-weight-regular); letter-spacing: 0; text-decoration: underline; text-underline-offset: 4px; }
+.ds-text-base-underlined-md { font-family: var(--ds-font-sans); font-size: var(--ds-text-base); line-height: var(--ds-leading-base); font-weight: var(--ds-weight-medium); letter-spacing: 0; text-decoration: underline; text-underline-offset: 4px; }
+
+/* text-lg — 18/28 · VERIFIED in Figma (text-lg/medium) */
+.ds-text-lg-regular { font-family: var(--ds-font-sans); font-size: var(--ds-text-lg); line-height: var(--ds-leading-lg); font-weight: var(--ds-weight-regular); letter-spacing: 0; }
+.ds-text-lg-medium { font-family: var(--ds-font-sans); font-size: var(--ds-text-lg); line-height: var(--ds-leading-lg); font-weight: var(--ds-weight-medium); letter-spacing: 0; }
+.ds-text-lg-semibold { font-family: var(--ds-font-sans); font-size: var(--ds-text-lg); line-height: var(--ds-leading-lg); font-weight: var(--ds-weight-semibold); letter-spacing: 0; }
+.ds-text-lg-bold { font-family: var(--ds-font-sans); font-size: var(--ds-text-lg); line-height: var(--ds-leading-lg); font-weight: var(--ds-weight-bold); letter-spacing: 0; }
+
+/* text-xl — 20/28 · Tailwind v4 default */
+.ds-text-xl-regular { font-family: var(--ds-font-sans); font-size: var(--ds-text-xl); line-height: var(--ds-leading-xl); font-weight: var(--ds-weight-regular); letter-spacing: 0; }
+.ds-text-xl-medium { font-family: var(--ds-font-sans); font-size: var(--ds-text-xl); line-height: var(--ds-leading-xl); font-weight: var(--ds-weight-medium); letter-spacing: 0; }
+.ds-text-xl-semibold { font-family: var(--ds-font-sans); font-size: var(--ds-text-xl); line-height: var(--ds-leading-xl); font-weight: var(--ds-weight-semibold); letter-spacing: 0; }
+.ds-text-xl-bold { font-family: var(--ds-font-sans); font-size: var(--ds-text-xl); line-height: var(--ds-leading-xl); font-weight: var(--ds-weight-bold); letter-spacing: 0; }
+
+/* text-2xl — 24/32 · Tailwind v4 default */
+.ds-text-2xl-regular { font-family: var(--ds-font-sans); font-size: var(--ds-text-2xl); line-height: var(--ds-leading-2xl); font-weight: var(--ds-weight-regular); letter-spacing: 0; }
+.ds-text-2xl-medium { font-family: var(--ds-font-sans); font-size: var(--ds-text-2xl); line-height: var(--ds-leading-2xl); font-weight: var(--ds-weight-medium); letter-spacing: 0; }
+.ds-text-2xl-semibold { font-family: var(--ds-font-sans); font-size: var(--ds-text-2xl); line-height: var(--ds-leading-2xl); font-weight: var(--ds-weight-semibold); letter-spacing: 0; }
+.ds-text-2xl-bold { font-family: var(--ds-font-sans); font-size: var(--ds-text-2xl); line-height: var(--ds-leading-2xl); font-weight: var(--ds-weight-bold); letter-spacing: 0; }
+
+/* text-3xl — 30/36 · Tailwind v4 default */
+.ds-text-3xl-regular { font-family: var(--ds-font-sans); font-size: var(--ds-text-3xl); line-height: var(--ds-leading-3xl); font-weight: var(--ds-weight-regular); letter-spacing: 0; }
+.ds-text-3xl-medium { font-family: var(--ds-font-sans); font-size: var(--ds-text-3xl); line-height: var(--ds-leading-3xl); font-weight: var(--ds-weight-medium); letter-spacing: 0; }
+.ds-text-3xl-semibold { font-family: var(--ds-font-sans); font-size: var(--ds-text-3xl); line-height: var(--ds-leading-3xl); font-weight: var(--ds-weight-semibold); letter-spacing: 0; }
+.ds-text-3xl-bold { font-family: var(--ds-font-sans); font-size: var(--ds-text-3xl); line-height: var(--ds-leading-3xl); font-weight: var(--ds-weight-bold); letter-spacing: 0; }
+
+/* text-4xl — 36/40 · Tailwind v4 default */
+.ds-text-4xl-regular { font-family: var(--ds-font-sans); font-size: var(--ds-text-4xl); line-height: var(--ds-leading-4xl); font-weight: var(--ds-weight-regular); letter-spacing: 0; }
+.ds-text-4xl-medium { font-family: var(--ds-font-sans); font-size: var(--ds-text-4xl); line-height: var(--ds-leading-4xl); font-weight: var(--ds-weight-medium); letter-spacing: 0; }
+.ds-text-4xl-semibold { font-family: var(--ds-font-sans); font-size: var(--ds-text-4xl); line-height: var(--ds-leading-4xl); font-weight: var(--ds-weight-semibold); letter-spacing: 0; }
+.ds-text-4xl-bold { font-family: var(--ds-font-sans); font-size: var(--ds-text-4xl); line-height: var(--ds-leading-4xl); font-weight: var(--ds-weight-bold); letter-spacing: 0; }
+
+/* =============================================================================
+   ELEVATION
+   Figma effect styles shadow/{xs..2xl}, shadow/toast, shadow/drawer-top and
+   focus/{default,destructive}. Colours come from the
+   alpha/* Layer 3 tokens so shadows stay mode-aware.
+   text-underline-offset above and these spreads come from the CSS, not from the
+   Figma render — Figma has no underline-offset control (conventions doc, Rule 8).
+   ============================================================================= */
+:root {
+  --ds-shadow-xs: 0 1px 2px 0 var(--ds-alpha-black-5);   /* Tailwind v4 shadow-xs */
+  --ds-shadow-sm: 0 1px 3px 0 var(--ds-alpha-black-10), 0 1px 2px -1px var(--ds-alpha-black-10);   /* VERIFIED in Figma */
+  --ds-shadow-md: 0 4px 6px -1px var(--ds-alpha-black-10), 0 2px 4px -2px var(--ds-alpha-black-10);   /* Tailwind v4 shadow-md */
+  --ds-shadow-lg: 0 10px 15px -3px var(--ds-alpha-black-10), 0 4px 6px -4px var(--ds-alpha-black-10);   /* Tailwind v4 shadow-lg */
+  --ds-shadow-xl: 0 20px 25px -5px var(--ds-alpha-black-10), 0 8px 10px -6px var(--ds-alpha-black-10);   /* Tailwind v4 shadow-xl */
+  --ds-shadow-2xl: 0 25px 50px -12px var(--ds-alpha-black-25);   /* Tailwind v4 shadow-2xl */
+  --ds-shadow-toast: 0 4px 12px 0 var(--ds-alpha-black-10);   /* VERIFIED in Figma */
+  --ds-shadow-drawer-top: 0 -10px 30px 0 var(--ds-alpha-black-10);   /* VERIFIED in Figma */
+}
+
+/* Focus rings. Figma effect styles focus/{default,destructive} — a single 3px
+   spread with no offset or blur, the shadcn ring-[3px] treatment. Paired with the
+   interaction/ring (or action/destructive) border the components already carry. */
+:root {
+  --ds-focus-default: 0 0 0 3px var(--ds-alpha-ring-50);   /* VERIFIED in Figma */
+  --ds-focus-destructive: 0 0 0 3px var(--ds-alpha-destructive-20);   /* VERIFIED in Figma */
+}
+
+.ds-shadow-xs { box-shadow: var(--ds-shadow-xs); }
+.ds-shadow-sm { box-shadow: var(--ds-shadow-sm); }
+.ds-shadow-md { box-shadow: var(--ds-shadow-md); }
+.ds-shadow-lg { box-shadow: var(--ds-shadow-lg); }
+.ds-shadow-xl { box-shadow: var(--ds-shadow-xl); }
+.ds-shadow-2xl { box-shadow: var(--ds-shadow-2xl); }
+.ds-shadow-toast { box-shadow: var(--ds-shadow-toast); }
+.ds-shadow-drawer-top { box-shadow: var(--ds-shadow-drawer-top); }
+.ds-focus-default { box-shadow: var(--ds-focus-default); }
+.ds-focus-destructive { box-shadow: var(--ds-focus-destructive); }
