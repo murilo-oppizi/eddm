@@ -48,6 +48,8 @@ export const trust = {
   ],
 }
 
+// Four steps, as on oppizi.com (select routes, design, launch, track) — eddm.com lists
+// the same flow. The visuals in how-it-works.tsx use illustrative numbers.
 export const steps = [
   {
     title: "Pick your neighborhoods",
@@ -55,11 +57,15 @@ export const steps = [
   },
   {
     title: "Design your postcard",
-    body: "Start from a template, upload your own artwork, or work with our designers. We check it meets USPS size rules.",
+    body: "Start from a USPS-ready template or upload your own artwork. We check it meets USPS size rules before it prints.",
   },
   {
     title: "We print and deliver",
     body: "We print, bundle and drop your mail at the post office. Your mail carrier delivers it to every door on the route.",
+  },
+  {
+    title: "Track your results",
+    body: "Follow every stage in your dashboard, then see scans, calls and visits by neighborhood, so you know where to mail next.",
   },
 ]
 

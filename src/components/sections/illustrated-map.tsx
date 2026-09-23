@@ -73,14 +73,22 @@ export function IllustratedMap({
   mode,
   thinking = false,
   optimized = false,
+  cover = false,
 }: {
   mode: SelectionMode;
   thinking?: boolean;
   optimized?: boolean;
+  /** Fill the box and crop the edges (like object-fit: cover) instead of letterboxing. */
+  cover?: boolean;
 }) {
   const route = mode === "route";
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="absolute inset-0 size-full" aria-hidden>
+    <svg
+      viewBox={`0 0 ${W} ${H}`}
+      preserveAspectRatio={cover ? "xMidYMid slice" : undefined}
+      className="absolute inset-0 size-full"
+      aria-hidden
+    >
       {/* Streets are the background; blocks are drawn on top with gaps between them. */}
       <rect width={W} height={H} className="fill-card" />
 
