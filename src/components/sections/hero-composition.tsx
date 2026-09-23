@@ -11,8 +11,9 @@ import {
   type TablerIcon,
 } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
-import { MotionConfig, motion } from "motion/react";
+import { AnimatePresence, MotionConfig, motion } from "motion/react";
 
+import { DotOrb } from "@/components/sections/dot-orb";
 import { IllustratedMap, ROUTE_CENTER } from "@/components/sections/illustrated-map";
 import { cn } from "@/lib/utils";
 
@@ -127,6 +128,9 @@ export function HeroComposition() {
                 <AudienceCard ai={ai} />
               </AiFrame>
             </Piece>
+            {/* Test: an extra floating "agent" card with a dot orb, only while the AI works.
+                Sits in the empty space above Selected routes, so nothing else moves. */}
+            <AnimatePresence>{loading && <AgentCard key="agent" />}</AnimatePresence>
           </div>
         </div>
       </div>
@@ -208,6 +212,34 @@ function AiFrame({ active, children }: { active: boolean; children: React.ReactN
       />
       <div className="relative">{children}</div>
     </div>
+  );
+}
+
+/** Floating card with the dot orb, shown while the AI is optimizing. Kept compact so it
+ *  clears the Selected routes card even at the top of that card's float. */
+function AgentCard() {
+  return (
+    <motion.div
+      aria-hidden
+      className="absolute"
+      style={{ left: px(452), top: px(2), width: px(184) }}
+      initial={{ opacity: 0, y: 10, scale: 0.92 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, y: -6, scale: 0.96 }}
+      transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+    >
+      <Card className="flex items-center gap-2.5 px-3 py-2">
+        <DotOrb className="size-12 shrink-0" />
+        <div className="min-w-0">
+          <p className="text-xs text-muted-foreground">Oppizi AI</p>
+          <p className="text-sm leading-tight font-medium">
+            <span className="animate-shimmer text-shimmer motion-reduce:animate-none">
+              Finding the best routes…
+            </span>
+          </p>
+        </div>
+      </Card>
+    </motion.div>
   );
 }
 
