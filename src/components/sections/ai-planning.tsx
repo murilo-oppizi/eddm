@@ -48,12 +48,12 @@ const icons: Record<string, LucideIcon> = {
 type Phase =
   "composing" | "typing" | "submitting" | "working" | "answering" | "done";
 
-// Paced so each stage can actually be read (≈ 13s end to end).
-const TYPE_MS = 38; // per character
-const PAUSE_MS = 800; // after the brief is typed
-const SUBMIT_MS = 500; // the button press
-const STEP_MS = 1100; // per agent step
-const ROW_MS = 500; // between answer lines
+// 1.5× the original pacing, so each stage can be read (≈ 9s end to end).
+const TYPE_MS = 30; // per character
+const PAUSE_MS = 525; // after the brief is typed
+const SUBMIT_MS = 450; // the button press
+const STEP_MS = 825; // per agent step
+const ROW_MS = 330; // between answer lines
 const STEPS = aiPlanning.steps.length;
 const ROWS = aiPlanning.scenarios[0].plan.length + 1; // plan lines + the "Run again" button
 
@@ -105,7 +105,7 @@ export function AiPlanning() {
       next(() => setPhase("working"), SUBMIT_MS);
     } else if (state === "working") {
       if (stepCount < STEPS) next(() => setStep((n) => n + 1), STEP_MS);
-      else next(() => setPhase("answering"), 600);
+      else next(() => setPhase("answering"), 300);
     } else if (state === "answering") {
       if (rowCount < ROWS) next(() => setRows((n) => n + 1), ROW_MS);
       else next(() => setPhase("done"), 0);
@@ -211,7 +211,7 @@ export function AiPlanning() {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0, scale: 0.98 }}
-                      transition={{ duration: 0.45 }}
+                      transition={{ duration: 0.3 }}
                     >
                       <Composer
                         phase={phase}
@@ -226,7 +226,7 @@ export function AiPlanning() {
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0 }}
-                      transition={{ duration: 0.55 }}
+                      transition={{ duration: 0.45 }}
                     >
                       <Response
                         scenario={scenario}
@@ -438,7 +438,7 @@ function Reveal({
   return (
     <div
       className={cn(
-        "transition-[opacity,translate] duration-700 ease-out motion-reduce:transition-none",
+        "transition-[opacity,translate] duration-750 ease-out motion-reduce:transition-none",
         visible ? "translate-y-0 opacity-100" : "translate-y-1.5 opacity-0",
         className,
       )}
