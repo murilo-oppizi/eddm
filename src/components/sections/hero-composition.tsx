@@ -15,6 +15,7 @@ import { MotionConfig, motion } from "motion/react";
 
 import { DotOrb } from "@/components/sections/dot-orb";
 import { IllustratedMap, ROUTE_CENTER } from "@/components/sections/illustrated-map";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 
 // Hero visual built from Campaign Builder pieces (Figma: "Campaign Builder
@@ -330,33 +331,30 @@ function RouteMap({
           </div>
         </div>
 
-        {/* Toolbar, as in the Campaign Builder map — the one interactive bit of the hero. */}
-        <div
-          role="group"
-          aria-label="Map selection mode"
-          className="pointer-events-auto relative flex w-fit overflow-hidden rounded-md border border-input bg-background shadow-xs"
+        {/* Mode tabs, as in the Campaign Builder map — the one interactive bit of the hero.
+            Tabs don't re-fire for the tab that's already selected, so AI's onClick handles
+            "run it again". */}
+        <Tabs
+          value={mode}
+          onValueChange={(value) => onChoose(value as Mode)}
+          className="pointer-events-auto relative w-fit"
         >
-          {modes.map(({ mode: m, label: text, Icon }) => {
-            const on = mode === m;
-            return (
-              <button
+          <TabsList aria-label="Map selection mode" className="shadow-sm ring-1 ring-border">
+            {modes.map(({ mode: m, label: text, Icon }) => (
+              <TabsTrigger
                 key={m}
-                type="button"
-                aria-pressed={on}
-                onClick={() => onChoose(m)}
-                className={cn(
-                  "flex h-9 cursor-pointer items-center gap-1.5 px-3 text-sm font-medium text-foreground transition-colors outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset",
-                  on ? "bg-muted" : "hover:bg-muted/50"
-                )}
+                value={m}
+                onClick={m === "ai" && mode === "ai" ? () => onChoose("ai") : undefined}
+                className="cursor-pointer px-3"
               >
                 <Icon className={cn("size-4.5", m === "ai" && "text-brand")} />
                 {/* Trim the text box to the capital letters so they centre exactly at any
                     scale; otherwise rounding at some widths nudges them toward the top. */}
                 <span className="[text-box:trim-both_cap_alphabetic]">{text}</span>
-              </button>
-            );
-          })}
-        </div>
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
       </div>
     </Card>
   );
