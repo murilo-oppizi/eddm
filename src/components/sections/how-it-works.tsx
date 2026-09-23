@@ -218,41 +218,79 @@ function Stage({ active }: { active: number }) {
   );
 }
 
-/** Numbered circle: filled once reached, a check once passed. */
-function StepNode({ index, active, className }: { index: number; active: number; className?: string }) {
-  return (
-    <span
-      aria-hidden
-      className={cn(
-        "grid size-8 place-items-center rounded-full border-2 font-heading text-sm font-bold transition-colors duration-500",
-        index <= active ? "border-primary bg-primary text-primary-foreground" : "border-border bg-background text-muted-foreground",
-        className
-      )}
-    >
-      {index < active ? <IconCheck className="size-4" /> : index + 1}
-    </span>
-  );
-}
-
 /* ------------------------------ Phones & tablets ------------------------------ */
 
+/** Where each stop sits: the vertical centre of its card's visual (design px from the card top). */
+const STOP_OFFSET = 112;
+
+/**
+ * The same mail route as on desktop, running down the left: a postcard marker rides a
+ * dashed line at a fixed point on screen as you scroll, the route fills in behind it,
+ * and each stop (and its card) lights up once the postcard reaches it.
+ */
 function VerticalTimeline() {
   const list = useRef<HTMLOListElement>(null);
-  const [active, setActive] = useState(0);
-  const { scrollYProgress } = useScroll({ target: list, offset: ["start 65%", "end 65%"] });
-  useMotionValueEvent(scrollYProgress, "change", (p) => setActive(Math.min(N - 1, Math.floor(p * N))));
+  const [stops, setStops] = useState<number[]>([]);
+  // The first stop is where the postcard starts, so it (and its card) is lit from the start.
+  const [reached, setReached] = useState(0);
+
+  // Stop positions (px from the list top), re-measured when the layout changes.
+  useEffect(() => {
+    const el = list.current;
+    if (!el) return;
+    const measure = () =>
+      setStops([...el.querySelectorAll<HTMLElement>(":scope > li")].map((li) => li.offsetTop + STOP_OFFSET));
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  // The marker follows a line 60% down the screen, held between the first and last stop.
+  const { scrollYProgress } = useScroll({ target: list, offset: ["start 60%", "end 60%"] });
+  const first = stops[0] ?? 0;
+  const last = stops[N - 1] ?? 0;
+  const y = useTransform(scrollYProgress, (p) => {
+    const height = list.current?.offsetHeight ?? 0;
+    return Math.min(last, Math.max(first, p * height));
+  });
+  const fill = useTransform(y, (v) => (last > first ? (v - first) / (last - first) : 0));
+  useMotionValueEvent(y, "change", (v) => setReached(Math.max(0, stops.filter((stop) => v >= stop - 1).length - 1)));
 
   return (
     <div className="container-page mt-12 lg:hidden">
       <ol ref={list} className="relative space-y-8 pl-12">
-        {/* The line behind the nodes, filling as you scroll */}
-        <div aria-hidden className="absolute top-4 bottom-4 left-4 w-0.5 -translate-x-1/2 rounded-full bg-border">
-          <motion.div className="h-full w-full origin-top rounded-full bg-primary" style={{ scaleY: scrollYProgress }} />
+        <div aria-hidden className="pointer-events-none absolute inset-y-0 left-4">
+          {/* Route: dashed, solid pink behind the marker */}
+          <div
+            className="absolute -translate-x-1/2 border-l-2 border-dashed border-border"
+            style={{ top: first, height: Math.max(0, last - first) }}
+          />
+          <motion.div
+            className="absolute w-0.5 origin-top -translate-x-1/2 rounded-full bg-primary"
+            style={{ top: first, height: Math.max(0, last - first), scaleY: fill }}
+          />
+          {stops.map((top, i) => (
+            <span
+              key={i}
+              className={cn(
+                "absolute size-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 transition-colors duration-500",
+                i <= reached ? "border-primary bg-primary" : "border-border bg-background"
+              )}
+              style={{ top }}
+            />
+          ))}
+          {/* The postcard, travelling the route */}
+          <motion.span
+            className="absolute top-0 grid size-9 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-xl bg-primary text-primary-foreground shadow-lg shadow-primary/30"
+            style={{ y }}
+          >
+            <IconMail className="size-4.5" />
+          </motion.span>
         </div>
         {steps.map((step, i) => (
-          <li key={step.title} className="relative">
-            <StepNode index={i} active={active} className="absolute top-0 -left-12" />
-            <StepCard index={i} active={i <= active} />
+          <li key={step.title} className={cn("transition-opacity duration-500", i > reached && "opacity-50")}>
+            <StepCard index={i} active={i <= reached} />
           </li>
         ))}
       </ol>
