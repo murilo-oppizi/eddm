@@ -270,7 +270,7 @@ function AudienceCard() {
       <div className="flex items-center justify-between">
         <p className="text-sm font-medium text-foreground">Audience</p>
         <p className="flex items-center gap-1 text-xs text-muted-foreground">
-          <CalendarIcon className="size-3.5" /> Delivers in 2–4 days
+          <CalendarIcon className="size-3.5" /> Delivers in 2–5 days
         </p>
       </div>
       <div className="flex flex-wrap gap-2">
