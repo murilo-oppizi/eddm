@@ -119,6 +119,58 @@ export const aiPlanning = {
   ],
 } as const
 
+// "Who it's for". Industries and use cases from eddm.com / oppizi.com (Sept 2026); the
+// postcard offers are illustrative examples of what each business might mail.
+export const audiences = {
+  eyebrow: "Who it's for",
+  title: "Built for businesses that serve a neighborhood",
+  body: "If your customers live nearby, EDDM puts you in their mailbox.",
+  industries: [
+    {
+      name: "Restaurants and cafés",
+      icon: "restaurant",
+      tone: "warning",
+      body: "Announce a new menu or an opening to every home within delivery distance.",
+      postcard: { business: "Luna Café", headline: "Our fall menu is here", offer: "Free pastry with any coffee", cta: "Scan for the menu" },
+    },
+    {
+      name: "Real estate agents",
+      icon: "realEstate",
+      tone: "info",
+      body: "Farm your neighborhood with just-listed and just-sold cards that keep you top of mind.",
+      postcard: { business: "Rivera Realty", headline: "Just sold on your street", offer: "Curious what your home is worth?", cta: "Scan for a free valuation" },
+    },
+    {
+      name: "Salons and spas",
+      icon: "salon",
+      tone: "brand",
+      body: "Fill quiet weekdays with a first-visit offer for everyone nearby.",
+      postcard: { business: "Studio Nine", headline: "Your first visit, 30% off", offer: "Cuts, color and facials", cta: "Scan to book" },
+    },
+    {
+      name: "Home services",
+      icon: "homeServices",
+      tone: "success",
+      body: "Reach homeowners right before the season hits: HVAC, roofing, cleaning, landscaping.",
+      postcard: { business: "Brightside HVAC", headline: "Spring AC tune-up, $79", offer: "Beat the first heat wave", cta: "Scan to schedule" },
+    },
+    {
+      name: "Gyms and fitness",
+      icon: "gym",
+      tone: "ai",
+      body: "Launch a new location or a new class with a free pass for the neighborhood.",
+      postcard: { business: "Forge Fitness", headline: "Your first week is on us", offer: "Now open on 5th Avenue", cta: "Scan to claim your pass" },
+    },
+    {
+      name: "Retail stores",
+      icon: "retail",
+      tone: "brand",
+      body: "Bring foot traffic to a grand opening, a seasonal sale or a new collection.",
+      postcard: { business: "Maple & Co.", headline: "Grand opening Saturday", offer: "20% off everything, all weekend", cta: "Scan for directions" },
+    },
+  ],
+} as const
+
 // Facts checked against oppizi.com and eddm.com (Sept 2026).
 export const features = [
   { icon: "map", title: "Map-based targeting", body: "Choose exactly which streets and neighborhoods hear from you." },

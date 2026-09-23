@@ -1,4 +1,5 @@
 import { AiPlanning } from "@/components/sections/ai-planning";
+import { Audiences } from "@/components/sections/audiences";
 import { Cta } from "@/components/sections/cta";
 import { Faq } from "@/components/sections/faq";
 import { Features } from "@/components/sections/features";
@@ -15,6 +16,7 @@ export default function Home() {
       <HowItWorks />
       <AiPlanning />
       <Features />
+      <Audiences />
       <Pricing />
       <Faq />
       <Cta />

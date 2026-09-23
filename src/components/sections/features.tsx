@@ -22,7 +22,7 @@ const icons: Record<(typeof features)[number]["icon"], TablerIcon> = {
 
 export function Features() {
   return (
-    <section id="features" className="scroll-mt-20 py-20">
+    <section id="features" className="scroll-mt-20 border-y bg-muted/40 py-20">
       <div className="container-page space-y-12">
         <SectionHeading
           eyebrow="Why EDDM"

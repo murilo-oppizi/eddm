@@ -27,6 +27,9 @@
   --color-info: var(--ds-status-info-solid);
   --color-info-subtle: var(--ds-status-info-subtle);
   --color-info-subtle-foreground: var(--ds-status-info-subtle-foreground);
+  --color-ai: var(--ds-status-ai-solid);
+  --color-ai-subtle: var(--ds-status-ai-subtle);
+  --color-ai-subtle-foreground: var(--ds-status-ai-subtle-foreground);
   --font-heading: var(--font-display);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
