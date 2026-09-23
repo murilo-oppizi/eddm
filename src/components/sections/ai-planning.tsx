@@ -132,7 +132,7 @@ export function AiPlanning() {
             <div
               role="group"
               aria-label="Example briefs"
-              className="grid w-full grid-cols-3 gap-1 rounded-2xl border bg-muted/60 p-1 sm:inline-flex sm:w-auto sm:rounded-full"
+              className="grid w-full grid-cols-3 gap-1 rounded-lg border bg-muted/60 p-1 sm:inline-flex sm:w-auto"
             >
               {aiPlanning.scenarios.map((s, i) => {
                 const Icon = icons[s.icon];
@@ -144,7 +144,7 @@ export function AiPlanning() {
                     aria-pressed={active}
                     onClick={() => (animated ? play(i) : setScenario(i))}
                     className={cn(
-                      "flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-xs font-medium whitespace-nowrap transition-all outline-none focus-visible:ring-3 focus-visible:ring-ring/50 sm:flex-row sm:gap-2 sm:rounded-full sm:px-4 sm:text-sm",
+                      "flex cursor-pointer flex-col items-center justify-center gap-1 rounded-md px-2 py-2 text-xs font-medium whitespace-nowrap transition-all outline-none focus-visible:ring-3 focus-visible:ring-ring/50 sm:flex-row sm:gap-2 sm:px-4 sm:text-sm",
                       active
                         ? "bg-card text-foreground shadow-sm"
                         : "text-muted-foreground hover:bg-card/60 hover:text-foreground",
@@ -188,7 +188,7 @@ export function AiPlanning() {
               animated && state === "composing" && typedCount === 0 && play(0)
             }
             viewport={{ once: true, amount: 0.5 }}
-            className="overflow-hidden rounded-3xl border bg-card shadow-lg"
+            className="overflow-hidden rounded-2xl border bg-card shadow-lg"
           >
             {/* The card is exactly as tall as the finished plan: an invisible copy of it sits in
                 the same grid cell as the live view, whatever the screen size or example. */}
@@ -291,12 +291,12 @@ function Composer({
 
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2">
-          <span className="grid size-9 place-items-center rounded-full border text-muted-foreground">
+          <span className="grid size-9 place-items-center rounded-lg border text-muted-foreground">
             <PaperclipIcon className="size-4" />
           </span>
           <span
             className={cn(
-              "flex h-9 items-center gap-1.5 rounded-full border px-3 text-sm text-muted-foreground transition-opacity duration-300",
+              "flex h-9 items-center gap-1.5 rounded-lg border px-3 text-sm text-muted-foreground transition-opacity duration-300",
               empty ? "opacity-0" : "opacity-100",
             )}
           >
@@ -305,7 +305,7 @@ function Composer({
         </div>
         <span
           className={cn(
-            "grid size-10 place-items-center rounded-full bg-primary text-primary-foreground transition-[opacity,scale] duration-150",
+            "grid size-9 place-items-center rounded-lg bg-primary text-primary-foreground transition-[opacity,scale] duration-150",
             empty && "opacity-40",
             phase === "submitting" && "scale-90",
           )}
@@ -342,7 +342,7 @@ function Response({
     <div className="flex h-full flex-col p-5 sm:p-6">
       {/* The brief, collapsed to a summary line */}
       {/* Padding on the wrapper: on the clamped element itself it would reveal the hidden line. */}
-      <div aria-hidden className="rounded-2xl bg-muted/70 px-4 py-3">
+      <div aria-hidden className="rounded-xl bg-muted/70 px-4 py-3">
         <p className="line-clamp-2 text-sm text-muted-foreground">
           {scenario.brief}
         </p>
@@ -350,7 +350,7 @@ function Response({
 
       {/* Agent status: the current step while working, then a one-line summary */}
       <div aria-hidden className="mt-5 flex items-center gap-2.5">
-        <span className="grid size-7 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground">
+        <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground">
           <SparklesIcon className="size-3.5" />
         </span>
         {working ? (
@@ -390,7 +390,7 @@ function Response({
         </ul>
       ) : (
         <>
-          <dl aria-hidden className="mt-4 divide-y rounded-2xl border">
+          <dl aria-hidden className="mt-4 divide-y rounded-xl border">
             {scenario.plan.map((row, i) => {
               const Icon = icons[row.icon];
               return (
@@ -415,7 +415,6 @@ function Response({
               <Button
                 variant="outline"
                 size="lg"
-                className="rounded-full px-4"
                 onClick={onRunAgain}
               >
                 <RotateCcwIcon data-icon="inline-start" /> Run again
