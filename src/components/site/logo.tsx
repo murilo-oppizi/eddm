@@ -46,7 +46,7 @@ export function Logo({ variant = "tile", className }: { variant?: LogoVariant; c
           </span>
           <span className="flex flex-col gap-1">
             <span className="text-lg leading-none font-bold tracking-tight">{site.name}</span>
-            <span className="text-[11px] leading-none font-medium text-muted-foreground">powered by Oppizi</span>
+            <span className="text-[11px] leading-none font-medium text-brand">powered by Oppizi</span>
           </span>
         </span>
       )}
@@ -56,17 +56,17 @@ export function Logo({ variant = "tile", className }: { variant?: LogoVariant; c
           <OppiziSymbol cropped className="h-4 w-auto text-brand" />
           <span className="text-xl leading-none font-bold tracking-tight">{site.name}</span>
           <span aria-hidden className="h-4 w-px bg-border" />
-          <span className="text-xs leading-none font-medium text-muted-foreground">powered by Oppizi</span>
+          <span className="text-xs leading-none font-medium text-brand">powered by Oppizi</span>
         </span>
       )}
 
       {variant === "endorsed" && (
         <span className="flex flex-col gap-1">
           <span className="text-2xl leading-none font-extrabold tracking-tight">{site.name}</span>
-          <span className="flex items-center gap-1 text-[11px] leading-none font-medium text-muted-foreground">
+          <span className="flex items-center gap-1 text-[11px] leading-none font-medium text-brand">
             powered by
             <OppiziSymbol cropped className="h-2 w-auto text-brand" />
-            <span className="font-semibold text-foreground">Oppizi</span>
+            <span className="font-semibold">Oppizi</span>
           </span>
         </span>
       )}
