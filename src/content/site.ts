@@ -64,21 +64,54 @@ export const steps = [
 ]
 
 // "AI planning" section. Capabilities are Oppizi's real AI features (oppizi.com, Sept
-// 2026); the brief and the plan are an illustrative example. Cost = 4,820 × $0.31.
+// 2026); the scenarios are illustrative examples. Every cost = homes × $0.31.
 export const aiPlanning = {
   eyebrow: "AI planning",
   title: "Tell us your goal. Our agents plan the campaign.",
   body: "Describe your business in plain words and get routes, timing and budget in seconds.",
-  brief:
-    "I run a coffee shop in Williamsburg. I want young families within walking distance. Budget around $1,500.",
-  button: "Plan my campaign",
-  plan: [
-    { icon: "route", label: "Routes", value: "6 routes · 4,820 homes" },
-    { icon: "users", label: "Audience match", value: "Age 25–44 · families" },
-    { icon: "calendar", label: "Best timing", value: "Lands Thursday, before the weekend" },
-    { icon: "receipt", label: "Estimated cost", value: "$1,494" },
+  placeholder: "Describe your business, who you want to reach and your budget…",
+  scenarios: [
+    {
+      chip: "Coffee shop in Williamsburg",
+      zip: "11211",
+      brief:
+        "I run a coffee shop in Williamsburg. I want young families within walking distance. Budget around $1,500.",
+      plan: [
+        { icon: "route", label: "Routes", value: "6 routes · 4,820 homes" },
+        { icon: "users", label: "Audience match", value: "Age 25–44 · families" },
+        { icon: "calendar", label: "Best timing", value: "Lands Thursday, before the weekend" },
+        { icon: "receipt", label: "Estimated cost", value: "$1,494" },
+      ],
+      tips: ["Put the offer in the headline", "Make the QR code larger"],
+    },
+    {
+      chip: "Gym opening in Park Slope",
+      zip: "11215",
+      brief:
+        "We're opening a gym in Park Slope next month. I want adults 25–40 who live within a mile. Around $2,000.",
+      plan: [
+        { icon: "route", label: "Routes", value: "9 routes · 6,410 homes" },
+        { icon: "users", label: "Audience match", value: "Age 25–40 · within 1 mile" },
+        { icon: "calendar", label: "Best timing", value: "Lands the week before opening" },
+        { icon: "receipt", label: "Estimated cost", value: "$1,987" },
+      ],
+      tips: ["Lead with the opening-week offer", "Add a small map to the address"],
+    },
+    {
+      chip: "Fall menu in Astoria",
+      zip: "11103",
+      brief:
+        "My restaurant in Astoria has a new fall menu. I want couples and families nearby. Budget about $1,000.",
+      plan: [
+        { icon: "route", label: "Routes", value: "4 routes · 3,180 homes" },
+        { icon: "users", label: "Audience match", value: "Age 30–54 · households of 2+" },
+        { icon: "calendar", label: "Best timing", value: "Lands Friday, ahead of dinner plans" },
+        { icon: "receipt", label: "Estimated cost", value: "$986" },
+      ],
+      tips: ["Show a dish, not the logo", "Add a first-visit discount code"],
+    },
   ],
-  tips: ["Put the offer in the headline", "Make the QR code larger"],
+  steps: ["Reading your brief", "Finding routes in {zip}", "Matching demographics", "Estimating cost and timing"],
   capabilities: [
     { icon: "pin", title: "AI-optimized routes", body: "Our agents suggest the best routes for the audience you describe." },
     { icon: "planning", title: "Agentic planning", body: "Recommendations for targeting, timing and spend, before you launch." },

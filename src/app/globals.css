@@ -75,6 +75,28 @@
       transform: translateX(-50%);
     }
   }
+  /* Light sweeping across "thinking" text (pair with the text-shimmer utility). */
+  --animate-shimmer: shimmer 1.8s linear infinite;
+  @keyframes shimmer {
+    from {
+      background-position: 100% 0;
+    }
+    to {
+      background-position: -100% 0;
+    }
+  }
+}
+
+@utility text-shimmer {
+  background-image: linear-gradient(
+    90deg,
+    var(--muted-foreground) 35%,
+    var(--foreground) 50%,
+    var(--muted-foreground) 65%
+  );
+  background-size: 200% 100%;
+  background-clip: text;
+  color: transparent;
 }
 
 /* shadcn's token names, bound to Oppizi's Layer 3 (semantic, mode-aware) tokens.
