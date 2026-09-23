@@ -27,7 +27,7 @@ export function SiteFooter() {
         <div className="space-y-3">
           <h2 className="text-sm font-semibold tracking-normal">Company</h2>
           <ul className="space-y-2 text-sm text-muted-foreground">
-            <li><Link href="#" className="hover:text-foreground">About</Link></li>
+            <li><Link href="/about" className="hover:text-foreground">About</Link></li>
             <li><Link href="#" className="hover:text-foreground">Contact</Link></li>
             <li><Link href="/styleguide" className="hover:text-foreground">Styleguide</Link></li>
           </ul>

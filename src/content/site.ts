@@ -260,3 +260,52 @@ export const faqs = [
     a: "No. Start from a USPS-compliant template in our design tool, which gives AI suggestions as you go, or upload your own artwork. Either way, we check it meets USPS requirements before it prints.",
   },
 ]
+
+// About page. Facts from oppizi.com (About us, homepage, imprint) and eddm.com, Sept
+// 2026; the values are Oppizi's own, explained for EDDM. Confirm with marketing.
+export const about = {
+  description:
+    "EDDM is Every Door Direct Mail by Oppizi, the offline marketing platform that plans, launches and measures campaigns for brands like DoorDash, Uber Eats and Chipotle.",
+  eyebrow: "About",
+  title: "Every door, powered by Oppizi",
+  body: "EDDM helps businesses that serve a neighborhood reach every home on the routes they choose. It's built and run by Oppizi, the offline marketing platform growth teams use to plan, launch and measure direct mail, inserts and flyering.",
+  story: {
+    title: "From flyers in Sydney to AI agents in New York",
+    paragraphs: [
+      "Oppizi started in Sydney in 2014 as a flyering company. Over the next decade it grew into a dozen countries across Europe, the Americas and Asia-Pacific, adding direct mail and package inserts along the way.",
+      "Today Oppizi is headquartered in New York, and its platform uses AI agents to plan, launch and measure offline campaigns, with the targeting and tracking teams expect from digital channels.",
+      "EDDM brings the same tools to local businesses: pick routes on a map, design your postcard, and we print it near your neighborhood and hand it to USPS.",
+    ],
+  },
+  facts: [
+    { value: "2014", label: "Founded, in Sydney" },
+    { value: "New York", label: "Headquarters" },
+    { value: "700+", label: "Local print partners in the US" },
+    { value: "Oppizi OS", label: "The platform behind EDDM" },
+  ],
+  valuesTitle: "What we believe",
+  valuesBody: "Four ideas guide how Oppizi builds, and how EDDM works for you.",
+  values: [
+    {
+      icon: "sparkles",
+      title: "Agents should power execution",
+      body: "Our AI agents do the legwork of planning, from finding routes to matching your audience and estimating cost, so a mailing takes minutes to plan, not days.",
+    },
+    {
+      icon: "mail",
+      title: "Attention is earned, not bought",
+      body: "A postcard in hand gets looked at. We help you design one worth keeping and send it to the neighborhoods that matter to your business.",
+    },
+    {
+      icon: "chart",
+      title: "Offline should be measurable",
+      body: "Every campaign comes with QR code and scan tracking by route, so you can see what worked and where to mail next.",
+    },
+    {
+      icon: "shield",
+      title: "Scale should not break quality",
+      body: "One neighborhood or a whole city, every campaign gets the same USPS checks, local printing and delivery you can follow.",
+    },
+  ],
+} as const
+
