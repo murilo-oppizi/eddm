@@ -3,7 +3,7 @@
 // so it needs no attribution or tile licence, and it's inline SVG: nothing to download,
 // sharp at any size.
 //
-// Coordinates are the map card's design pixels (400×440). Everything street-related
+// Coordinates are the map card's design pixels (400×440 by default; see `width`). Everything street-related
 // lives in one group rotated like Williamsburg's grid, centred on the route, so the
 // route outline can sit exactly on street centrelines.
 
@@ -74,23 +74,27 @@ export function IllustratedMap({
   thinking = false,
   optimized = false,
   cover = false,
+  width = W,
 }: {
   mode: SelectionMode;
   thinking?: boolean;
   optimized?: boolean;
   /** Fill the box and crop the edges (like object-fit: cover) instead of letterboxing. */
   cover?: boolean;
+  /** Design width of the map. Wider maps show more streets to the right; the route
+   *  and pin stay put, since they're positioned from the left. */
+  width?: number;
 }) {
   const route = mode === "route";
   return (
     <svg
-      viewBox={`0 0 ${W} ${H}`}
+      viewBox={`0 0 ${width} ${H}`}
       preserveAspectRatio={cover ? "xMidYMid slice" : undefined}
       className="absolute inset-0 size-full"
       aria-hidden
     >
       {/* Streets are the background; blocks are drawn on top with gaps between them. */}
-      <rect width={W} height={H} className="fill-card" />
+      <rect width={width} height={H} className="fill-card" />
 
       <g transform={`translate(${ROUTE_CENTER.x} ${ROUTE_CENTER.y}) rotate(${GRID_ANGLE})`}>
         {blocks.map(({ x, y, park }) => (

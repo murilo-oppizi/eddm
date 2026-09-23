@@ -23,6 +23,8 @@ import { cn } from "@/lib/utils";
 // route, plus the two decisions that matter — who you're reaching and what it costs.
 // Laid out on a 640×500 design canvas, so values are design pixels.
 const CANVAS = { w: 640, h: 500 };
+/** Map card width: runs under the Selected routes card so the composition fills out. */
+const MAP_W = 480;
 
 /** `n` design pixels as a length that scales with the composition's width. */
 const px = (n: number) => `calc(${n} * 100cqw / ${CANVAS.w})`;
@@ -117,7 +119,7 @@ export function HeroComposition() {
             {loading ? "Optimizing with AI…" : optimized ? "AI optimized: 14 routes and 7,380 homes in Williamsburg, plus Greenpoint." : ""}
           </p>
           <div className="absolute inset-0" style={scaled}>
-            <Piece x={70} y={20} w={400} delay={0}>
+            <Piece x={70} y={20} w={MAP_W} delay={0}>
               {/* The map (with its toolbar, pin and route label) is the anchor: it only
                   fades in and never moves. The two cards float over it. */}
               <RouteMap mode={mode} source={source} ai={ai} onChoose={choose} />
@@ -295,6 +297,7 @@ function RouteMap({
       {/* In AI mode the map keeps the starting shape (route or area) while the AI works,
           then swaps to the optimized route. */}
       <IllustratedMap
+        width={MAP_W}
         mode={mode === "ai" ? (ai === "done" ? "route" : source) : mode}
         thinking={loading}
         optimized={mode === "ai" && ai === "done"}
