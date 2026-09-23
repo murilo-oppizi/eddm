@@ -278,7 +278,7 @@ function RouteMap({ mode, ai, onChoose }: { mode: Mode; ai: AiState; onChoose: (
   return (
     <Card className="relative h-110 overflow-hidden">
       {/* AI works on routes, so the map keeps showing the route outline in that mode. */}
-      <IllustratedMap mode={mode === "area" ? "area" : "route"} thinking={loading} />
+      <IllustratedMap mode={mode === "area" ? "area" : "route"} thinking={loading} optimized={ai === "done"} />
 
       <div className="pointer-events-none absolute inset-0 p-4">
         {/* Decorative overlays; the pin sits on the selection's centre. */}

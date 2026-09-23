@@ -38,7 +38,19 @@ const ROUTE_STEPS: [number, number][] = [
   [-1, -2], [0, -2], [0, -3], [1, -3], [1, 2], [0, 2], [0, 3], [-1, 3],
 ];
 
-const routePoints = ROUTE_STEPS.map(([i, j]) => `${i * AVENUE_GAP},${j * STREET_GAP}`).join(" ");
+/**
+ * The AI's pick: a different set of blocks around the same pin — it drops the thin
+ * top and bottom tails and takes a wider stretch in the middle, still on street
+ * centrelines.
+ */
+const AI_ROUTE_STEPS: [number, number][] = [
+  [-2, -1], [-1, -1], [-1, -2], [1, -2], [1, -1], [2, -1], [2, 1], [1, 1], [1, 2], [-1, 2], [-1, 1], [-2, 1],
+];
+
+const toPoints = (steps: [number, number][]) =>
+  steps.map(([i, j]) => `${i * AVENUE_GAP},${j * STREET_GAP}`).join(" ");
+const routePoints = toPoints(ROUTE_STEPS);
+const aiRoutePoints = toPoints(AI_ROUTE_STEPS);
 
 const selectionClass =
   "fill-primary/20 stroke-primary transition-[opacity,scale] duration-300 ease-out transform-fill origin-center motion-reduce:transition-none";
@@ -55,8 +67,18 @@ export type SelectionMode = "route" | "area";
 /** Radius of the "Area" selection, sized to cover about the same ground as the route. */
 const AREA_RADIUS = 74;
 
-/** `thinking`: the selection breathes while the AI is working on it. */
-export function IllustratedMap({ mode, thinking = false }: { mode: SelectionMode; thinking?: boolean }) {
+/** `thinking`: the selection breathes while the AI is working on it.
+ *  `optimized`: show the AI's route instead of the original one. */
+export function IllustratedMap({
+  mode,
+  thinking = false,
+  optimized = false,
+}: {
+  mode: SelectionMode;
+  thinking?: boolean;
+  optimized?: boolean;
+}) {
+  const route = mode === "route";
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="absolute inset-0 size-full" aria-hidden>
       {/* Streets are the background; blocks are drawn on top with gaps between them. */}
@@ -78,11 +100,20 @@ export function IllustratedMap({ mode, thinking = false }: { mode: SelectionMode
         {/* A diagonal like Broadway, cutting across the grid */}
         <line x1={-420} y1={260} x2={420} y2={-120} className="stroke-card" strokeWidth="8" />
 
-        {/* The selection: a street-following route, or a radius around the pin. Both stay
-            mounted and cross-fade, so switching modes is smooth. */}
+        {/* The selection: a street-following route (original or the AI's pick), or a
+            radius around the pin. All stay mounted and cross-fade, so switching is smooth. */}
         <polygon
           points={routePoints}
-          className={cn(selectionClass, mode === "route" ? (thinking ? "animate-pulse" : "opacity-100") : "scale-90 opacity-0")}
+          className={cn(
+            selectionClass,
+            route && !optimized ? (thinking ? "animate-pulse" : "opacity-100") : "scale-90 opacity-0"
+          )}
+          strokeWidth="2.5"
+          strokeLinejoin="round"
+        />
+        <polygon
+          points={aiRoutePoints}
+          className={cn(selectionClass, "duration-500", route && optimized ? "opacity-100" : "scale-90 opacity-0")}
           strokeWidth="2.5"
           strokeLinejoin="round"
         />
