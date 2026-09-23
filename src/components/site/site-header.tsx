@@ -30,8 +30,8 @@ export function SiteHeader() {
         </nav>
 
         <div className="hidden items-center gap-2 lg:flex">
-          <Button variant="outline" size="lg" nativeButton={false} render={<Link href="#" />}>
-            Log in
+          <Button variant="outline" size="lg" nativeButton={false} render={<Link href={site.login.href} />}>
+            {site.login.label}
           </Button>
           <Button size="lg" nativeButton={false} render={<Link href={site.primaryCta.href} />}>
             {site.primaryCta.label}
@@ -61,6 +61,9 @@ export function SiteHeader() {
               ))}
               <Button className="mt-4" size="lg" nativeButton={false} render={<Link href={site.primaryCta.href} />}>
                 {site.primaryCta.label}
+              </Button>
+              <Button variant="outline" size="lg" nativeButton={false} render={<Link href={site.login.href} />}>
+                {site.login.label}
               </Button>
             </nav>
           </SheetContent>

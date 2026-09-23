@@ -6,14 +6,17 @@ export const site = {
   tagline: "Every Door Direct Mail, made simple.",
   description:
     "Reach every home in the neighborhoods you choose. Pick routes on a map, design your postcard, and we handle printing and USPS delivery.",
+  // Homepage sections, linked from "/" so the links also work from the other pages.
   nav: [
-    { label: "How it works", href: "#how-it-works" },
-    { label: "Why EDDM", href: "#features" },
-    { label: "Pricing", href: "#pricing" },
-    { label: "FAQ", href: "#faq" },
+    { label: "How it works", href: "/#how-it-works" },
+    { label: "Why EDDM", href: "/#features" },
+    { label: "Pricing", href: "/#pricing" },
+    { label: "FAQ", href: "/#faq" },
   ],
-  primaryCta: { label: "Start a campaign", href: "#get-started" },
-  secondaryCta: { label: "See pricing", href: "#pricing" },
+  primaryCta: { label: "Start a campaign", href: "/#get-started" },
+  secondaryCta: { label: "See pricing", href: "/#pricing" },
+  // The same Oppizi app login the live eddm.com links to.
+  login: { label: "Log in", href: "https://app.oppizi.com/login?oppizi_source=eddm" },
 }
 
 export const hero = {

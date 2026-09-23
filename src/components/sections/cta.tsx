@@ -1,8 +1,11 @@
+"use client";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-// Front-end only: the form doesn't submit anywhere yet — backend devs will wire it up.
+// Front-end only: the form doesn't submit anywhere yet — backend devs will wire it up
+// in onSubmit. Until then it only validates, instead of reloading the page.
 export function Cta() {
   return (
     <section id="get-started" className="scroll-mt-20 pb-20">
@@ -16,12 +19,21 @@ export function Cta() {
                 Enter a ZIP code to see how many homes you can reach and what it would cost.
               </p>
             </div>
-            <form className="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <form
+              className="flex flex-col gap-3 sm:flex-row sm:items-end"
+              onSubmit={(e) => e.preventDefault()}
+            >
               <div className="flex-1 space-y-2">
                 <Label htmlFor="zip" className="text-brand-foreground">ZIP code</Label>
                 <Input
                   id="zip"
+                  name="zip"
+                  required
                   inputMode="numeric"
+                  autoComplete="postal-code"
+                  maxLength={5}
+                  pattern="[0-9]{5}"
+                  title="A 5-digit US ZIP code"
                   placeholder="e.g. 90210"
                   className="h-11 border-transparent bg-background text-base text-foreground"
                 />

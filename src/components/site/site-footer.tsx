@@ -13,7 +13,7 @@ export function SiteFooter() {
           <p className="max-w-sm text-sm text-muted-foreground">{site.description}</p>
         </div>
         <div className="space-y-3">
-          <h4 className="text-sm font-semibold">Product</h4>
+          <h2 className="text-sm font-semibold tracking-normal">Product</h2>
           <ul className="space-y-2 text-sm text-muted-foreground">
             {site.nav.map((item) => (
               <li key={item.href}>
@@ -25,7 +25,7 @@ export function SiteFooter() {
           </ul>
         </div>
         <div className="space-y-3">
-          <h4 className="text-sm font-semibold">Company</h4>
+          <h2 className="text-sm font-semibold tracking-normal">Company</h2>
           <ul className="space-y-2 text-sm text-muted-foreground">
             <li><Link href="#" className="hover:text-foreground">About</Link></li>
             <li><Link href="#" className="hover:text-foreground">Contact</Link></li>
@@ -35,7 +35,8 @@ export function SiteFooter() {
       </div>
       <Separator />
       <div className="container-page flex flex-col justify-between gap-2 py-6 text-xs text-muted-foreground sm:flex-row">
-        <p>© {new Date().getFullYear()} {site.name}. All rights reserved.</p>
+        {/* The US legal entity, per oppizi.com's imprint ("EDDM" itself is a USPS trademark). */}
+        <p>© {new Date().getFullYear()} Oppizi US Inc. All rights reserved.</p>
         <p>EDDM® and Every Door Direct Mail® are trademarks of the United States Postal Service.</p>
       </div>
     </footer>
