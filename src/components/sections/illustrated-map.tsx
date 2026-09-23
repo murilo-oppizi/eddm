@@ -81,6 +81,14 @@ export function IllustratedMap({
   const route = mode === "route";
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="absolute inset-0 size-full" aria-hidden>
+      {/* Same pink-to-indigo as the AI loading glow (see .ai-glow in globals.css). */}
+      <defs>
+        <linearGradient id="ai-route-gradient" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" style={{ stopColor: "var(--ds-action-primary)" }} />
+          <stop offset="100%" style={{ stopColor: "var(--ds-status-ai-solid)" }} />
+        </linearGradient>
+      </defs>
+
       {/* Streets are the background; blocks are drawn on top with gaps between them. */}
       <rect width={W} height={H} className="fill-card" />
 
@@ -114,6 +122,8 @@ export function IllustratedMap({
         <polygon
           points={aiRoutePoints}
           className={cn(selectionClass, "duration-500", route && optimized ? "opacity-100" : "scale-90 opacity-0")}
+          // Inline style so the gradient wins over the pink fill/stroke classes.
+          style={{ fill: "url(#ai-route-gradient)", fillOpacity: 0.22, stroke: "url(#ai-route-gradient)" }}
           strokeWidth="2.5"
           strokeLinejoin="round"
         />
