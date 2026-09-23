@@ -3,18 +3,21 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
 import {
   IconArrowUp,
-  IconBarbell,
+  IconBan,
   IconCalendar,
+  IconChartBar,
   IconCheck,
   IconCircle,
-  IconCoffee,
+  IconFlask,
   IconLoader2,
   IconPaperclip,
   IconReceipt,
+  IconRocket,
   IconRotate,
   IconRoute,
   IconSparkles,
-  IconToolsKitchen2,
+  IconTrendingUp,
+  IconUserSearch,
   IconUsers,
   type TablerIcon,
 } from "@tabler/icons-react";
@@ -30,17 +33,40 @@ const icons: Record<string, TablerIcon> = {
   users: IconUsers,
   calendar: IconCalendar,
   receipt: IconReceipt,
-  coffee: IconCoffee,
-  dumbbell: IconBarbell,
-  utensils: IconToolsKitchen2,
+  ban: IconBan,
+  trending: IconTrendingUp,
+  flask: IconFlask,
+  rocket: IconRocket,
+  userSearch: IconUserSearch,
+  chart: IconChartBar,
+};
+
+type Scenario = (typeof aiPlanning.scenarios)[number];
+type Choice = Extract<Scenario, { choice: unknown }>["choice"];
+
+/** The options the agent offers, for examples that stop for the visitor to pick. */
+const choiceOf = (s: Scenario): Choice | undefined => ("choice" in s ? s.choice : undefined);
+const recommendedOf = (c: Choice) => Math.max(0, c.options.findIndex((o) => o.recommended));
+/** The plan to show: the example's own, or the one for the option picked. */
+const planOf = (s: Scenario, picked: number | null) => {
+  const c = choiceOf(s);
+  if (c) return c.options[picked ?? recommendedOf(c)].plan;
+  return "plan" in s ? s.plan : [];
 };
 
 // One card that changes in place, like an AI composer: the brief types itself into the
 // prompt box, gets submitted, the agent works through its steps, and the box becomes
-// the agent's plan. Until the page has hydrated (and for visitors who prefer reduced
+// the agent's plan. Some examples stop halfway for the visitor to pick between the
+// options the agent offers; their pick shows as their reply, then the plan follows. Until the page has hydrated (and for visitors who prefer reduced
 // motion) the card shows the finished plan, so the full text is always in the page.
 type Phase =
-  "composing" | "typing" | "submitting" | "working" | "answering" | "done";
+  | "composing"
+  | "typing"
+  | "submitting"
+  | "working"
+  | "choosing"
+  | "answering"
+  | "done";
 
 // 1.5× the original pacing (agent steps a bit longer), so each stage can be read (≈ 10s).
 const TYPE_MS = 30; // per character
@@ -48,8 +74,8 @@ const PAUSE_MS = 525; // after the brief is typed
 const SUBMIT_MS = 450; // the button press
 const STEP_MS = 1100; // per agent step — slower than the rest so each step can be read
 const ROW_MS = 330; // between answer lines
-const STEPS = aiPlanning.steps.length;
-const ROWS = aiPlanning.scenarios[0].plan.length + 1; // plan lines + the "Run again" button
+const STEPS = 4; // every example has four agent steps…
+const ROWS = 4 + 1; // …and four plan lines, plus the "Run again" button
 
 const noop = () => () => {};
 /** false during SSR and hydration, true afterwards. */
@@ -70,6 +96,7 @@ export function AiPlanning() {
   const [typedCount, setTyped] = useState(0);
   const [stepCount, setStep] = useState(0);
   const [rowCount, setRows] = useState(0);
+  const [picked, setPicked] = useState<number | null>(null);
 
   const scenario = aiPlanning.scenarios[scenarioIndex];
   // What's on screen: the live demo when animating, otherwise the finished plan.
@@ -77,13 +104,22 @@ export function AiPlanning() {
   const typed = animated ? typedCount : scenario.brief.length;
   const step = animated ? stepCount : STEPS;
   const rows = animated ? rowCount : ROWS;
+  const choice = choiceOf(scenario);
+  const pick = animated ? picked : choice ? recommendedOf(choice) : null;
 
   const play = (index: number) => {
     setScenario(index);
     setTyped(0);
     setStep(0);
     setRows(0);
+    setPicked(null);
     setPhase("typing");
+  };
+
+  const choose = (index: number) => {
+    setPicked(index);
+    setRows(0);
+    setPhase("answering");
   };
 
   // Drive the timeline (all state changes happen in timer callbacks).
@@ -99,13 +135,14 @@ export function AiPlanning() {
       next(() => setPhase("working"), SUBMIT_MS);
     } else if (state === "working") {
       if (stepCount < STEPS) next(() => setStep((n) => n + 1), STEP_MS);
-      else next(() => setPhase("answering"), 300);
+      // Examples with options wait for the visitor's pick (see choose).
+      else next(() => setPhase(choice ? "choosing" : "answering"), 300);
     } else if (state === "answering") {
       if (rowCount < ROWS) next(() => setRows((n) => n + 1), ROW_MS);
       else next(() => setPhase("done"), 0);
     }
     return () => clearTimeout(timer);
-  }, [animated, state, typedCount, stepCount, rowCount, scenario.brief.length]);
+  }, [animated, state, typedCount, stepCount, rowCount, scenario.brief.length, choice]);
 
   const composing =
     phase === "composing" || phase === "typing" || phase === "submitting";
@@ -121,7 +158,7 @@ export function AiPlanning() {
           />
 
           {/* Example briefs as a segmented control, like the suggestion chips of AI composers. */}
-          {/* Three equal tabs (icon over label) on phones; one pill row from md up. */}
+          {/* Three equal tabs (icon over label) on phones; one pill row from md up, with the area from lg. */}
           <div className="flex justify-center">
             <div
               role="group"
@@ -138,7 +175,7 @@ export function AiPlanning() {
                     aria-pressed={active}
                     onClick={() => (animated ? play(i) : setScenario(i))}
                     className={cn(
-                      "flex cursor-pointer flex-col items-center justify-center gap-1 rounded-md px-2 py-2 text-xs font-medium whitespace-nowrap transition-all outline-none focus-visible:ring-3 focus-visible:ring-ring/50 md:flex-row md:gap-2 md:px-4 md:text-sm",
+                      "flex cursor-pointer flex-col items-center justify-center gap-1 rounded-md px-2 py-2 text-center text-xs leading-tight font-medium transition-all md:whitespace-nowrap outline-none focus-visible:ring-3 focus-visible:ring-ring/50 md:flex-row md:gap-2 md:px-4 md:text-sm",
                       active
                         ? "bg-card text-foreground shadow-sm"
                         : "text-muted-foreground hover:bg-card/60 hover:text-foreground",
@@ -149,7 +186,7 @@ export function AiPlanning() {
                       aria-hidden
                     />
                     {s.chip}
-                    <span className="hidden font-normal text-muted-foreground md:inline">
+                    <span className="hidden font-normal text-muted-foreground lg:inline">
                       · {s.area}
                     </span>
                   </button>
@@ -164,8 +201,9 @@ export function AiPlanning() {
           <div className="sr-only" aria-live="polite">
             <p>Example brief: {scenario.brief}</p>
             <p>
+              {choice && pick !== null && `${choice.prompt} Picked: ${choice.options[pick].title}. `}
               Suggested plan:{" "}
-              {scenario.plan
+              {planOf(scenario, pick)
                 .map((row) => `${row.label}: ${row.value}`)
                 .join(". ")}
               .
@@ -193,6 +231,7 @@ export function AiPlanning() {
                   phase="done"
                   step={STEPS}
                   rows={ROWS}
+                  picked={pick ?? (choice ? recommendedOf(choice) : null)}
                   onRunAgain={animated ? () => {} : undefined}
                 />
               </div>
@@ -226,6 +265,8 @@ export function AiPlanning() {
                         phase={phase}
                         step={step}
                         rows={rows}
+                        picked={pick}
+                        onChoose={animated ? choose : undefined}
                         onRunAgain={
                           animated ? () => play(scenarioIndex) : undefined
                         }
@@ -277,26 +318,32 @@ function Composer({ phase, text }: { phase: Phase; text: string }) {
   );
 }
 
-type Scenario = (typeof aiPlanning.scenarios)[number];
-
 /** The agent's reply, which replaces the prompt box once the brief is sent. */
 function Response({
   scenario,
   phase,
   step,
   rows,
+  picked,
+  onChoose,
   onRunAgain,
 }: {
   scenario: Scenario;
   phase: Phase;
   step: number;
   rows: number;
+  /** The option the visitor picked, for examples that offer a choice. */
+  picked: number | null;
+  onChoose?: (index: number) => void;
   onRunAgain?: () => void;
 }) {
   const working = phase === "working";
+  const choosing = phase === "choosing";
   const visible = (i: number) =>
     phase === "done" || (phase === "answering" && i < rows);
-  const steps = aiPlanning.steps.map((s) => s.replace("{area}", scenario.area));
+  const steps = scenario.steps;
+  const choice = choiceOf(scenario);
+  const plan = planOf(scenario, picked);
 
   return (
     <div className="flex h-full flex-col p-5 sm:p-6">
@@ -308,7 +355,17 @@ function Response({
         </p>
       </div>
 
-      {/* Agent status: the current step while working, then a one-line summary */}
+      {/* The visitor's pick, as their reply */}
+      {choice && picked !== null && !working && !choosing && (
+        <div aria-hidden className="mt-3 flex justify-end">
+          <p className="flex items-center gap-1.5 rounded-xl bg-brand-subtle px-4 py-2 text-sm font-medium text-brand-subtle-foreground">
+            <IconCheck className="size-4" /> {choice.options[picked].title}
+          </p>
+        </div>
+      )}
+
+      {/* Agent status: the current step while working, the question while it waits for a
+          pick, then a one-line summary */}
       <div aria-hidden className="mt-5 flex items-center gap-2.5">
         <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground">
           <IconSparkles className="size-3.5" />
@@ -317,9 +374,11 @@ function Response({
           <span className="animate-shimmer text-sm font-medium text-shimmer motion-reduce:animate-none">
             {steps[Math.min(step, steps.length - 1)]}…
           </span>
+        ) : choosing && choice ? (
+          <span className="text-sm font-medium">{choice.prompt}</span>
         ) : (
           <span className="text-sm font-medium">
-            Plan ready{" "}
+            {scenario.summary}{" "}
             <span className="font-normal text-muted-foreground">
               · {steps.length} steps
             </span>
@@ -348,10 +407,35 @@ function Response({
             </li>
           ))}
         </ul>
+      ) : choosing && choice ? (
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 sm:pl-9.5">
+          {choice.options.map((option, i) => (
+            <motion.button
+              key={option.title}
+              type="button"
+              onClick={() => onChoose?.(i)}
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.12, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+              className="flex cursor-pointer flex-col items-start gap-1 rounded-xl border bg-card p-4 text-left transition-colors outline-none hover:border-primary/40 hover:bg-brand-subtle/40 focus-visible:ring-3 focus-visible:ring-ring/50"
+            >
+              <span className="flex w-full items-center justify-between gap-2">
+                <span className="text-sm font-semibold">{option.title}</span>
+                {option.recommended && (
+                  <span className="rounded-md bg-brand-subtle px-1.5 py-0.5 text-[11px] leading-none font-medium text-brand">
+                    Recommended
+                  </span>
+                )}
+              </span>
+              <span className="text-sm text-muted-foreground">{option.detail}</span>
+              <span className="mt-1 text-xs font-medium text-foreground/80 tabular-nums">{option.meta}</span>
+            </motion.button>
+          ))}
+        </div>
       ) : (
         <>
           <dl aria-hidden className="mt-4 divide-y rounded-xl border">
-            {scenario.plan.map((row, i) => {
+            {plan.map((row, i) => {
               const Icon = icons[row.icon];
               return (
                 <Reveal
@@ -369,7 +453,7 @@ function Response({
 
           {onRunAgain && (
             <Reveal
-              visible={visible(scenario.plan.length)}
+              visible={visible(plan.length)}
               className="mt-auto flex justify-center pt-6"
             >
               <Button
