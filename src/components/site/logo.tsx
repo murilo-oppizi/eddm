@@ -24,52 +24,18 @@ export function OppiziSymbol({ className, cropped = false }: { className?: strin
   );
 }
 
-export type LogoVariant = "tile" | "inline" | "endorsed";
-
-/**
- * EDDM, powered by Oppizi. Three lockups to choose from (compare them at /logos):
- * - tile: the symbol on a pink tile, "EDDM" stacked over "powered by Oppizi"
- * - inline: the bare pink symbol, "EDDM" | "powered by Oppizi" on one line
- * - endorsed: "EDDM" leads on its own; the symbol sits in the "powered by" line
- */
-export function Logo({ variant = "tile", className }: { variant?: LogoVariant; className?: string }) {
+/** EDDM, powered by Oppizi: the pink symbol, "EDDM", a hairline, then the endorsement. */
+export function Logo({ className }: { className?: string }) {
   return (
     <Link
       href="/"
       aria-label={`${site.name}, powered by Oppizi — home`}
-      className={cn("flex items-center font-heading", className)}
+      className={cn("flex items-center gap-2 font-heading", className)}
     >
-      {variant === "tile" && (
-        <span className="flex items-center gap-2.5">
-          <span className="grid size-9 place-items-center rounded-lg bg-brand text-brand-foreground">
-            <OppiziSymbol className="size-7" />
-          </span>
-          <span className="flex flex-col gap-1">
-            <span className="text-lg leading-none font-bold tracking-tight">{site.name}</span>
-            <span className="text-[11px] leading-none font-medium text-brand">powered by Oppizi</span>
-          </span>
-        </span>
-      )}
-
-      {variant === "inline" && (
-        <span className="flex items-center gap-2">
-          <OppiziSymbol cropped className="h-4 w-auto text-brand" />
-          <span className="text-xl leading-none font-bold tracking-tight">{site.name}</span>
-          <span aria-hidden className="h-4 w-px bg-border" />
-          <span className="text-xs leading-none font-medium text-brand">powered by Oppizi</span>
-        </span>
-      )}
-
-      {variant === "endorsed" && (
-        <span className="flex flex-col gap-1">
-          <span className="text-2xl leading-none font-extrabold tracking-tight">{site.name}</span>
-          <span className="flex items-center gap-1 text-[11px] leading-none font-medium text-brand">
-            powered by
-            <OppiziSymbol cropped className="h-2 w-auto text-brand" />
-            <span className="font-semibold">Oppizi</span>
-          </span>
-        </span>
-      )}
+      <OppiziSymbol cropped className="h-4 w-auto text-brand" />
+      <span className="text-xl leading-none font-bold tracking-tight">{site.name}</span>
+      <span aria-hidden className="h-4 w-px bg-border" />
+      <span className="text-xs leading-none font-medium text-brand">powered by Oppizi</span>
     </Link>
   );
 }
