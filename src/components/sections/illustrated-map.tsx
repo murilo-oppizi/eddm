@@ -7,6 +7,8 @@
 // lives in one group rotated like Williamsburg's grid, centred on the route, so the
 // route outline can sit exactly on street centrelines.
 
+import { useId } from "react";
+
 import { cn } from "@/lib/utils";
 
 const W = 400;
@@ -88,12 +90,26 @@ const aiRoutePoints = toPoints(AI_ROUTE_STEPS);
 const selectionClass =
   "fill-primary/20 stroke-primary transition-[opacity,scale] duration-300 ease-out transform-fill origin-center motion-reduce:transition-none";
 
-const blocks: { x: number; y: number; park: boolean }[] = [];
-for (let i = -COLS; i < COLS; i++) {
-  for (let j = -ROWS; j < ROWS; j++) {
-    blocks.push({ x: i * AVENUE_GAP, y: j * STREET_GAP, park: PARK.has(`${i},${j}`) });
-  }
+/** A block's rectangle, for the block whose top-left street corner is at avenue i, street j. */
+function blockAt(i: number, j: number) {
+  const major = isMajorAvenue(i) ? 1.5 : 0; // wide avenues eat a little into the block
+  return {
+    x: i * AVENUE_GAP + STREET_W / 2 + major,
+    y: j * STREET_GAP + STREET_W / 2,
+    width: AVENUE_GAP - STREET_W - major,
+    height: STREET_GAP - STREET_W,
+  };
 }
+
+// The blocks repeat every three avenues (one of them wide), so they're drawn as one SVG
+// pattern tile instead of ~800 separate rectangles per map. Parks are drawn on top.
+const TILE = { w: 3 * AVENUE_GAP, h: STREET_GAP };
+const tileBlocks = [0, 1, 2].map((i) => blockAt(i, 0));
+const GRID = { x: -COLS * AVENUE_GAP, y: -ROWS * STREET_GAP, w: 2 * COLS * AVENUE_GAP, h: 2 * ROWS * STREET_GAP };
+const parks = [...PARK].map((key) => {
+  const [i, j] = key.split(",").map(Number);
+  return blockAt(i, j);
+});
 
 export type SelectionMode = "route" | "area";
 
@@ -129,6 +145,7 @@ export function IllustratedMap({
   view?: { x: number; y: number; w: number; h: number };
 }) {
   const route = mode === "route";
+  const blocksId = `${useId()}blocks`;
   return (
     <svg
       viewBox={view ? `${view.x} ${view.y} ${view.w} ${view.h}` : `0 0 ${width} ${H}`}
@@ -146,16 +163,17 @@ export function IllustratedMap({
       />
 
       <g transform={`translate(${ROUTE_CENTER.x} ${ROUTE_CENTER.y}) rotate(${GRID_ANGLE})`}>
-        {blocks.map(({ x, y, park }) => (
-          <rect
-            key={`${x},${y}`}
-            x={x + STREET_W / 2 + (isMajorAvenue(x / AVENUE_GAP) ? 1.5 : 0)}
-            y={y + STREET_W / 2}
-            width={AVENUE_GAP - STREET_W - (isMajorAvenue(x / AVENUE_GAP) ? 1.5 : 0)}
-            height={STREET_GAP - STREET_W}
-            rx="1.5"
-            className={park ? "fill-success-subtle" : "fill-subtle/70"}
-          />
+        {/* The pattern tile starts on a wide avenue (i = 0), so it lines up with the grid. */}
+        <defs>
+          <pattern id={blocksId} width={TILE.w} height={TILE.h} patternUnits="userSpaceOnUse">
+            {tileBlocks.map((b) => (
+              <rect key={b.x} {...b} rx="1.5" className="fill-subtle/70" />
+            ))}
+          </pattern>
+        </defs>
+        <rect {...{ x: GRID.x, y: GRID.y, width: GRID.w, height: GRID.h }} fill={`url(#${blocksId})`} />
+        {parks.map((b) => (
+          <rect key={`${b.x},${b.y}`} {...b} rx="1.5" className="fill-success-subtle" />
         ))}
 
         {/* A diagonal like Broadway, cutting across the grid */}
