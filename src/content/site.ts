@@ -23,6 +23,31 @@ export const hero = {
   checks: ["USPS-compliant", "No mailing list needed", "Full support included"],
 }
 
+// Client logos and numbers from oppizi.com (Sept 2026). The numbers are Oppizi-wide,
+// across all offline channels, not EDDM only. Logos: oppizi.com/brand/clients/*.svg.
+export const trust = {
+  label: "Trusted by 1,000+ companies",
+  clients: [
+    { name: "DoorDash", src: "/brand/clients/doordash.svg", width: 241, height: 29 },
+    { name: "Uber Eats", src: "/brand/clients/uber.svg", width: 160, height: 28 }, // the file is the Uber Eats wordmark
+    { name: "Chipotle", src: "/brand/clients/chipotle.svg", width: 191, height: 37 },
+    { name: "Sephora", src: "/brand/clients/sephora.svg", width: 163, height: 20 },
+    { name: "TikTok", src: "/brand/clients/tiktok.svg", width: 157, height: 42 },
+    { name: "Uniqlo", src: "/brand/clients/uniqlo.svg", width: 50, height: 49 },
+    { name: "ClassPass", src: "/brand/clients/classpass.svg", width: 178, height: 27 },
+    { name: "Gopuff", src: "/brand/clients/gopuff.svg", width: 142, height: 47 },
+    { name: "Wolt", src: "/brand/clients/wolt.svg", width: 88, height: 32 },
+    { name: "Wonder", src: "/brand/clients/wonder.svg", width: 140, height: 26 },
+    { name: "Getaround", src: "/brand/clients/getaround.svg", width: 157, height: 35 },
+  ],
+  stats: [
+    { value: "306M+", label: "Pieces delivered since 2014" },
+    { value: "1,000+", label: "Companies served" },
+    { value: "12+", label: "Countries" },
+    { value: "672K+", label: "Direct mail conversions tracked" },
+  ],
+}
+
 export const steps = [
   {
     title: "Pick your neighborhoods",

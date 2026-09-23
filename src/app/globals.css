@@ -66,6 +66,17 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* Endless horizontal scroll (logo strip). The track holds the list twice, so moving
+   it by half its width loops seamlessly. */
+@theme {
+  --animate-marquee: marquee 45s linear infinite;
+  @keyframes marquee {
+    to {
+      transform: translateX(-50%);
+    }
+  }
+}
+
 /* shadcn's token names, bound to Oppizi's Layer 3 (semantic, mode-aware) tokens.
    Light/dark comes from oppizi-tokens.css — set data-theme="dark" on <html> to flip. */
 :root {
