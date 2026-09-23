@@ -38,12 +38,13 @@ export const steps = [
   },
 ]
 
+// Facts checked against oppizi.com and eddm.com (Sept 2026).
 export const features = [
   { icon: "map", title: "Map-based targeting", body: "Choose exactly which streets and neighborhoods hear from you." },
-  { icon: "users", title: "Real demographics", body: "Filter routes by household income, age and home ownership." },
-  { icon: "printer", title: "Print included", body: "High-quality, full-color postcards printed on thick stock." },
+  { icon: "users", title: "Real demographics", body: "Filter routes by age, income and household size to reach the right homes." },
+  { icon: "printer", title: "Printed locally", body: "Printed within 50 miles of your campaign by our network of 700+ print partners." },
   { icon: "truck", title: "USPS drop-off handled", body: "We prepare the paperwork and deliver bundles to the post office." },
-  { icon: "chart", title: "Track your results", body: "Use QR codes and call tracking to see what your mail brings in." },
+  { icon: "chart", title: "Track your results", body: "Follow delivery live, then see scans, calls and visits by neighborhood." },
   { icon: "sparkles", title: "AI-optimized routes", body: "Describe your ideal customer and our AI agents suggest the best routes to reach them." },
 ] as const
 
