@@ -320,7 +320,7 @@ function RouteMap({
                   <p className="text-sm font-semibold text-foreground">Oppizi AI</p>
                   <p className="text-xs">
                     <span className="animate-shimmer text-shimmer motion-reduce:animate-none">
-                      Finding the best routes…
+                      Optimizing campaign…
                     </span>
                   </p>
                 </div>
