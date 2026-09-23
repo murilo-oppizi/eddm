@@ -534,7 +534,12 @@ function DeliveryVisual({ active }: { active: boolean }) {
   const [ticks, setTicks] = useState(0);
   useEffect(() => {
     if (!active || reduce) return;
-    const timer = setInterval(() => setTicks((n) => Math.min(n + 1, delivery.length)), TICK_MS);
+    let ticked = 0;
+    const timer = setInterval(() => {
+      ticked += 1;
+      setTicks(ticked);
+      if (ticked >= delivery.length) clearInterval(timer); // all checked: stop ticking
+    }, TICK_MS);
     return () => {
       clearInterval(timer);
       setTicks(0); // replay from the start next time the step comes back
