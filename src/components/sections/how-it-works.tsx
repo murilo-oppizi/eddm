@@ -5,12 +5,15 @@ import {
   IconCheck,
   IconCircleCheck,
   IconLayoutGrid,
-  IconMail,
+  IconChartBar,
+  IconMapPin,
+  IconPencil,
   IconMailFast,
   IconPrinter,
   IconQrcode,
   IconTruckDelivery,
   IconUpload,
+  type TablerIcon,
 } from "@tabler/icons-react";
 import {
   AnimatePresence,
@@ -29,7 +32,8 @@ import { steps } from "@/content/site";
 import { cn } from "@/lib/utils";
 
 // "How it works" as the mail's journey from map to mailbox. On desktop the section
-// pins: a postcard travels a dashed mail route past four stops as you scroll, and one
+// pins: a marker travels a dashed mail route past four stops as you scroll (its icon
+// changes with each step: pin, pencil, truck, chart), and one
 // stage card below cross-fades to each step's text and visual. Phones get a vertical
 // timeline whose line fills as you scroll. With reduced motion, a still grid.
 
@@ -140,7 +144,7 @@ function RouteRail({ progress, active, reached }: { progress: MotionValue<number
           className="absolute top-1/2 grid size-10 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-xl bg-primary text-primary-foreground shadow-lg shadow-primary/30"
           style={{ left }}
         >
-          <IconMail className="size-5" />
+          <MarkerIcon step={active} className="size-5" />
         </motion.span>
       </div>
       <ol className="mt-3 grid grid-cols-4 text-center">
@@ -218,6 +222,27 @@ function Stage({ active }: { active: number }) {
   );
 }
 
+/** The route marker's icon shows what the mail is going through at each stop. */
+const markerIcons: TablerIcon[] = [IconMapPin, IconPencil, IconTruckDelivery, IconChartBar];
+
+function MarkerIcon({ step, className }: { step: number; className?: string }) {
+  const Icon = markerIcons[Math.min(Math.max(step, 0), markerIcons.length - 1)];
+  return (
+    <AnimatePresence initial={false} mode="popLayout">
+      <motion.span
+        key={step}
+        className="grid place-items-center"
+        initial={{ scale: 0.4, rotate: -45, opacity: 0 }}
+        animate={{ scale: 1, rotate: 0, opacity: 1 }}
+        exit={{ scale: 0.4, rotate: 45, opacity: 0 }}
+        transition={{ type: "spring", stiffness: 420, damping: 24 }}
+      >
+        <Icon className={className} />
+      </motion.span>
+    </AnimatePresence>
+  );
+}
+
 /* ------------------------------ Phones & tablets ------------------------------ */
 
 /** Where each stop sits: the vertical centre of its card's visual (design px from the card top). */
@@ -285,7 +310,7 @@ function VerticalTimeline() {
             className="absolute top-0 grid size-9 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-xl bg-primary text-primary-foreground shadow-lg shadow-primary/30"
             style={{ y }}
           >
-            <IconMail className="size-4.5" />
+            <MarkerIcon step={reached} className="size-4.5" />
           </motion.span>
         </div>
         {steps.map((step, i) => (
