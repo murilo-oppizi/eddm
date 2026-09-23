@@ -48,9 +48,8 @@ export const features = [
 ] as const
 
 // Source: oppizi.com EDDM page ("$0.31 USD per piece · all-in", "$4,650 for ~15,000
-// addresses", USPS postage $0.260/piece per Notice 123, July 2026) and the sizes on
-// eddm.com/pricing. TO CONFIRM with marketing: eddm.com still says "from 7¢/piece",
-// and whether $0.31 applies to every size.
+// addresses", USPS postage $0.260/piece per Notice 123, July 2026). TO CONFIRM with
+// marketing: eddm.com still says "from 7¢/piece", and whether $0.31 applies to every size.
 export const pricing = {
   perPiece: "$0.31",
   example: { homes: "15,000", total: "$4,650" },
@@ -62,14 +61,6 @@ export const pricing = {
     "Delivery and scan tracking dashboard",
   ],
   noFees: "No mailing lists, data fees or setup fees.",
-  // Width × height in inches; drawn to scale in the pricing section.
-  sizes: [
-    { name: "Small", w: 4.25, h: 11 },
-    { name: "Standard", w: 6.25, h: 9, bestSeller: true },
-    { name: "Large", w: 6.25, h: 11 },
-    { name: "Jumbo", w: 8.25, h: 11 },
-    { name: "Oversized", w: 15, h: 12 },
-  ],
 }
 
 export const faqs = [
