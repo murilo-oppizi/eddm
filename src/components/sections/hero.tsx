@@ -3,13 +3,13 @@ import { ArrowRightIcon, CircleCheckIcon } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { HeroStreet } from "@/components/sections/hero-street";
+import { HeroComposition } from "@/components/sections/hero-composition";
 import { hero, site } from "@/content/site";
 
 export function Hero() {
   return (
     <section className="relative overflow-hidden">
-      <div className="container-page grid items-center gap-12 py-16 md:py-24 lg:grid-cols-2">
+      <div className="container-page grid items-center gap-12 py-16 md:py-24 lg:grid-cols-[1fr_1.1fr]">
         <div className="space-y-6">
           <Badge variant="secondary">{hero.eyebrow}</Badge>
           <h1 className="text-4xl font-bold sm:text-5xl lg:text-6xl">{hero.title}</h1>
@@ -33,7 +33,7 @@ export function Hero() {
           </div>
         </div>
 
-        <HeroStreet />
+        <HeroComposition />
       </div>
     </section>
   );

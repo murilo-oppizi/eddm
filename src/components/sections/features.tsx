@@ -2,7 +2,7 @@ import {
   ChartColumnIcon,
   MapIcon,
   PrinterIcon,
-  ShieldCheckIcon,
+  SparklesIcon,
   TruckIcon,
   UsersIcon,
   type LucideIcon,
@@ -17,7 +17,7 @@ const icons: Record<(typeof features)[number]["icon"], LucideIcon> = {
   printer: PrinterIcon,
   truck: TruckIcon,
   chart: ChartColumnIcon,
-  shield: ShieldCheckIcon,
+  sparkles: SparklesIcon,
 };
 
 export function Features() {

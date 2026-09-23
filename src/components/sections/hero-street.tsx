@@ -1,14 +1,15 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 import {
   motion,
   useMotionValue,
   useReducedMotion,
-  useScroll,
   useTransform,
   type MotionValue,
 } from "motion/react";
+
+import { useScrollProgress } from "@/hooks/use-scroll-progress";
 
 // A street of houses on one carrier route. Scrolling draws the route and walks a
 // postcard to every front door — the whole EDDM pitch in one picture.
@@ -75,40 +76,10 @@ function pointAt(progress: number): [number, number] {
   return routePoints[routePoints.length - 1];
 }
 
-/**
- * 0 → 1 as the visitor scrolls past the illustration. Starts at 0 on page load
- * even when the illustration is already on screen (desktop), and only once it
- * comes into view on mobile, where it sits below the headline.
- */
-function useDeliveryProgress(ref: React.RefObject<HTMLDivElement | null>) {
-  const { scrollY } = useScroll();
-  const range = useRef({ start: 0, length: 420 });
-
-  useEffect(() => {
-    const measure = () => {
-      const el = ref.current;
-      if (!el) return;
-      const rect = el.getBoundingClientRect();
-      const top = rect.top + window.scrollY;
-      const start = Math.max(0, top + rect.height / 2 - window.innerHeight * 0.6);
-      // Finish while the doors are still on screen, before the header covers them.
-      range.current = { start, length: Math.max(220, rect.height * 0.7) };
-    };
-    measure();
-    window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
-  }, [ref]);
-
-  return useTransform(scrollY, (y) => {
-    const { start, length } = range.current;
-    return Math.min(1, Math.max(0, (y - start) / length));
-  });
-}
-
 export function HeroStreet() {
   const ref = useRef<HTMLDivElement>(null);
   const reduceMotion = useReducedMotion();
-  const scrolled = useDeliveryProgress(ref);
+  const scrolled = useScrollProgress(ref);
   const finished = useMotionValue(1);
   // Respect "reduce motion": show every door already delivered.
   const progress = reduceMotion ? finished : scrolled;

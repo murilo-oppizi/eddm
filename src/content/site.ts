@@ -44,7 +44,7 @@ export const features = [
   { icon: "printer", title: "Print included", body: "High-quality, full-color postcards printed on thick stock." },
   { icon: "truck", title: "USPS drop-off handled", body: "We prepare the paperwork and deliver bundles to the post office." },
   { icon: "chart", title: "Track your results", body: "Use QR codes and call tracking to see what your mail brings in." },
-  { icon: "shield", title: "No minimums to start", body: "Test one neighborhood first, then scale what works." },
+  { icon: "sparkles", title: "AI-optimized routes", body: "Describe your ideal customer and our AI agents suggest the best routes to reach them." },
 ] as const
 
 export const plans = [
