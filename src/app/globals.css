@@ -69,15 +69,7 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* Endless horizontal scroll (logo strip). The track holds the list twice, so moving
-   it by half its width loops seamlessly. */
 @theme {
-  --animate-marquee: marquee 45s linear infinite;
-  @keyframes marquee {
-    to {
-      transform: translateX(-50%);
-    }
-  }
   /* Light sweeping across "thinking" text (pair with the text-shimmer utility). */
   --animate-shimmer: shimmer 1.8s linear infinite;
   @keyframes shimmer {

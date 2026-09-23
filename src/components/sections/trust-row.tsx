@@ -1,4 +1,8 @@
+"use client";
+
+import { useEffect, useRef } from "react";
 import Image from "next/image";
+import { motion, useAnimationFrame, useMotionValue, useReducedMotion } from "motion/react";
 
 import { trust } from "@/content/site";
 import { cn } from "@/lib/utils";
@@ -7,21 +11,20 @@ import { cn } from "@/lib/utils";
  *  Shown at 80%: close to the stats' near-black but a step quieter; full strength on hover. */
 const LOGO_SCALE = 0.72;
 
+/** One full loop of the strip at normal speed. */
+const LOOP_SECONDS = 45;
+/** How quickly the speed eases toward its target (hover, or settling after a fling). */
+const EASE_MS = 450;
+/** Cap on the glide speed after a flick, in px/s. */
+const MAX_FLING = 2500;
+
 export function TrustRow() {
   return (
     <section aria-label="Our clients" className="border-t py-12">
       <div className="container-page space-y-10">
         <p className="text-center text-sm font-medium text-muted-foreground">{trust.label}</p>
 
-        {/* Endless logo strip: fades out at both edges, pauses on hover, and becomes a
-            static wrapped row for visitors who prefer reduced motion. */}
-        <div className="group relative overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_12%,black_88%,transparent)] motion-reduce:[mask-image:none]">
-          <div className="flex w-max animate-marquee group-hover:[animation-play-state:paused] motion-reduce:w-full motion-reduce:animate-none">
-            <LogoList />
-            {/* Second copy makes the loop seamless; hidden from assistive tech and when static. */}
-            <LogoList aria-hidden className="motion-reduce:hidden" />
-          </div>
-        </div>
+        <LogoMarquee />
 
         <dl className="grid grid-cols-2 gap-y-8 border-t pt-10 md:grid-cols-4 md:divide-x">
           {trust.stats.map((stat) => (
@@ -36,6 +39,88 @@ export function TrustRow() {
         </dl>
       </div>
     </section>
+  );
+}
+
+/**
+ * Endless logo strip. It drifts left, eases to half speed while hovered, and can be
+ * dragged either way — let go with a flick and it glides, then settles back to its
+ * drift. Fades out at both edges; a static wrapped row for visitors who prefer reduced
+ * motion. Driven frame by frame (a CSS animation can only play or pause).
+ */
+function LogoMarquee() {
+  const reduceMotion = useReducedMotion();
+  const trackRef = useRef<HTMLDivElement>(null);
+  const x = useMotionValue(0);
+  const half = useRef(0); // width of one copy of the list = one loop
+  const speed = useRef(0); // px/s; positive moves left. Starts at 0 and eases in.
+  const hovered = useRef(false);
+  const drag = useRef<{ startX: number; startValue: number; lastX: number; lastT: number; velocity: number } | null>(null);
+
+  useEffect(() => {
+    const el = trackRef.current;
+    if (!el) return;
+    const measure = () => (half.current = el.scrollWidth / 2);
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, []);
+
+  /** Keep x within one loop, so the strip repeats seamlessly in both directions. */
+  const wrap = (value: number) => {
+    const h = half.current;
+    return h ? (((value % h) - h) % h) : value;
+  };
+
+  useAnimationFrame((_, delta) => {
+    if (reduceMotion !== false || drag.current || !half.current) return;
+    const base = half.current / LOOP_SECONDS;
+    const target = hovered.current ? base / 2 : base;
+    speed.current += (target - speed.current) * Math.min(1, delta / EASE_MS);
+    x.set(wrap(x.get() - (speed.current * delta) / 1000));
+  });
+
+  const onPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (reduceMotion !== false) return;
+    e.currentTarget.setPointerCapture(e.pointerId);
+    const now = performance.now();
+    drag.current = { startX: e.clientX, startValue: x.get(), lastX: e.clientX, lastT: now, velocity: 0 };
+  };
+  const onPointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    const d = drag.current;
+    if (!d) return;
+    const now = performance.now();
+    if (now > d.lastT) d.velocity = ((e.clientX - d.lastX) / (now - d.lastT)) * 1000;
+    d.lastX = e.clientX;
+    d.lastT = now;
+    x.set(wrap(d.startValue + e.clientX - d.startX));
+  };
+  const onPointerEnd = () => {
+    const d = drag.current;
+    if (!d) return;
+    drag.current = null;
+    // Glide on in the flick's direction (none if the pointer was held still), then ease back.
+    const velocity = performance.now() - d.lastT > 100 ? 0 : d.velocity;
+    speed.current = Math.max(-MAX_FLING, Math.min(MAX_FLING, -velocity));
+  };
+
+  return (
+    <div
+      onPointerEnter={(e) => e.pointerType === "mouse" && (hovered.current = true)}
+      onPointerLeave={() => (hovered.current = false)}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerEnd}
+      onPointerCancel={onPointerEnd}
+      // pan-y: vertical swipes still scroll the page on touch screens.
+      className="relative cursor-grab touch-pan-y overflow-hidden select-none [mask-image:linear-gradient(to_right,transparent,black_12%,black_88%,transparent)] active:cursor-grabbing motion-reduce:cursor-auto motion-reduce:[mask-image:none]"
+    >
+      <motion.div ref={trackRef} style={{ x }} className="flex w-max motion-reduce:w-full">
+        <LogoList />
+        {/* Second copy makes the loop seamless; hidden from assistive tech and when static. */}
+        <LogoList aria-hidden className="motion-reduce:hidden" />
+      </motion.div>
+    </div>
   );
 }
 
@@ -58,6 +143,7 @@ function LogoList({ className, ...props }: React.ComponentProps<"ul">) {
             unoptimized
             // Tiny SVGs that slide in from off-screen; lazy loading would make them pop in.
             loading="eager"
+            draggable={false}
             className="opacity-80 transition-opacity duration-300 hover:opacity-100"
             style={{ width: client.width * LOGO_SCALE, height: "auto" }}
           />
