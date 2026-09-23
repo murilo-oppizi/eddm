@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import {
+  IconArrowRight,
   IconArrowUp,
   IconBan,
   IconCalendar,
@@ -19,7 +20,15 @@ import {
   IconUsers,
   type TablerIcon,
 } from "@tabler/icons-react";
-import { AnimatePresence, motion, useMotionValueEvent, useReducedMotion, useScroll } from "motion/react";
+import {
+  AnimatePresence,
+  animate,
+  motion,
+  useMotionValue,
+  useMotionValueEvent,
+  useReducedMotion,
+  useScroll,
+} from "motion/react";
 
 import { IllustratedMap, RANKED_FOCUS } from "@/components/sections/illustrated-map";
 import { SectionHeading } from "@/components/sections/section-heading";
@@ -77,6 +86,10 @@ const STEP_MS = 1100; // per agent step — slower than the rest so each step ca
 const ROW_MS = 330; // between answer lines
 const STEPS = 4; // every example has four agent steps…
 const ROWS = 4; // …and four answer lines (plan rows, or the map and its three routes)
+// Autoplay: a line fills along the bottom of the card (with "Next: …" under it), then the
+// next example starts. It pauses while the card is hovered, focused or off screen.
+const DWELL_S = 5; // a finished example stays this long before the next one
+const CHOICE_S = 8; // how long the options wait before the recommended one is picked
 
 const noop = () => () => {};
 /** false during SSR and hydration, true afterwards. */
@@ -144,6 +157,40 @@ export function AiPlanning() {
     }
     return () => clearTimeout(timer);
   }, [animated, state, typedCount, stepCount, rowCount, scenario.brief.length, choice]);
+
+  // Countdown to the next example (or, while options wait, to picking the recommended one).
+  const countdown = useMotionValue(0);
+  const [hovered, setHovered] = useState(false);
+  const [focused, setFocused] = useState(false);
+  const [onScreen, setOnScreen] = useState(false);
+  const waiting = animated && (state === "done" || state === "choosing");
+  const paused = hovered || focused || !onScreen;
+  const advance = useRef(() => {});
+  useEffect(() => {
+    advance.current = () =>
+      state === "choosing" && choice
+        ? choose(recommendedOf(choice))
+        : play((scenarioIndex + 1) % aiPlanning.scenarios.length);
+  });
+  const countdownControls = useRef<ReturnType<typeof animate> | null>(null);
+  useEffect(() => {
+    countdown.set(0);
+    if (!waiting) return;
+    const controls = animate(countdown, 1, {
+      duration: state === "choosing" ? CHOICE_S : DWELL_S,
+      ease: "linear",
+      onComplete: () => advance.current(),
+    });
+    countdownControls.current = controls;
+    return () => {
+      controls.stop();
+      countdownControls.current = null;
+    };
+  }, [waiting, state, scenarioIndex, countdown]);
+  useEffect(() => {
+    if (paused) countdownControls.current?.pause();
+    else countdownControls.current?.play();
+  }, [paused, waiting, state, scenarioIndex]);
 
   // Once you're back above the section (it's entirely below the screen), rewind to the
   // empty prompt box, so coming down again replays the selected example. Scrolling on
@@ -229,11 +276,17 @@ export function AiPlanning() {
             }}
             // Plays the selected example when the card is mostly on screen — the first
             // time, and again after you've scrolled back above the section (see above).
-            onViewportEnter={() =>
-              animated && state === "composing" && play(scenarioIndex)
-            }
+            onViewportEnter={() => {
+              setOnScreen(true);
+              if (animated && state === "composing") play(scenarioIndex);
+            }}
+            onViewportLeave={() => setOnScreen(false)}
             viewport={{ amount: 0.5 }}
-            className="overflow-hidden rounded-2xl border bg-card shadow-lg"
+            onPointerEnter={() => setHovered(true)}
+            onPointerLeave={() => setHovered(false)}
+            onFocus={() => setFocused(true)}
+            onBlur={() => setFocused(false)}
+            className="relative overflow-hidden rounded-2xl border bg-card shadow-lg"
           >
             {/* The card is exactly as tall as the finished plan: an invisible copy of it sits in
                 the same grid cell as the live view, whatever the screen size or example. */}
@@ -285,7 +338,38 @@ export function AiPlanning() {
                 </AnimatePresence>
               </div>
             </div>
+
+            {/* The countdown: a line filling along the card's bottom edge */}
+            {waiting && (
+              <motion.span
+                aria-hidden
+                className="absolute inset-x-0 bottom-0 h-0.5 origin-left bg-primary"
+                style={{ scaleX: countdown }}
+              />
+            )}
           </motion.div>
+
+          {/* What the countdown leads to; click to skip ahead. Its space is kept so the page
+              doesn't shift. */}
+          <div className="mt-3 flex h-5 justify-end">
+            <AnimatePresence>
+              {waiting && (
+                <motion.button
+                  type="button"
+                  onClick={() => advance.current()}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="flex cursor-pointer items-center gap-1 rounded-sm text-xs font-medium text-muted-foreground outline-none hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
+                >
+                  {state === "choosing" && choice
+                    ? `Picking ${choice.options[recommendedOf(choice)].title} for you`
+                    : `Next: ${aiPlanning.scenarios[(scenarioIndex + 1) % aiPlanning.scenarios.length].chip}`}
+                  <IconArrowRight className="size-3.5" aria-hidden />
+                </motion.button>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
     </section>
