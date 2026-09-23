@@ -1,14 +1,20 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Inter } from "next/font/google";
 import "./globals.css";
 
 import { SiteFooter } from "@/components/site/site-footer";
 import { SiteHeader } from "@/components/site/site-header";
 import { site } from "@/content/site";
 
-// Geist is used for both body text (`font-sans`) and headings (`font-heading`, see globals.css).
-const geistSans = Geist({
+// Inter for body text, buttons and labels (`font-sans`, as the Oppizi design system
+// specifies); Geist for titles and headings (`font-heading`, see globals.css).
+const inter = Inter({
   variable: "--font-sans",
+  subsets: ["latin"],
+});
+
+const geist = Geist({
+  variable: "--font-display",
   subsets: ["latin"],
 });
 
@@ -29,7 +35,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${inter.variable} ${geist.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
         <SiteHeader />
