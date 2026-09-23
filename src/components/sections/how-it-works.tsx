@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import {
   IconCheck,
   IconCircleCheck,
@@ -41,11 +41,40 @@ import { cn } from "@/lib/utils";
 
 const N = steps.length;
 
+/**
+ * Which steps' visuals have already played. A visual plays once, the first time its
+ * step is reached, then stays finished — scrolling on, or back up to it, doesn't rewind
+ * it. All of them reset once you scroll back above the section, so coming down again
+ * replays them.
+ */
+const SeenSteps = createContext<{ has: (i: number) => boolean; add: (i: number) => void }>({
+  has: () => false,
+  add: () => {},
+});
+
 export function HowItWorks() {
   const reduceMotion = useReducedMotion();
+  const section = useRef<HTMLElement>(null);
+  const [seen, setSeen] = useState(0); // bitmask of step indices
+  // While you're above the section, nothing counts as seen (a visual can still report
+  // itself active for a moment after you scroll away).
+  const above = useRef(false);
+  const add = useCallback((i: number) => {
+    if (!above.current) setSeen((m) => m | (1 << i));
+  }, []);
+  const seenSteps = useMemo(() => ({ has: (i: number) => (seen & (1 << i)) !== 0, add }), [seen, add]);
+
+  // 0 while the section is still entirely below the screen, i.e. you're above it.
+  const { scrollYProgress } = useScroll({ target: section, offset: ["start end", "end start"] });
+  useMotionValueEvent(scrollYProgress, "change", (p) => {
+    above.current = p <= 0;
+    if (above.current) setSeen(0);
+  });
+
   return (
     <MotionConfig reducedMotion="user">
-      <section id="how-it-works" className="scroll-mt-20 border-y bg-muted/40 py-20">
+      <SeenSteps.Provider value={seenSteps}>
+      <section ref={section} id="how-it-works" className="scroll-mt-20 border-y bg-muted/40 py-20">
         {/* On desktop the heading lives inside the pinned area instead (see PinnedStage). */}
         <div className={cn("container-page", !reduceMotion && "lg:hidden")}>
           <Heading />
@@ -59,6 +88,7 @@ export function HowItWorks() {
           </>
         )}
       </section>
+      </SeenSteps.Provider>
     </MotionConfig>
   );
 }
@@ -315,7 +345,7 @@ function VerticalTimeline() {
           </motion.span>
         </div>
         {steps.map((step, i) => (
-          <li key={step.title} className={cn("transition-opacity duration-500", i > reached && "opacity-50")}>
+          <li key={step.title}>
             <StepCard index={i} active={i <= reached} />
           </li>
         ))}
@@ -363,11 +393,31 @@ function StepCard({ index, active, numbered = false }: { index: number; active: 
   );
 }
 
+/** Visuals that should appear finished straight away, with no entrance. */
+const Instant = createContext(false);
+
+/** True when a visual should skip its entrance: already seen, or reduced motion. */
+function useInstant() {
+  const reduce = useReducedMotion();
+  return useContext(Instant) || !!reduce;
+}
+
 function StepVisual({ index, active }: { index: number; active: boolean }) {
-  if (index === 0) return <RoutesVisual active={active} />;
-  if (index === 1) return <DesignVisual active={active} />;
-  if (index === 2) return <DeliveryVisual active={active} />;
-  return <ResultsVisual active={active} />;
+  const { has, add } = useContext(SeenSteps);
+  // Seen before this visual mounted (e.g. scrolling back up to its step): show it finished.
+  const [seenAtMount] = useState(() => has(index));
+  // Once played it stays played, even when its step is left or it scrolls out of view.
+  const played = active || has(index);
+  useEffect(() => {
+    if (active) add(index);
+  }, [active, index, add]);
+
+  const Visual = [RoutesVisual, DesignVisual, DeliveryVisual, ResultsVisual][index];
+  return (
+    <Instant.Provider value={seenAtMount}>
+      <Visual active={played} />
+    </Instant.Provider>
+  );
 }
 
 /* ------------------------------ Step visuals ------------------------------ */
@@ -376,12 +426,13 @@ function StepVisual({ index, active }: { index: number; active: boolean }) {
 // quickly (all done in under a second), so it's seen even when scrolling fast. Each
 // plays when its step becomes active (the desktop stage remounts it per step; the phone
 // timeline flips `active` as you scroll) and rewinds when it's left. Children pick up
-// the "off" → "on" variants from the visual's root. With reduced motion they render finished.
+// the "off" → "on" variants from the visual's root. Once played they stay finished
+// (see SeenSteps); with reduced motion they render finished.
 
 /** Motion props for a visual's root: play the entrance while `active`. */
 function usePlay(active: boolean) {
-  const reduce = useReducedMotion();
-  return { initial: reduce ? false : "off", animate: active ? "on" : "off" } as const;
+  const instant = useInstant();
+  return { initial: instant ? false : "off", animate: active ? "on" : "off" } as const;
 }
 
 /** Fade up into place, after `custom` seconds. */
@@ -398,7 +449,7 @@ const pop: Variants = {
 
 /** A number that counts up from 0 while `active`. */
 function CountUp({ to, active, delay = 0, duration = 0.6 }: { to: number; active: boolean; delay?: number; duration?: number }) {
-  const reduce = useReducedMotion();
+  const reduce = useInstant();
   const value = useMotionValue(0);
   const text = useTransform(value, (v) => Math.round(v).toLocaleString("en-US"));
   useEffect(() => {
@@ -479,7 +530,7 @@ const TICK_MS = 220;
 
 /** Each stage ticks off in turn, the last one ("Delivered") included. */
 function DeliveryVisual({ active }: { active: boolean }) {
-  const reduce = useReducedMotion();
+  const reduce = useInstant();
   const [ticks, setTicks] = useState(0);
   useEffect(() => {
     if (!active || reduce) return;
