@@ -45,22 +45,26 @@ const icons: Record<string, LucideIcon> = {
 // prompt box, gets submitted, the agent works through its steps, and the box becomes
 // the agent's plan. Until the page has hydrated (and for visitors who prefer reduced
 // motion) the card shows the finished plan, so the full text is always in the page.
-type Phase = "composing" | "typing" | "submitting" | "working" | "answering" | "done";
+type Phase =
+  "composing" | "typing" | "submitting" | "working" | "answering" | "done";
 
-const TYPE_MS = 20; // per character
-const STEP_MS = 550; // per agent step
-const ROW_MS = 220; // between answer lines
+// Paced so each stage can actually be read (≈ 13s end to end).
+const TYPE_MS = 38; // per character
+const PAUSE_MS = 800; // after the brief is typed
+const SUBMIT_MS = 500; // the button press
+const STEP_MS = 1100; // per agent step
+const ROW_MS = 500; // between answer lines
 const STEPS = aiPlanning.steps.length;
 const ROWS = aiPlanning.scenarios[0].plan.length + 1; // plan lines + the "Run again" button
 
-/** Shared by the prompt box and the reply, sized to the finished plan (incl. "Run
- *  again") at each breakpoint, so swapping between them never pushes the page around.
- *  Measured: ~453px on phones, ~421px on tablets, ~401px on desktop. */
-const CARD_MIN_H = "min-h-[28.5rem] sm:min-h-[26.5rem] lg:min-h-[25.25rem]";
-
 const noop = () => () => {};
 /** false during SSR and hydration, true afterwards. */
-const useHydrated = () => useSyncExternalStore(noop, () => true, () => false);
+const useHydrated = () =>
+  useSyncExternalStore(
+    noop,
+    () => true,
+    () => false,
+  );
 
 export function AiPlanning() {
   const hydrated = useHydrated();
@@ -94,13 +98,14 @@ export function AiPlanning() {
     let timer: ReturnType<typeof setTimeout> | undefined;
     const next = (fn: () => void, ms: number) => (timer = setTimeout(fn, ms));
     if (state === "typing") {
-      if (typedCount < scenario.brief.length) next(() => setTyped((n) => n + 1), TYPE_MS);
-      else next(() => setPhase("submitting"), 350);
+      if (typedCount < scenario.brief.length)
+        next(() => setTyped((n) => n + 1), TYPE_MS);
+      else next(() => setPhase("submitting"), PAUSE_MS);
     } else if (state === "submitting") {
-      next(() => setPhase("working"), 300);
+      next(() => setPhase("working"), SUBMIT_MS);
     } else if (state === "working") {
       if (stepCount < STEPS) next(() => setStep((n) => n + 1), STEP_MS);
-      else next(() => setPhase("answering"), 200);
+      else next(() => setPhase("answering"), 600);
     } else if (state === "answering") {
       if (rowCount < ROWS) next(() => setRows((n) => n + 1), ROW_MS);
       else next(() => setPhase("done"), 0);
@@ -108,13 +113,18 @@ export function AiPlanning() {
     return () => clearTimeout(timer);
   }, [animated, state, typedCount, stepCount, rowCount, scenario.brief.length]);
 
-  const composing = phase === "composing" || phase === "typing" || phase === "submitting";
+  const composing =
+    phase === "composing" || phase === "typing" || phase === "submitting";
 
   return (
     <section id="ai" className="scroll-mt-20 py-20">
       <div className="container-page space-y-12">
         <div className="space-y-8">
-          <SectionHeading eyebrow={aiPlanning.eyebrow} title={aiPlanning.title} body={aiPlanning.body} />
+          <SectionHeading
+            eyebrow={aiPlanning.eyebrow}
+            title={aiPlanning.title}
+            body={aiPlanning.body}
+          />
 
           {/* Example briefs as a segmented control, like the suggestion chips of AI composers. */}
           {/* Three equal tabs (icon over label) on phones; one pill row from sm up. */}
@@ -137,12 +147,17 @@ export function AiPlanning() {
                       "flex cursor-pointer flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-xs font-medium whitespace-nowrap transition-all outline-none focus-visible:ring-3 focus-visible:ring-ring/50 sm:flex-row sm:gap-2 sm:rounded-full sm:px-4 sm:text-sm",
                       active
                         ? "bg-card text-foreground shadow-sm"
-                        : "text-muted-foreground hover:bg-card/60 hover:text-foreground"
+                        : "text-muted-foreground hover:bg-card/60 hover:text-foreground",
                     )}
                   >
-                    <Icon className={cn("size-4", active && "text-brand")} aria-hidden />
+                    <Icon
+                      className={cn("size-4", active && "text-brand")}
+                      aria-hidden
+                    />
                     {s.chip}
-                    <span className="hidden font-normal text-muted-foreground sm:inline">· {s.area}</span>
+                    <span className="hidden font-normal text-muted-foreground sm:inline">
+                      · {s.area}
+                    </span>
                   </button>
                 );
               })}
@@ -155,49 +170,79 @@ export function AiPlanning() {
           <div className="sr-only" aria-live="polite">
             <p>Example brief: {scenario.brief}</p>
             <p>
-              Suggested plan: {scenario.plan.map((row) => `${row.label}: ${row.value}`).join(". ")}.
+              Suggested plan:{" "}
+              {scenario.plan
+                .map((row) => `${row.label}: ${row.value}`)
+                .join(". ")}
+              .
             </p>
           </div>
 
           <motion.div
             layout
-            transition={{ layout: { duration: 0.35, ease: [0.22, 1, 0.36, 1] } }}
+            transition={{
+              layout: { duration: 0.35, ease: [0.22, 1, 0.36, 1] },
+            }}
             // Starts the demo the first time the card is mostly on screen.
-            onViewportEnter={() => animated && state === "composing" && typedCount === 0 && play(0)}
+            onViewportEnter={() =>
+              animated && state === "composing" && typedCount === 0 && play(0)
+            }
             viewport={{ once: true, amount: 0.5 }}
             className="overflow-hidden rounded-3xl border bg-card shadow-lg"
           >
-            <AnimatePresence mode="wait" initial={false}>
-              {composing ? (
-                <motion.div
-                  key="composer"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0, scale: 0.98 }}
-                  transition={{ duration: 0.2 }}
-                >
-                  <Composer phase={phase} text={scenario.brief.slice(0, typed)} zip={scenario.zip} />
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="response"
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <Response
-                    scenario={scenario}
-                    phase={phase}
-                    step={step}
-                    rows={rows}
-                    onRunAgain={animated ? () => play(scenarioIndex) : undefined}
-                  />
-                </motion.div>
-              )}
-            </AnimatePresence>
+            {/* The card is exactly as tall as the finished plan: an invisible copy of it sits in
+                the same grid cell as the live view, whatever the screen size or example. */}
+            <div className="grid">
+              <div aria-hidden className="invisible [grid-area:1/1]">
+                <Response
+                  scenario={scenario}
+                  phase="done"
+                  step={STEPS}
+                  rows={ROWS}
+                  onRunAgain={animated ? () => {} : undefined}
+                />
+              </div>
+              <div className="[grid-area:1/1]">
+                <AnimatePresence mode="wait" initial={false}>
+                  {composing ? (
+                    <motion.div
+                      key="composer"
+                      className="h-full"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0, scale: 0.98 }}
+                      transition={{ duration: 0.45 }}
+                    >
+                      <Composer
+                        phase={phase}
+                        text={scenario.brief.slice(0, typed)}
+                        zip={scenario.zip}
+                      />
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="response"
+                      className="h-full"
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.55 }}
+                    >
+                      <Response
+                        scenario={scenario}
+                        phase={phase}
+                        step={step}
+                        rows={rows}
+                        onRunAgain={
+                          animated ? () => play(scenarioIndex) : undefined
+                        }
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </div>
           </motion.div>
-
         </div>
 
         <ul className="grid gap-4 md:grid-cols-3">
@@ -220,11 +265,24 @@ export function AiPlanning() {
 }
 
 /** The prompt box: text on top, toolbar with context chips and a round submit below. */
-function Composer({ phase, text, zip }: { phase: Phase; text: string; zip: string }) {
+function Composer({
+  phase,
+  text,
+  zip,
+}: {
+  phase: Phase;
+  text: string;
+  zip: string;
+}) {
   const empty = text.length === 0;
   return (
-    <div aria-hidden className={cn("flex flex-col gap-4 p-5 sm:p-6", CARD_MIN_H)}>
-      <p className={cn("flex-1 text-lg leading-relaxed", empty && "text-muted-foreground")}>
+    <div aria-hidden className="flex h-full flex-col gap-4 p-5 sm:p-6">
+      <p
+        className={cn(
+          "flex-1 text-lg leading-relaxed",
+          empty && "text-muted-foreground",
+        )}
+      >
         {empty && phase === "composing" ? aiPlanning.placeholder : text}
         {phase === "typing" && (
           <span className="ml-0.5 inline-block h-[1.1em] w-0.5 translate-y-[0.2em] animate-pulse bg-primary" />
@@ -239,7 +297,7 @@ function Composer({ phase, text, zip }: { phase: Phase; text: string; zip: strin
           <span
             className={cn(
               "flex h-9 items-center gap-1.5 rounded-full border px-3 text-sm text-muted-foreground transition-opacity duration-300",
-              empty ? "opacity-0" : "opacity-100"
+              empty ? "opacity-0" : "opacity-100",
             )}
           >
             <MapPinIcon className="size-4 text-brand" /> ZIP {zip}
@@ -249,7 +307,7 @@ function Composer({ phase, text, zip }: { phase: Phase; text: string; zip: strin
           className={cn(
             "grid size-10 place-items-center rounded-full bg-primary text-primary-foreground transition-[opacity,scale] duration-150",
             empty && "opacity-40",
-            phase === "submitting" && "scale-90"
+            phase === "submitting" && "scale-90",
           )}
         >
           <ArrowUpIcon className="size-5" />
@@ -276,15 +334,18 @@ function Response({
   onRunAgain?: () => void;
 }) {
   const working = phase === "working";
-  const visible = (i: number) => phase === "done" || (phase === "answering" && i < rows);
+  const visible = (i: number) =>
+    phase === "done" || (phase === "answering" && i < rows);
   const steps = aiPlanning.steps.map((s) => s.replace("{zip}", scenario.zip));
 
   return (
-    <div className={cn("flex flex-col p-5 sm:p-6", CARD_MIN_H)}>
+    <div className="flex h-full flex-col p-5 sm:p-6">
       {/* The brief, collapsed to a summary line */}
       {/* Padding on the wrapper: on the clamped element itself it would reveal the hidden line. */}
       <div aria-hidden className="rounded-2xl bg-muted/70 px-4 py-3">
-        <p className="line-clamp-2 text-sm text-muted-foreground">{scenario.brief}</p>
+        <p className="line-clamp-2 text-sm text-muted-foreground">
+          {scenario.brief}
+        </p>
       </div>
 
       {/* Agent status: the current step while working, then a one-line summary */}
@@ -298,7 +359,10 @@ function Response({
           </span>
         ) : (
           <span className="text-sm font-medium">
-            Plan ready <span className="font-normal text-muted-foreground">· {steps.length} steps</span>
+            Plan ready{" "}
+            <span className="font-normal text-muted-foreground">
+              · {steps.length} steps
+            </span>
           </span>
         )}
       </div>
@@ -310,7 +374,7 @@ function Response({
               key={label}
               className={cn(
                 "flex items-center gap-2",
-                i > step ? "text-muted-foreground/50" : "text-muted-foreground"
+                i > step ? "text-muted-foreground/50" : "text-muted-foreground",
               )}
             >
               {i < step ? (
@@ -330,7 +394,11 @@ function Response({
             {scenario.plan.map((row, i) => {
               const Icon = icons[row.icon];
               return (
-                <Reveal key={row.label} visible={visible(i)} className="flex items-center gap-3 px-4 py-3 text-sm">
+                <Reveal
+                  key={row.label}
+                  visible={visible(i)}
+                  className="flex items-center gap-3 px-4 py-3 text-sm"
+                >
                   <Icon className="size-4 shrink-0 text-brand" />
                   <dt className="flex-1 text-muted-foreground">{row.label}</dt>
                   <dd className="text-right font-medium">{row.value}</dd>
@@ -340,8 +408,16 @@ function Response({
           </dl>
 
           {onRunAgain && (
-            <Reveal visible={visible(scenario.plan.length)} className="mt-auto flex justify-center pt-6">
-              <Button variant="outline" size="lg" className="rounded-full px-4" onClick={onRunAgain}>
+            <Reveal
+              visible={visible(scenario.plan.length)}
+              className="mt-auto flex justify-center pt-6"
+            >
+              <Button
+                variant="outline"
+                size="lg"
+                className="rounded-full px-4"
+                onClick={onRunAgain}
+              >
                 <RotateCcwIcon data-icon="inline-start" /> Run again
               </Button>
             </Reveal>
@@ -362,9 +438,9 @@ function Reveal({
   return (
     <div
       className={cn(
-        "transition-[opacity,translate] duration-500 ease-out motion-reduce:transition-none",
+        "transition-[opacity,translate] duration-700 ease-out motion-reduce:transition-none",
         visible ? "translate-y-0 opacity-100" : "translate-y-1.5 opacity-0",
-        className
+        className,
       )}
       {...props}
     >
