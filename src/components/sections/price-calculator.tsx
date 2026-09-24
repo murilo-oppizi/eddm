@@ -38,7 +38,7 @@ export function PriceCalculator() {
   const [homes, setHomes] = useState<number>(initial);
   const size = pricing.sizes.find((s) => s.name === sizeName) ?? pricing.sizes[1];
   const total = totalFor(size, homes);
-  const cents = Math.round((total / homes) * 100);
+  const perPiece = `$${(total / homes).toFixed(2)}`; // e.g. $0.47
 
   // The total glides to each new value instead of jumping.
   const shown = useMotionValue(total);
@@ -151,10 +151,10 @@ export function PriceCalculator() {
             {shownText}
           </motion.p>
           <p className="sr-only" aria-live="polite">
-            {usd(total)} for {homes.toLocaleString("en-US")} homes, {cents} cents per piece.
+            {usd(total)} for {homes.toLocaleString("en-US")} homes, {perPiece} per piece.
           </p>
           <p className="mt-2 text-sm text-background/70">
-            <span className="font-semibold text-background">{cents}¢</span> per piece · all-in
+            <span className="font-semibold text-background">{perPiece}</span> per piece · all-in
           </p>
         </div>
 
