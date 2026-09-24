@@ -201,7 +201,8 @@ function Stage({ active }: { active: number }) {
   const visual = useRef<HTMLDivElement>(null);
   const inView = useInView(visual, { amount: 0.6 });
   return (
-    <div className="mx-auto grid max-w-5xl grid-cols-[1fr_1.35fr] overflow-hidden rounded-2xl border bg-card shadow-lg">
+    // Same width as the route above it, so the card lines up with the rail.
+    <div className="mx-auto grid max-w-4xl grid-cols-[1fr_1.35fr] overflow-hidden rounded-2xl border bg-card shadow-lg">
       <div className="flex flex-col justify-center gap-6 p-10 [@media(max-height:820px)]:p-8">
         {/* Rolling step counter */}
         <p className="flex items-center gap-1 font-heading text-sm leading-5 font-semibold text-muted-foreground tabular-nums">
