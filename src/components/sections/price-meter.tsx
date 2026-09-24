@@ -1,0 +1,290 @@
+"use client";
+
+import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { IconArrowRight, IconHomeFilled, IconMinus, IconPlus } from "@tabler/icons-react";
+import { animate, useInView, useReducedMotion } from "motion/react";
+
+import { OppiziSymbol } from "@/components/site/logo";
+import { Slider } from "@/components/ui/slider";
+import { pricing } from "@/content/site";
+import { cn } from "@/lib/utils";
+
+// The "EDDM price meter": a flat, product-like object (after the postage meters post
+// offices use to price mail) instead of a form. A light screen shows the estimate in
+// rolling digits and a strip of houses; a fader with − / + sets the homes; five keycaps
+// pick the postcard size (the chosen one stays pressed, its light on); a big key asks
+// for the quote. The first time it's on screen the fader glides up to 15,000 once.
+
+type Size = (typeof pricing.sizes)[number];
+const { min, max, step, initial } = pricing.homes;
+const HOMES_PER_HOUSE = 1000;
+const HOUSES = max / HOMES_PER_HOUSE;
+const ease = [0.22, 1, 0.36, 1] as const;
+
+/** Oppizi's calculator total at the anchor counts, straight lines in between. */
+function totalFor(size: Size, homes: number) {
+  const { anchors } = pricing;
+  for (let k = 0; k < anchors.length - 1; k++) {
+    if (homes <= anchors[k + 1]) {
+      const f = (homes - anchors[k]) / (anchors[k + 1] - anchors[k]);
+      return Math.round(size.totals[k] + f * (size.totals[k + 1] - size.totals[k]));
+    }
+  }
+  return size.totals[size.totals.length - 1];
+}
+
+const usd = (n: number) => `$${Math.round(n).toLocaleString("en-US")}`;
+const fmt = (n: number) => n.toLocaleString("en-US");
+const clamp = (n: number) => Math.min(max, Math.max(min, n));
+
+// A keycap: white, lit from above, with a hard shadow under it that shrinks when pressed.
+const keycap =
+  "bg-white text-foreground shadow-[0_3px_0_rgb(0_0_0/0.22),inset_0_1px_0_rgb(255_255_255/0.9)] transition-[translate,box-shadow] duration-100 active:translate-y-[2px] active:shadow-[0_1px_0_rgb(0_0_0/0.22)] outline-none focus-visible:ring-3 focus-visible:ring-white/70";
+const pressed = "translate-y-[2px] shadow-[0_1px_0_rgb(0_0_0/0.22),inset_0_1px_0_rgb(255_255_255/0.9)]";
+
+export function PriceMeter() {
+  const [sizeName, setSizeName] = useState<string>(pricing.initialSize);
+  const [homes, setHomes] = useState<number>(initial);
+  const size = pricing.sizes.find((s) => s.name === sizeName) ?? pricing.sizes[1];
+  const total = totalFor(size, homes);
+  const perPiece = `$${(total / homes).toFixed(2)}`;
+  const reduce = useReducedMotion();
+
+  // One glide from the minimum up to the starting count, the first time it's seen.
+  const root = useRef<HTMLDivElement>(null);
+  const seen = useInView(root, { once: true, amount: 0.5 });
+  const sweep = useRef<ReturnType<typeof animate> | null>(null);
+  useEffect(() => {
+    if (!seen || reduce) return;
+    sweep.current = animate(min, initial, {
+      duration: 1.4,
+      ease,
+      onUpdate: (v) => setHomes(Math.round(v / step) * step),
+    });
+    return () => sweep.current?.stop();
+  }, [seen, reduce]);
+  const set = (value: number) => {
+    sweep.current?.stop();
+    setHomes(clamp(value));
+  };
+
+  return (
+    <div className="relative mx-auto w-full max-w-[540px]">
+      {/* Soft pink glow on the "table" under the device */}
+      <div aria-hidden className="absolute inset-x-10 -bottom-8 h-16 rounded-full bg-primary/30 blur-3xl" />
+
+      <div
+        ref={root}
+        className="relative rounded-[30px] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--primary)_78%,white),var(--primary)_55%)] p-4 shadow-[inset_0_1px_0_rgb(255_255_255/0.4),inset_0_-5px_0_rgb(0_0_0/0.14),0_30px_60px_-24px_color-mix(in_oklab,var(--primary)_70%,black)] sm:p-5"
+      >
+        <Screw className="top-2.5 left-2.5" />
+        <Screw className="top-2.5 right-2.5" />
+        <Screw className="bottom-2.5 left-2.5" />
+        <Screw className="right-2.5 bottom-2.5" />
+
+        {/* Top plate: the maker's mark and a speaker grille */}
+        <div className="flex items-center justify-between px-2 pt-1 pb-3 text-white">
+          <span className="flex items-center gap-2 text-xs font-semibold tracking-wide">
+            <OppiziSymbol cropped className="h-3 w-auto" />
+            EDDM price meter
+          </span>
+          <span aria-hidden className="grid grid-cols-8 gap-1">
+            {Array.from({ length: 16 }, (_, i) => (
+              <span key={i} className="size-1 rounded-full bg-black/20" />
+            ))}
+          </span>
+        </div>
+
+        {/* The screen */}
+        <div className="rounded-2xl bg-card p-5 shadow-[inset_0_2px_8px_rgb(0_0_0/0.14)] ring-1 ring-black/10">
+          <div className="flex items-end justify-between gap-4">
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">Total estimate</p>
+              <p className="mt-1 font-heading text-4xl font-bold tracking-tight sm:text-5xl" aria-hidden>
+                <RollingNumber value={usd(total)} />
+              </p>
+              <p className="sr-only" aria-live="polite">
+                {usd(total)} for {fmt(homes)} homes with a {size.name} postcard, {perPiece} per piece.
+              </p>
+            </div>
+            <dl aria-hidden className="shrink-0 space-y-1 text-right text-xs tabular-nums">
+              <Row label="Per piece" value={perPiece} />
+              <Row label="Homes" value={fmt(homes)} />
+              <Row label="Postcard" value={size.name} />
+            </dl>
+          </div>
+          {/* Level meter: one house per 1,000 homes */}
+          <div aria-hidden className="mt-4 flex justify-between border-t border-dashed pt-3">
+            {Array.from({ length: HOUSES }, (_, i) => (
+              <IconHomeFilled
+                key={i}
+                className={cn(
+                  "size-2 transition-colors duration-200 sm:size-3",
+                  min + i * HOMES_PER_HOUSE <= homes ? "text-primary" : "text-muted-foreground/20"
+                )}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Homes: − / fader / + */}
+        <div className="mt-5 px-1">
+          <div className="flex items-center gap-3">
+            <button type="button" aria-label="1,000 fewer homes" onClick={() => set(homes - step)} className={cn(keycap, "grid size-10 shrink-0 place-items-center rounded-xl")}>
+              <IconMinus className="size-4" />
+            </button>
+            <Slider
+              getAriaLabel={() => "Homes to reach"}
+              value={homes}
+              min={min}
+              max={max}
+              step={step}
+              largeStep={5000}
+              onValueChange={set}
+              getAriaValueText={(_, v: number) => `${fmt(v)} homes`}
+              className={cn(
+                "[&_[data-slot=slider-track]]:h-2.5 [&_[data-slot=slider-track]]:bg-black/20 [&_[data-slot=slider-track]]:shadow-[inset_0_1px_2px_rgb(0_0_0/0.25)]",
+                "[&_[data-slot=slider-range]]:bg-white/85",
+                "[&_[data-slot=slider-thumb]]:h-7 [&_[data-slot=slider-thumb]]:w-10 [&_[data-slot=slider-thumb]]:rounded-lg [&_[data-slot=slider-thumb]]:border-0 [&_[data-slot=slider-thumb]]:bg-white [&_[data-slot=slider-thumb]]:shadow-[0_3px_0_rgb(0_0_0/0.22)] [&_[data-slot=slider-thumb]]:ring-white/50"
+              )}
+            />
+            <button type="button" aria-label="1,000 more homes" onClick={() => set(homes + step)} className={cn(keycap, "grid size-10 shrink-0 place-items-center rounded-xl")}>
+              <IconPlus className="size-4" />
+            </button>
+          </div>
+          <div aria-hidden className="mt-1.5 flex justify-between px-[3.25rem] text-[10px] font-semibold tracking-wider text-white/75 uppercase tabular-nums">
+            <span>{fmt(min)}</span>
+            <span>Homes</span>
+            <span>{fmt(max)}</span>
+          </div>
+        </div>
+
+        {/* Postcard size keys */}
+        <fieldset className="mt-5 px-1">
+          <legend className="sr-only">Postcard size</legend>
+          <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
+            {pricing.sizes.map((s) => {
+              const on = s.name === sizeName;
+              return (
+                <label key={s.name} className="cursor-pointer">
+                  <input
+                    type="radio"
+                    name="size"
+                    value={s.name}
+                    checked={on}
+                    onChange={() => {
+                      sweep.current?.stop();
+                      setSizeName(s.name);
+                    }}
+                    className="peer sr-only"
+                  />
+                  <span
+                    className={cn(
+                      keycap,
+                      "relative flex h-full flex-col items-center gap-1.5 rounded-xl px-1 pt-3 pb-2 text-center peer-focus-visible:ring-3",
+                      on && pressed
+                    )}
+                  >
+                    {/* The key's light */}
+                    <span
+                      aria-hidden
+                      className={cn(
+                        "absolute top-1.5 right-1.5 size-1.5 rounded-full transition-colors",
+                        on ? "bg-primary shadow-[0_0_6px_var(--primary)]" : "bg-muted-foreground/25"
+                      )}
+                    />
+                    <SizeGlyph size={s} active={on} />
+                    <span className="block text-[10px] leading-tight font-semibold tracking-tight sm:text-[11px] sm:tracking-normal">{s.name}</span>
+                    <span className="hidden text-[10px] leading-tight whitespace-nowrap text-muted-foreground sm:block">
+                      {s.dims}
+                    </span>
+                  </span>
+                </label>
+              );
+            })}
+          </div>
+          <p aria-hidden className="mt-1.5 text-center text-[10px] font-semibold tracking-wider text-white/75 uppercase">
+            Postcard size · inches
+          </p>
+        </fieldset>
+
+        {/* The big key */}
+        <Link
+          href="/contact"
+          className={cn(keycap, "mt-5 flex h-14 items-center justify-center gap-2 rounded-2xl font-semibold text-primary")}
+        >
+          {pricing.cta} <IconArrowRight className="size-4" aria-hidden />
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+function Row({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex justify-end gap-2">
+      <dt className="text-muted-foreground">{label}</dt>
+      <dd className="min-w-14 font-semibold">{value}</dd>
+    </div>
+  );
+}
+
+function Screw({ className }: { className: string }) {
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        "absolute size-2 rounded-full bg-black/15 shadow-[inset_0_1px_1px_rgb(0_0_0/0.3)] after:absolute after:inset-x-0.5 after:top-1/2 after:h-px after:-translate-y-1/2 after:rotate-45 after:bg-white/40",
+        className
+      )}
+    />
+  );
+}
+
+/**
+ * A number whose digits roll like an odometer when it changes. Digits are keyed from
+ * the right, so adding a thousands digit doesn't make the others jump.
+ */
+function RollingNumber({ value }: { value: string }) {
+  const chars = [...value];
+  return (
+    <span className="inline-flex tabular-nums">
+      {chars.map((c, i) => {
+        const fromRight = chars.length - i;
+        if (!/\d/.test(c)) return <span key={`s${fromRight}`}>{c}</span>;
+        const d = Number(c);
+        return (
+          <span key={`d${fromRight}`} className="relative inline-block h-[1em] overflow-hidden leading-none">
+            <span
+              className="flex flex-col transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none"
+              style={{ transform: `translateY(${-d * 10}%)` }}
+            >
+              {"0123456789".split("").map((n) => (
+                <span key={n} className="h-[1em] leading-none">
+                  {n}
+                </span>
+              ))}
+            </span>
+          </span>
+        );
+      })}
+    </span>
+  );
+}
+
+/** The postcard's shape at its real proportions, all drawn on the same scale. */
+function SizeGlyph({ size, active }: { size: Size; active: boolean }) {
+  const largest = 15; // inches, the Oversized card's width
+  return (
+    <span aria-hidden className="flex h-6 items-end">
+      <span
+        className={cn(
+          "block rounded-[2px] border-[1.5px] transition-colors",
+          active ? "border-primary bg-primary/15" : "border-muted-foreground/40 bg-muted"
+        )}
+        style={{ width: `${(size.w / largest) * 30}px`, height: `${(size.h / largest) * 30}px` }}
+      />
+    </span>
+  );
+}
