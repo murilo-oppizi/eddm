@@ -201,8 +201,9 @@ function Stage({ active }: { active: number }) {
   const visual = useRef<HTMLDivElement>(null);
   const inView = useInView(visual, { amount: 0.6 });
   return (
-    // Same width as the route above it, so the card lines up with the rail.
-    <div className="mx-auto grid max-w-4xl grid-cols-[1fr_1.35fr] overflow-hidden rounded-2xl border bg-card shadow-lg">
+    // Same width as the route above it, so the card lines up with the rail. Text and
+    // visual split it in half.
+    <div className="mx-auto grid max-w-4xl grid-cols-2 overflow-hidden rounded-2xl border bg-card shadow-lg">
       <div className="flex flex-col justify-center gap-6 p-10 [@media(max-height:820px)]:p-8">
         {/* Rolling step counter */}
         <p className="flex items-center gap-1 font-heading text-sm leading-5 font-semibold text-muted-foreground tabular-nums">
@@ -482,7 +483,9 @@ function RoutesVisual({ active }: { active: boolean }) {
   return (
     <motion.div className="absolute inset-0" {...usePlay(active)}>
       <IllustratedMap mode="route" cover />
-      <Chip className="top-4 left-4">
+      {/* Top right: the map's neighborhood label sits top left. On the smallest phones
+          it tucks a little closer to the corner to stay clear of the label. */}
+      <Chip className="top-4 right-4 max-[380px]:top-3 max-[380px]:right-3">
         <p className="text-xs text-muted-foreground">3 routes selected</p>
         <p className="font-semibold">
           <CountUp to={1540} active={active} delay={0.2} /> homes
@@ -495,7 +498,11 @@ function RoutesVisual({ active }: { active: boolean }) {
 /** The postcard is ready; the USPS check comes in and ticks. */
 function DesignVisual({ active }: { active: boolean }) {
   return (
-    <motion.div className="flex h-full items-center justify-center p-5" {...usePlay(active)}>
+    // On short screens the postcard sits at the top, so the USPS check chip fits below it.
+    <motion.div
+      className="flex h-full items-center justify-center p-5 lg:[@media(max-height:820px)]:items-start"
+      {...usePlay(active)}
+    >
       {/* The postcard */}
       {/* Sized to always fit its box: by width on phones, by height on desktop. */}
       <div className="relative aspect-[9/6.25] w-full max-w-60 min-w-0 rounded-lg border bg-card p-4 shadow-md lg:h-full lg:max-h-44 lg:w-auto lg:max-w-none">
