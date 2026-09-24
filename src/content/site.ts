@@ -224,13 +224,13 @@ export const pricing = {
   body: "Printing, USPS postage and delivery included. Pick a size and how many homes to reach.",
   homes: { min: 1000, max: 30000, step: 1000, initial: 15000 },
   anchors: [1000, 5000, 10000, 15000, 20000, 30000],
-  // w × h in inches (landscape), for the little size glyphs.
+  // dims and w × h are in inches (landscape); w × h draws the little size glyphs.
   sizes: [
-    { name: "Small", dims: "4.25 × 11 in", w: 11, h: 4.25, totals: [534, 2238, 4391, 6567, 8692, 13029] },
-    { name: "Standard", dims: "6.25 × 9 in", w: 9, h: 6.25, bestSeller: true, totals: [578, 2385, 4675, 6987, 9248, 13857] },
-    { name: "Large", dims: "6.25 × 11 in", w: 11, h: 6.25, totals: [635, 2576, 5042, 7532, 9968, 14931] },
-    { name: "Jumbo", dims: "8.25 × 11 in", w: 11, h: 8.25, totals: [750, 2958, 5776, 8622, 11408, 17076] },
-    { name: "Oversized", dims: "15 × 12 in", w: 15, h: 12, totals: [1150, 4293, 8346, 12434, 16446, 24582] },
+    { name: "Small", dims: "4.25 × 11", w: 11, h: 4.25, totals: [534, 2238, 4391, 6567, 8692, 13029] },
+    { name: "Standard", dims: "6.25 × 9", w: 9, h: 6.25, bestSeller: true, totals: [578, 2385, 4675, 6987, 9248, 13857] },
+    { name: "Large", dims: "6.25 × 11", w: 11, h: 6.25, totals: [635, 2576, 5042, 7532, 9968, 14931] },
+    { name: "Jumbo", dims: "8.25 × 11", w: 11, h: 8.25, totals: [750, 2958, 5776, 8622, 11408, 17076] },
+    { name: "Oversized", dims: "15 × 12", w: 15, h: 12, totals: [1150, 4293, 8346, 12434, 16446, 24582] },
   ],
   initialSize: "Standard",
   more: "Need more than 30,000 homes?",
