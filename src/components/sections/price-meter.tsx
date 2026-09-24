@@ -38,9 +38,9 @@ const usd = (n: number) => `$${Math.round(n).toLocaleString("en-US")}`;
 const fmt = (n: number) => n.toLocaleString("en-US");
 const clamp = (n: number) => Math.min(max, Math.max(min, n));
 
-// A keycap: white, lit from above, with a hard shadow under it that shrinks when pressed.
+// A keycap: white (dark in dark mode), lit from above, with a hard shadow under it that shrinks when pressed.
 const keycap =
-  "bg-white text-foreground shadow-[0_3px_0_rgb(0_0_0/0.22),inset_0_1px_0_rgb(255_255_255/0.9)] transition-[translate,box-shadow] duration-100 active:translate-y-[2px] active:shadow-[0_1px_0_rgb(0_0_0/0.22)] outline-none focus-visible:ring-3 focus-visible:ring-white/70";
+  "bg-card text-card-foreground shadow-[0_3px_0_rgb(0_0_0/0.22),inset_0_1px_0_rgb(255_255_255/0.9)] transition-[translate,box-shadow] duration-100 active:translate-y-[2px] active:shadow-[0_1px_0_rgb(0_0_0/0.22)] outline-none focus-visible:ring-3 focus-visible:ring-white/70";
 const pressed = "translate-y-[2px] shadow-[0_1px_0_rgb(0_0_0/0.22),inset_0_1px_0_rgb(255_255_255/0.9)]";
 
 export function PriceMeter() {
