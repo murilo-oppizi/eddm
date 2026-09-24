@@ -213,12 +213,29 @@ export const features = [
   { icon: "sparkles", title: "AI-optimized routes", body: "Describe your ideal customer and our AI agents suggest the best routes to reach them." },
 ] as const
 
-// Source: oppizi.com EDDM page ("$0.31 USD per piece · all-in", "$4,650 for ~15,000
-// addresses", USPS postage $0.260/piece per Notice 123, July 2026). TO CONFIRM with
-// marketing: eddm.com still says "from 7¢/piece", and whether $0.31 applies to every size.
+// Pricing calculator. Totals are what Oppizi's live EDDM cost calculator shows at these
+// home counts (oppizi.com/…/every-door-direct-mail/cost-calculator, read Sept 24 2026),
+// with straight lines in between (its prices rise almost linearly). They replace the
+// "$0.31 · $4,650 for 15,000" from the same page's static text, which the calculator
+// contradicts (47¢ · $6,987). TO CONFIRM with marketing.
 export const pricing = {
-  perPiece: "$0.31",
-  example: { homes: "15,000", total: "$4,650" },
+  eyebrow: "Pricing",
+  title: "Know your cost up front",
+  body: "Printing, USPS postage and delivery included. Pick a size and how many homes to reach.",
+  homes: { min: 1000, max: 30000, step: 1000, initial: 15000 },
+  anchors: [1000, 5000, 10000, 15000, 20000, 30000],
+  // w × h in inches (landscape), for the little size glyphs.
+  sizes: [
+    { name: "Small", dims: "4.25 × 11 in", w: 11, h: 4.25, totals: [534, 2238, 4391, 6567, 8692, 13029] },
+    { name: "Standard", dims: "6.25 × 9 in", w: 9, h: 6.25, bestSeller: true, totals: [578, 2385, 4675, 6987, 9248, 13857] },
+    { name: "Large", dims: "6.25 × 11 in", w: 11, h: 6.25, totals: [635, 2576, 5042, 7532, 9968, 14931] },
+    { name: "Jumbo", dims: "8.25 × 11 in", w: 11, h: 8.25, totals: [750, 2958, 5776, 8622, 11408, 17076] },
+    { name: "Oversized", dims: "15 × 12 in", w: 15, h: 12, totals: [1150, 4293, 8346, 12434, 16446, 24582] },
+  ],
+  initialSize: "Standard",
+  more: "Need more than 30,000 homes?",
+  cta: "Get your exact quote",
+  note: "Estimate based on USPS EDDM retail postage plus printing. Your final price is confirmed in your quote.",
   included: [
     "Printing through 700+ local print partners",
     "USPS postage and post office drop-off",
@@ -227,7 +244,7 @@ export const pricing = {
     "Delivery and scan tracking dashboard",
   ],
   noFees: "No mailing lists, data fees or setup fees.",
-}
+} as const
 
 // Facts checked against oppizi.com and eddm.com (Sept 2026).
 export const faqs = [
