@@ -221,7 +221,7 @@ export const features = [
 export const pricing = {
   eyebrow: "Pricing",
   title: "Know your cost up front",
-  body: "Printing, USPS postage and delivery included. Pick a size and how many homes to reach.",
+  body: "Printing, USPS postage and delivery, all included. No mailing lists or setup fees.",
   homes: { min: 1000, max: 30000, step: 1000, initial: 15000 },
   anchors: [1000, 5000, 10000, 15000, 20000, 30000],
   // dims and w × h are in inches (landscape); w × h draws the little size glyphs.
@@ -235,15 +235,13 @@ export const pricing = {
   initialSize: "Standard",
   more: "Need more than 30,000 homes?",
   cta: "Get your exact quote",
-  note: "Estimate based on USPS EDDM retail postage plus printing. Your final price is confirmed in your quote.",
+  note: "Estimates include USPS EDDM postage. Your quote confirms the final price.",
   included: [
-    "Printing through 700+ local print partners",
-    "USPS postage and post office drop-off",
-    "Route selection with demographic filters",
-    "Design tool with USPS-ready templates",
-    "Delivery and scan tracking dashboard",
+    "700+ local print partners",
+    "Demographic route targeting",
+    "USPS-ready design templates",
+    "Delivery and scan tracking",
   ],
-  noFees: "No mailing lists, data fees or setup fees.",
 } as const
 
 // Facts checked against oppizi.com and eddm.com (Sept 2026).

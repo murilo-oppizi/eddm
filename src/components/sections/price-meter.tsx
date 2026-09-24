@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { IconArrowRight, IconHomeFilled, IconMinus, IconPlus } from "@tabler/icons-react";
+import { IconArrowRight, IconMinus, IconPlus } from "@tabler/icons-react";
 import { animate, useInView, useReducedMotion } from "motion/react";
 
 import { OppiziSymbol } from "@/components/site/logo";
@@ -12,14 +12,14 @@ import { cn } from "@/lib/utils";
 
 // The "EDDM price meter": a flat, product-like object (after the postage meters post
 // offices use to price mail) instead of a form. A light screen shows the estimate in
-// rolling digits and a strip of houses; a fader with − / + sets the homes; five keycaps
+// rolling digits and a level meter; a fader with − / + sets the homes; five keycaps
 // pick the postcard size (the chosen one stays pressed, its light on); a big key asks
 // for the quote. The first time it's on screen the fader glides up to 15,000 once.
 
 type Size = (typeof pricing.sizes)[number];
 const { min, max, step, initial } = pricing.homes;
-const HOMES_PER_HOUSE = 1000;
-const HOUSES = max / HOMES_PER_HOUSE;
+const HOMES_PER_SEGMENT = 1000;
+const SEGMENTS = max / HOMES_PER_SEGMENT;
 const ease = [0.22, 1, 0.36, 1] as const;
 
 /** Oppizi's calculator total at the anchor counts, straight lines in between. */
@@ -76,7 +76,7 @@ export function PriceMeter() {
 
       <div
         ref={root}
-        className="relative rounded-[30px] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--primary)_78%,white),var(--primary)_55%)] p-4 shadow-[inset_0_1px_0_rgb(255_255_255/0.4),inset_0_-5px_0_rgb(0_0_0/0.14),0_30px_60px_-24px_color-mix(in_oklab,var(--primary)_70%,black)] sm:p-5"
+        className="relative rounded-[30px] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--primary)_78%,white),var(--primary)_55%)] p-4 shadow-[inset_0_1px_0_rgb(255_255_255/0.4),inset_0_-5px_0_rgb(0_0_0/0.14),0_30px_60px_-24px_color-mix(in_oklab,var(--primary)_70%,black)] max-[360px]:p-3 sm:p-5"
       >
         <Screw className="top-2.5 left-2.5" />
         <Screw className="top-2.5 right-2.5" />
@@ -100,7 +100,7 @@ export function PriceMeter() {
         <div className="rounded-2xl bg-card p-5 shadow-[inset_0_2px_8px_rgb(0_0_0/0.14)] ring-1 ring-black/10">
           <div className="flex items-end justify-between gap-4">
             <div className="min-w-0">
-              <p className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">Total estimate</p>
+              <p className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">Estimate</p>
               <p className="mt-1 font-heading text-4xl font-bold tracking-tight sm:text-5xl" aria-hidden>
                 <RollingNumber value={usd(total)} />
               </p>
@@ -114,17 +114,23 @@ export function PriceMeter() {
               <Row label="Postcard" value={size.name} />
             </dl>
           </div>
-          {/* Level meter: one house per 1,000 homes */}
-          <div aria-hidden className="mt-4 flex justify-between border-t border-dashed pt-3">
-            {Array.from({ length: HOUSES }, (_, i) => (
-              <IconHomeFilled
-                key={i}
-                className={cn(
-                  "size-2 transition-colors duration-200 sm:size-3",
-                  min + i * HOMES_PER_HOUSE <= homes ? "text-primary" : "text-muted-foreground/20"
-                )}
-              />
-            ))}
+          {/* Level meter: one segment per 1,000 homes, the current one a little taller */}
+          <div aria-hidden className="mt-5 flex h-4 items-end gap-0.5 sm:gap-[3px]">
+            {Array.from({ length: SEGMENTS }, (_, i) => {
+              const value = min + i * HOMES_PER_SEGMENT;
+              const on = value <= homes;
+              const head = on && value + HOMES_PER_SEGMENT > homes;
+              return (
+                <span
+                  key={i}
+                  className={cn(
+                    "flex-1 rounded-[2px] transition-[background-color,height] duration-200",
+                    on ? "bg-primary" : "bg-muted-foreground/15",
+                    head ? "h-4" : "h-2.5"
+                  )}
+                />
+              );
+            })}
           </div>
         </div>
 
@@ -146,7 +152,9 @@ export function PriceMeter() {
               className={cn(
                 "[&_[data-slot=slider-track]]:h-2.5 [&_[data-slot=slider-track]]:bg-black/20 [&_[data-slot=slider-track]]:shadow-[inset_0_1px_2px_rgb(0_0_0/0.25)]",
                 "[&_[data-slot=slider-range]]:bg-white/85",
-                "[&_[data-slot=slider-thumb]]:h-7 [&_[data-slot=slider-thumb]]:w-10 [&_[data-slot=slider-thumb]]:rounded-lg [&_[data-slot=slider-thumb]]:border-0 [&_[data-slot=slider-thumb]]:bg-white [&_[data-slot=slider-thumb]]:shadow-[0_3px_0_rgb(0_0_0/0.22)] [&_[data-slot=slider-thumb]]:ring-white/50"
+                "[&_[data-slot=slider-thumb]]:h-7 [&_[data-slot=slider-thumb]]:w-10 [&_[data-slot=slider-thumb]]:rounded-lg [&_[data-slot=slider-thumb]]:border-0 [&_[data-slot=slider-thumb]]:shadow-[0_3px_0_rgb(0_0_0/0.22)] [&_[data-slot=slider-thumb]]:ring-white/50",
+                // Grip lines on the fader cap
+                "[&_[data-slot=slider-thumb]]:[background:repeating-linear-gradient(90deg,rgb(0_0_0/0.18)_0_1.5px,transparent_1.5px_4px)_center/10px_12px_no-repeat,white]"
               )}
             />
             <button type="button" aria-label="1,000 more homes" onClick={() => set(homes + step)} className={cn(keycap, "grid size-10 shrink-0 place-items-center rounded-xl")}>
@@ -205,7 +213,7 @@ export function PriceMeter() {
             })}
           </div>
           <p aria-hidden className="mt-1.5 text-center text-[10px] font-semibold tracking-wider text-white/75 uppercase">
-            Postcard size · inches
+            Postcard size<span className="hidden sm:inline"> · inches</span>
           </p>
         </fieldset>
 
