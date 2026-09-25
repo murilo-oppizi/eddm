@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
 import { createPortal } from "react-dom";
 import { IconArrowRight, IconMinus, IconPlus, IconVolume, IconVolumeOff } from "@tabler/icons-react";
@@ -27,8 +27,7 @@ import { cn } from "@/lib/utils";
 // pick the postcard size (the chosen one shows its shape and name in pink); a big key asks
 // for the quote. The first time it's on screen the fader glides up to 15,000 once.
 // It rests still, like an object on a desk, and its keys clack (Cream switch samples;
-// the speaker grille turns the sound off). Left untouched for a few seconds, the level
-// meter's current step breathes softly, inviting a touch. Asking for the quote
+// the speaker grille turns the sound off). Asking for the quote
 // prints a postage stamp with the estimate out of a slot at the bottom; it then floats
 // along as the page glides down to the "Ready to reach every door?" card, and lands on it.
 
@@ -40,7 +39,6 @@ const NOTCHES = Array.from({ length: Math.floor((max - 1) / NOTCH_EVERY) }, (_, 
 const FADER_CAP = 40; // px, the fader cap's width (w-10); its center travels inset by half
 const SEGMENTS = max / HOMES_PER_SEGMENT;
 const ease = [0.22, 1, 0.36, 1] as const;
-const IDLE_AFTER = 4000; // ms without a touch before the current step starts to breathe
 
 /** Oppizi's calculator total at the anchor counts, straight lines in between. */
 function totalFor(size: Size, homes: number) {
@@ -101,16 +99,6 @@ export function PriceMeter() {
   const perPiece = `$${(total / homes).toFixed(2)}`;
   const reduce = useReducedMotion();
 
-  // Idle: any touch (press, key, drag) resets the countdown; hovering doesn't count.
-  const [idle, setIdle] = useState(false);
-  const idleTimer = useRef(0);
-  const poke = useCallback(() => {
-    setIdle(false);
-    window.clearTimeout(idleTimer.current);
-    idleTimer.current = window.setTimeout(() => setIdle(true), IDLE_AFTER);
-  }, []);
-  useEffect(() => () => window.clearTimeout(idleTimer.current), []);
-
   // One glide from the minimum up to the starting count, the first time it's seen.
   const root = useRef<HTMLDivElement>(null);
   const seen = useInView(root, { once: true, amount: 0.5 });
@@ -121,10 +109,9 @@ export function PriceMeter() {
       duration: 1.4,
       ease,
       onUpdate: (v) => setHomes(Math.round(v / step) * step),
-      onComplete: poke,
     });
     return () => sweep.current?.stop();
-  }, [seen, reduce, poke]);
+  }, [seen, reduce]);
   const set = (value: number) => {
     sweep.current?.stop();
     setHomes(clamp(value));
@@ -161,7 +148,6 @@ export function PriceMeter() {
         : null;
       if (!key) return;
       e.preventDefault();
-      poke();
       setHeld(key);
       sweep.current?.stop();
       if (key === "minus" || key === "plus") {
@@ -179,7 +165,7 @@ export function PriceMeter() {
       document.removeEventListener("keydown", onDown);
       document.removeEventListener("keyup", onUp);
     };
-  }, [mostlyOnScreen, poke]);
+  }, [mostlyOnScreen]);
 
   // The quote key prints the stamp, which then flies (in a fixed layer above the page)
   // to its spot on the "Ready to reach every door?" card while the page glides there.
@@ -280,9 +266,6 @@ export function PriceMeter() {
     playKey(sound, { gain: sound === "enter" ? 0.6 : 0.5 });
   };
 
-  // Breathe only while it's on screen, at rest, and animations are welcome.
-  const invite = idle && mostlyOnScreen && !reduce && !printing && !flight;
-
   return (
     <TooltipProvider delay={300}>
       <div className="relative mx-auto w-full max-w-[540px]">
@@ -293,8 +276,6 @@ export function PriceMeter() {
           ref={root}
           onPointerEnter={() => prepareSounds()}
           onFocus={() => prepareSounds()}
-          onPointerDown={poke}
-          onKeyDown={poke}
           className="relative rounded-[30px] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--primary)_86%,white),var(--primary)_55%)] p-6 shadow-[inset_0_1px_0_rgb(255_255_255/0.4),inset_0_-5px_0_rgb(0_0_0/0.14),0_30px_60px_-24px_color-mix(in_oklab,var(--primary)_70%,black)]"
         >
           <Screw className="top-3.5 left-3.5" />
@@ -376,8 +357,7 @@ export function PriceMeter() {
                     className={cn(
                       "flex-1 rounded-[2px] transition-[background-color,height] duration-200",
                       on ? "bg-primary" : "bg-muted-foreground/15",
-                      head ? "h-4" : "h-2.5",
-                      head && invite && "animate-[meter-invite_2.6s_ease-in-out_infinite] motion-reduce:animate-none"
+                      head ? "h-4" : "h-2.5"
                     )}
                   />
                 );
@@ -429,7 +409,6 @@ export function PriceMeter() {
                 largeStep={5000}
                 onValueChange={(v) => {
                   set(v);
-                  poke(); // a slow drag is still a touch
                   // Passing a notch clicks a little firmer.
                   playKey("tick", { gain: v % NOTCH_EVERY === 0 ? 0.4 : 0.22, pitch: 0.85 + (0.35 * (v - min)) / (max - min) });
                 }}

@@ -90,16 +90,6 @@
   }
 }
 
-/* The price meter's "touch me" breath: a soft pink halo swells and fades around the
-   level meter's current step while the meter sits untouched (see price-meter.tsx). */
-@keyframes meter-invite {
-  50% {
-    box-shadow:
-      0 0 0 2px color-mix(in oklab, var(--primary) 18%, transparent),
-      0 0 12px 2px color-mix(in oklab, var(--primary) 45%, transparent);
-  }
-}
-
 /* A postage stamp's perforated edge: half-circle bites every 12px around the border.
    The content box stays solid; only the 6px padding ring is punched. Keep the size a
    multiple of 12px so the bites land evenly. (Shadows need drop-shadow on a wrapper.) */
