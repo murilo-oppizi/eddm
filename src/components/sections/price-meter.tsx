@@ -7,11 +7,8 @@ import { IconArrowRight, IconMinus, IconPlus, IconVolume, IconVolumeOff } from "
 import {
   animate,
   motion,
-  type MotionValue,
   useInView,
-  useMotionValue,
   useReducedMotion,
-  useTransform,
 } from "motion/react";
 
 import { PrintedStamp } from "@/components/sections/printed-stamp";
@@ -29,9 +26,8 @@ import { cn } from "@/lib/utils";
 // rolling digits and a level meter; a fader with − / + sets the homes; five keycaps
 // pick the postcard size (the chosen one shows its shape and name in pink); a big key asks
 // for the quote. The first time it's on screen the fader glides up to 15,000 once.
-// It rests still, like an object on a desk, and answers your touch: every press sinks
-// the whole device a hair, and its keys clack (Cream switch samples; the speaker grille
-// turns the sound off). Asking for the quote
+// It rests still, like an object on a desk, and its keys clack (Cream switch samples;
+// the speaker grille turns the sound off). Asking for the quote
 // prints a postage stamp with the estimate out of a slot at the bottom; it then floats
 // along as the page glides down to the "Ready to reach every door?" card, and lands on it.
 
@@ -63,10 +59,6 @@ const FEED = 0.7;
 const FEED_STEPS = [0, 0.21, 0.42];
 const TAKE_OFF = 1050; // ms after the press
 const glide = [0.65, 0, 0.35, 1] as const;
-
-/** Sink the device `depth` px and let it spring back. */
-const sinkBy = (sink: MotionValue<number>, depth: number) =>
-  animate(sink, [sink.get(), depth, 0], { duration: 0.28, times: [0, 0.25, 1], ease: ["easeOut", "easeOut"] });
 
 type Flight = { stamp: Stamp; left: number; top: number; x: number; y: number; scale: number; duration: number };
 
@@ -124,25 +116,6 @@ export function PriceMeter() {
 
   const sound = useSyncExternalStore(subscribeSound, soundsOn, () => true);
 
-  // Pressing it: the whole device sinks a hair and springs back, its shadow tightening
-  // as it nears the "desk" (bigger keys press deeper). While the stamp prints, it
-  // shudders on each feed step, as if a small motor ran inside.
-  const sink = useMotionValue(0);
-  const shake = useMotionValue(0);
-  const deviceShadow = useTransform(
-    sink,
-    (d) =>
-      `inset 0 1px 0 rgb(255 255 255 / 0.4), inset 0 -5px 0 rgb(0 0 0 / 0.14), 0 ${30 - d * 5}px ${60 - d * 10}px -24px color-mix(in oklab, var(--primary) 70%, black)`
-  );
-  const glowOpacity = useTransform(sink, [0, 2], [1, 1.35]);
-  const bump = (depth: number) => {
-    if (!reduce) sinkBy(sink, depth);
-  };
-  const shudder = () => {
-    if (reduce) return;
-    animate(shake, [0, -0.7, 0.6, -0.3, 0], { duration: 0.14, ease: "linear" });
-  };
-
   // Your own keyboard works the meter while it's mostly on screen: ← → or − + for the
   // homes (hold to repeat), 1–5 for the postcard size. The matching key presses and
   // clicks. Ignored while typing in a field or with modifier keys.
@@ -176,11 +149,9 @@ export function PriceMeter() {
       sweep.current?.stop();
       if (key === "minus" || key === "plus") {
         playKey("space");
-        if (!reduce) sinkBy(sink, 1);
         setHomes((h) => clamp(h + (key === "plus" ? step : -step)));
       } else if (!e.repeat) {
         playKey("press");
-        if (!reduce) sinkBy(sink, 1.25);
         setSizeName(key);
       }
     };
@@ -191,7 +162,7 @@ export function PriceMeter() {
       document.removeEventListener("keydown", onDown);
       document.removeEventListener("keyup", onUp);
     };
-  }, [mostlyOnScreen, reduce, sink]);
+  }, [mostlyOnScreen]);
 
   // The quote key prints the stamp, which then flies (in a fixed layer above the page)
   // to its spot on the "Ready to reach every door?" card while the page glides there.
@@ -261,10 +232,7 @@ export function PriceMeter() {
   };
 
   const printQuote = (e: React.MouseEvent<HTMLAnchorElement>) => {
-    if (e.detail === 0) {
-      playKey("enter", { gain: 0.6 }); // Enter key
-      bump(2);
-    }
+    if (e.detail === 0) playKey("enter", { gain: 0.6 }); // Enter key
     if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return; // new tab
     e.preventDefault();
     if (printing || flight) return;
@@ -283,12 +251,7 @@ export function PriceMeter() {
     }
     setPrinting(stamp);
     timers.current = [
-      ...FEED_STEPS.map((t) =>
-        window.setTimeout(() => {
-          playKey("tick", { gain: 0.35, pitch: 0.75 });
-          shudder();
-        }, t * 1000 + 60)
-      ),
+      ...FEED_STEPS.map((t) => window.setTimeout(() => playKey("tick", { gain: 0.35, pitch: 0.75 }), t * 1000 + 60)),
       window.setTimeout(() => takeOff(stamp), TAKE_OFF),
     ];
   };
@@ -298,21 +261,19 @@ export function PriceMeter() {
   const pressKey = (sound: "press" | "space" | "enter") => {
     viaPointer.current = true;
     playKey(sound, { gain: sound === "enter" ? 0.6 : 0.5 });
-    bump(sound === "enter" ? 2 : sound === "press" ? 1.25 : 1);
   };
 
   return (
     <TooltipProvider delay={300}>
       <div className="relative mx-auto w-full max-w-[540px]">
         {/* Soft pink glow on the "table" under the device */}
-        <motion.div aria-hidden style={{ opacity: glowOpacity }} className="absolute inset-x-10 -bottom-8 h-16 rounded-full bg-primary/30 blur-3xl" />
+        <div aria-hidden className="absolute inset-x-10 -bottom-8 h-16 rounded-full bg-primary/30 blur-3xl" />
 
         <motion.div
           ref={root}
-          style={{ y: sink, x: shake, boxShadow: deviceShadow }}
           onPointerEnter={() => prepareSounds()}
           onFocus={() => prepareSounds()}
-          className="relative rounded-[30px] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--primary)_86%,white),var(--primary)_55%)] p-6"
+          className="relative rounded-[30px] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--primary)_86%,white),var(--primary)_55%)] p-6 shadow-[inset_0_1px_0_rgb(255_255_255/0.4),inset_0_-5px_0_rgb(0_0_0/0.14),0_30px_60px_-24px_color-mix(in_oklab,var(--primary)_70%,black)]"
         >
           <Screw className="top-3.5 left-3.5" />
           <Screw className="top-3.5 right-3.5" />
@@ -425,10 +386,7 @@ export function PriceMeter() {
                   aria-keyshortcuts="ArrowLeft"
                   onPointerDown={() => pressKey("space")}
                   onClick={(e) => {
-                    if (e.detail === 0) {
-                      playKey("space");
-                      bump(1);
-                    }
+                    if (e.detail === 0) playKey("space");
                     set(homes - step);
                   }}
                   className={cn(keycap, held === "minus" ? pressed : lift, "grid size-10 shrink-0 place-items-center rounded-xl")}
@@ -465,10 +423,7 @@ export function PriceMeter() {
                   aria-keyshortcuts="ArrowRight"
                   onPointerDown={() => pressKey("space")}
                   onClick={(e) => {
-                    if (e.detail === 0) {
-                      playKey("space");
-                      bump(1);
-                    }
+                    if (e.detail === 0) playKey("space");
                     set(homes + step);
                   }}
                   className={cn(keycap, held === "plus" ? pressed : lift, "grid size-10 shrink-0 place-items-center rounded-xl")}
@@ -502,10 +457,7 @@ export function PriceMeter() {
                       onChange={() => {
                         sweep.current?.stop();
                         setSizeName(s.name);
-                        if (!viaPointer.current) {
-                          playKey("press"); // arrow keys
-                          bump(1.25);
-                        }
+                        if (!viaPointer.current) playKey("press"); // arrow keys
                         viaPointer.current = false;
                       }}
                       className="peer sr-only"
