@@ -48,11 +48,15 @@ const usd = (n: number) => `$${Math.round(n).toLocaleString("en-US")}`;
 const fmt = (n: number) => n.toLocaleString("en-US");
 const clamp = (n: number) => Math.min(max, Math.max(min, n));
 
-// A keycap: white (dark in dark mode), lit from above, with a hard shadow under it that shrinks when pressed.
+// Keycaps (white, dark in dark mode), after Aceternity's keyboard: a hairline edge, a
+// soft drop and a bright top highlight, over our deeper "travel" shadow. Pressed keys
+// sink 2px, shrink a hair and lose some highlight.
 const keycap =
-  "bg-card text-card-foreground shadow-[0_3px_0_rgb(0_0_0/0.22),inset_0_1px_0_rgb(255_255_255/0.9)] transition-[translate,box-shadow] duration-100 active:translate-y-[2px] active:shadow-[0_1px_0_rgb(0_0_0/0.22)] outline-none focus-visible:ring-3 focus-visible:ring-white/70";
-const pressed = "translate-y-[2px] shadow-[0_1px_0_rgb(0_0_0/0.22),inset_0_1px_0_rgb(255_255_255/0.9)]";
-const lift = "hover:-translate-y-px hover:shadow-[0_4px_0_rgb(0_0_0/0.22),inset_0_1px_0_rgb(255_255_255/0.9)]";
+  "bg-card text-card-foreground shadow-[0_0_0_1px_rgb(0_0_0/0.06),0_1px_1px_rgb(0_0_0/0.1),0_3px_0_rgb(0_0_0/0.2),inset_0_1px_0_rgb(255_255_255/0.95)] transition-[translate,scale,box-shadow] duration-100 active:translate-y-[2px] active:scale-[0.98] active:shadow-[0_0_0_1px_rgb(0_0_0/0.06),0_1px_0_rgb(0_0_0/0.2),inset_0_1px_0_rgb(255_255_255/0.5)] outline-none focus-visible:ring-3 focus-visible:ring-white/70";
+const pressed =
+  "translate-y-[2px] scale-[0.98] shadow-[0_0_0_1px_rgb(0_0_0/0.06),0_1px_0_rgb(0_0_0/0.2),inset_0_1px_0_rgb(255_255_255/0.5)]";
+const lift =
+  "hover:-translate-y-px hover:shadow-[0_0_0_1px_rgb(0_0_0/0.06),0_2px_2px_rgb(0_0_0/0.1),0_4px_0_rgb(0_0_0/0.2),inset_0_1px_0_rgb(255_255_255/0.95)]";
 
 // The sound switch, shared by every meter on the page and remembered in the browser.
 const soundListeners = new Set<() => void>();
@@ -121,6 +125,46 @@ export function PriceMeter() {
       onLeave();
     };
   }, [reduce, onScreen, tiltX, tiltY]);
+
+  // Your own keyboard works the meter while it's mostly on screen: ← → or − + for the
+  // homes (hold to repeat), 1–5 for the postcard size. The matching key presses and
+  // clicks. Ignored while typing in a field, with modifier keys, or when a control
+  // inside the meter has focus (the fader and size keys handle their own keys).
+  const [held, setHeld] = useState<string | null>(null);
+  const mostlyOnScreen = useInView(root, { amount: 0.5 });
+  useEffect(() => {
+    if (!mostlyOnScreen) return;
+    const onDown = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+      if (t && t !== document.body && root.current?.contains(t)) return;
+      const k = e.key;
+      const key =
+        k === "ArrowLeft" || k === "-" || k === "_" ? "minus"
+        : k === "ArrowRight" || k === "+" || k === "=" ? "plus"
+        : /^[1-5]$/.test(k) ? pricing.sizes[Number(k) - 1].name
+        : null;
+      if (!key) return;
+      e.preventDefault();
+      setHeld(key);
+      sweep.current?.stop();
+      if (key === "minus" || key === "plus") {
+        playKey("space");
+        setHomes((h) => clamp(h + (key === "plus" ? step : -step)));
+      } else if (!e.repeat) {
+        playKey("press");
+        setSizeName(key);
+      }
+    };
+    const onUp = () => setHeld(null);
+    document.addEventListener("keydown", onDown);
+    document.addEventListener("keyup", onUp);
+    return () => {
+      document.removeEventListener("keydown", onDown);
+      document.removeEventListener("keyup", onUp);
+    };
+  }, [mostlyOnScreen]);
 
   // Keys play when pressed (click-in only); keyboard use plays the press too.
   const viaPointer = useRef(false);
@@ -213,12 +257,13 @@ export function PriceMeter() {
             <button
               type="button"
               aria-label="1,000 fewer homes"
+              aria-keyshortcuts="ArrowLeft"
               onPointerDown={() => pressKey("space")}
               onClick={(e) => {
                 if (e.detail === 0) playKey("space");
                 set(homes - step);
               }}
-              className={cn(keycap, lift, "grid size-10 shrink-0 place-items-center rounded-xl")}
+              className={cn(keycap, held === "minus" ? pressed : lift, "grid size-10 shrink-0 place-items-center rounded-xl")}
             >
               <IconMinus className="size-4" />
             </button>
@@ -245,19 +290,22 @@ export function PriceMeter() {
             <button
               type="button"
               aria-label="1,000 more homes"
+              aria-keyshortcuts="ArrowRight"
               onPointerDown={() => pressKey("space")}
               onClick={(e) => {
                 if (e.detail === 0) playKey("space");
                 set(homes + step);
               }}
-              className={cn(keycap, lift, "grid size-10 shrink-0 place-items-center rounded-xl")}
+              className={cn(keycap, held === "plus" ? pressed : lift, "grid size-10 shrink-0 place-items-center rounded-xl")}
             >
               <IconPlus className="size-4" />
             </button>
           </div>
           <div aria-hidden className="mt-1.5 flex justify-between px-[3.25rem] text-[10px] font-semibold tracking-wider text-white/75 uppercase tabular-nums">
             <span>{fmt(min)}</span>
-            <span>Homes</span>
+            <span>
+              Homes<span className="hidden pointer-fine:inline"> · ← →</span>
+            </span>
             <span>{fmt(max)}</span>
           </div>
         </div>
@@ -308,6 +356,7 @@ export function PriceMeter() {
           </div>
           <p aria-hidden className="mt-1.5 text-center text-[10px] font-semibold tracking-wider text-white/75 uppercase">
             Postcard size<span className="hidden sm:inline"> · inches</span>
+            <span className="hidden pointer-fine:inline"> · keys 1–5</span>
           </p>
         </fieldset>
 
