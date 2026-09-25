@@ -28,7 +28,7 @@ import { cn } from "@/lib/utils";
 // for the quote. The first time it's on screen the fader glides up to 15,000 once.
 // It rests still, like an object on a desk, and its keys clack (Cream switch samples;
 // the speaker grille turns the sound off). Asking for the quote
-// prints a postage stamp with the estimate out of a slot on top; it then floats
+// prints a postage stamp with the estimate out of a slot at the bottom; it then floats
 // along as the page glides down to the "Ready to reach every door?" card, and lands on it.
 
 type Size = (typeof pricing.sizes)[number];
@@ -283,14 +283,14 @@ export function PriceMeter() {
           <Screw className="bottom-3.5 left-3.5" />
           <Screw className="right-3.5 bottom-3.5" />
 
-          {/* The printer: a slot along the top edge, and the stamp that feeds out of it.
+          {/* The printer: a slot along the bottom edge, and the stamp that feeds out of it.
               The stamp sits behind the slot's lip, so it looks like it comes from inside. */}
-          <div aria-hidden className="pointer-events-none absolute bottom-[calc(100%-4px)] left-1/2 z-10 -translate-x-1/2 overflow-hidden px-5 pt-5">
+          <div aria-hidden className="pointer-events-none absolute top-[calc(100%-4px)] left-1/2 z-10 -translate-x-1/2 overflow-hidden px-5 pb-5">
             {printing && (
               <motion.div
                 ref={feedRef}
-                initial={{ y: "100%" }}
-                animate={{ y: ["100%", "68%", "68%", "36%", "36%", "4%", "4%", "0%"] }}
+                initial={{ y: "-100%" }}
+                animate={{ y: ["-100%", "-68%", "-68%", "-36%", "-36%", "-4%", "-4%", "0%"] }}
                 transition={{ duration: FEED, times: [0, 0.14, 0.3, 0.44, 0.6, 0.74, 0.86, 1], ease: "easeOut" }}
                 className="drop-shadow-[0_4px_6px_rgb(0_0_0/0.18)]"
               >
@@ -298,7 +298,7 @@ export function PriceMeter() {
               </motion.div>
             )}
           </div>
-          <span aria-hidden className="absolute top-0 left-1/2 z-20 h-[5px] w-[196px] -translate-x-1/2 rounded-b-[4px] bg-black/35 shadow-[inset_0_2px_2px_rgb(0_0_0/0.35),0_1px_0_rgb(255_255_255/0.3)]" />
+          <span aria-hidden className="absolute bottom-0 left-1/2 z-20 h-[5px] w-[196px] -translate-x-1/2 rounded-t-[4px] bg-black/35 shadow-[inset_0_-2px_2px_rgb(0_0_0/0.35)]" />
 
           {/* Top plate: the maker's nameplate and the speaker, both debossed into the body
               (a darker, inset plate with a light lower edge), so white reads clearly */}
