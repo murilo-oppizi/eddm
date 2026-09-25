@@ -53,7 +53,7 @@ const clamp = (n: number) => Math.min(max, Math.max(min, n));
 // edge and soft drop over our deeper "travel" shadow. Pressed keys sink 2px, shrink a
 // hair and lose some highlight.
 const keycap =
-  "bg-[var(--ds-tw-gray-100)] text-card-foreground dark:bg-card shadow-[0_0_0_1px_rgb(0_0_0/0.06),0_1px_1px_rgb(0_0_0/0.1),0_3px_0_rgb(0_0_0/0.2),inset_0_3px_0_rgb(255_255_255/1)] dark:shadow-[0_0_0_1px_rgb(0_0_0/0.06),0_1px_1px_rgb(0_0_0/0.1),0_3px_0_rgb(0_0_0/0.2),inset_0_3px_0_rgb(255_255_255/0.12)] transition-[translate,scale,box-shadow] duration-100 active:translate-y-[2px] active:scale-[0.98] active:shadow-[0_0_0_1px_rgb(0_0_0/0.06),0_1px_0_rgb(0_0_0/0.2),inset_0_1px_0_rgb(255_255_255/0.5)] outline-none focus-visible:ring-3 focus-visible:ring-white/70";
+  "bg-[var(--ds-tw-gray-100)] text-card-foreground dark:bg-card shadow-[0_0_0_1px_rgb(0_0_0/0.06),0_1px_1px_rgb(0_0_0/0.1),0_3px_0_rgb(0_0_0/0.2),inset_0_3px_0_rgb(255_255_255/1)] dark:shadow-[0_0_0_1px_rgb(0_0_0/0.06),0_1px_1px_rgb(0_0_0/0.1),0_3px_0_rgb(0_0_0/0.2),inset_0_3px_0_rgb(255_255_255/0.12)] transition-[translate,scale,box-shadow] duration-100 active:translate-y-[2px] active:scale-[0.98] active:shadow-[0_0_0_1px_rgb(0_0_0/0.06),0_1px_0_rgb(0_0_0/0.2),inset_0_1px_0_rgb(255_255_255/0.5)] outline-none focus-visible:ring-3 focus-visible:ring-ring/50";
 const pressed =
   "translate-y-[2px] scale-[0.98] shadow-[0_0_0_1px_rgb(0_0_0/0.06),0_1px_0_rgb(0_0_0/0.2),inset_0_1px_0_rgb(255_255_255/0.5)]";
 const lift =
@@ -211,7 +211,7 @@ export function PriceMeter() {
             aria-pressed={sound}
             aria-label="Key sounds"
             title={sound ? "Key sounds on" : "Key sounds off"}
-            className="flex cursor-pointer items-center gap-2 rounded-md p-1 text-white/80 outline-none hover:text-white focus-visible:ring-3 focus-visible:ring-white/70"
+            className="flex cursor-pointer items-center gap-2 rounded-md p-1 text-white/80 outline-none hover:text-white focus-visible:ring-3 focus-visible:ring-ring/50"
           >
             {sound ? <IconVolume className="size-3.5" /> : <IconVolumeOff className="size-3.5" />}
             <span aria-hidden className="grid grid-cols-8 gap-1">
@@ -347,7 +347,7 @@ export function PriceMeter() {
                   <span
                     className={cn(
                       keycap,
-                      "relative flex h-full flex-col items-center gap-1.5 rounded-xl px-1 pt-3 pb-2 text-center peer-focus-visible:ring-3",
+                      "relative flex h-full flex-col items-center gap-1.5 rounded-xl px-1 pt-3 pb-2 text-center peer-focus-visible:ring-3 peer-focus-visible:ring-ring/50",
                       held === s.name ? pressed : lift
                     )}
                   >
