@@ -1,13 +1,23 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { IconArrowRight, IconMinus, IconPlus } from "@tabler/icons-react";
-import { animate, useInView, useReducedMotion } from "motion/react";
+import { IconArrowRight, IconMinus, IconPlus, IconVolume, IconVolumeOff } from "@tabler/icons-react";
+import {
+  animate,
+  motion,
+  useInView,
+  useMotionTemplate,
+  useMotionValue,
+  useReducedMotion,
+  useSpring,
+  useTransform,
+} from "motion/react";
 
 import { OppiziSymbol } from "@/components/site/logo";
 import { Slider } from "@/components/ui/slider";
 import { pricing } from "@/content/site";
+import { playKey, prepareSounds, setSoundsOn, soundsOn } from "@/lib/key-sounds";
 import { cn } from "@/lib/utils";
 
 // The "EDDM price meter": a flat, product-like object (after the postage meters post
@@ -15,6 +25,8 @@ import { cn } from "@/lib/utils";
 // rolling digits and a level meter; a fader with − / + sets the homes; five keycaps
 // pick the postcard size (the chosen one stays pressed, its shape and name pink); a big key asks
 // for the quote. The first time it's on screen the fader glides up to 15,000 once.
+// It tilts a little toward the pointer, with a glare that follows it, and its keys clack
+// (Cream switch samples; the speaker grille turns the sound off).
 
 type Size = (typeof pricing.sizes)[number];
 const { min, max, step, initial } = pricing.homes;
@@ -42,6 +54,18 @@ const clamp = (n: number) => Math.min(max, Math.max(min, n));
 const keycap =
   "bg-card text-card-foreground shadow-[0_3px_0_rgb(0_0_0/0.22),inset_0_1px_0_rgb(255_255_255/0.9)] transition-[translate,box-shadow] duration-100 active:translate-y-[2px] active:shadow-[0_1px_0_rgb(0_0_0/0.22)] outline-none focus-visible:ring-3 focus-visible:ring-white/70";
 const pressed = "translate-y-[2px] shadow-[0_1px_0_rgb(0_0_0/0.22),inset_0_1px_0_rgb(255_255_255/0.9)]";
+const lift = "hover:-translate-y-px hover:shadow-[0_4px_0_rgb(0_0_0/0.22),inset_0_1px_0_rgb(255_255_255/0.9)]";
+
+// The sound switch, shared by every meter on the page and remembered in the browser.
+const soundListeners = new Set<() => void>();
+const subscribeSound = (cb: () => void) => {
+  soundListeners.add(cb);
+  return () => soundListeners.delete(cb);
+};
+const toggleSound = () => {
+  setSoundsOn(!soundsOn());
+  soundListeners.forEach((cb) => cb());
+};
 
 export function PriceMeter() {
   const [sizeName, setSizeName] = useState<string>(pricing.initialSize);
@@ -69,13 +93,60 @@ export function PriceMeter() {
     setHomes(clamp(value));
   };
 
+  const sound = useSyncExternalStore(subscribeSound, soundsOn, () => true);
+
+  // Tilt toward the pointer (anywhere on screen, gently), with a glare under it.
+  const tiltX = useSpring(0, { stiffness: 140, damping: 18, mass: 0.6 });
+  const tiltY = useSpring(0, { stiffness: 140, damping: 18, mass: 0.6 });
+  const glareX = useMotionValue(50);
+  const glareY = useMotionValue(20);
+  const glare = useMotionTemplate`radial-gradient(360px circle at ${glareX}% ${glareY}%, rgb(255 255 255 / 0.22), transparent 65%)`;
+  const glowX = useTransform(tiltY, (v) => v * -3);
+  const onScreen = useInView(root, { amount: 0.2 });
+  useEffect(() => {
+    if (reduce || !onScreen || !window.matchMedia("(pointer: fine)").matches) return;
+    const clampUnit = (n: number) => Math.max(-1, Math.min(1, n));
+    const onMove = (e: PointerEvent) => {
+      const r = root.current?.getBoundingClientRect();
+      if (!r) return;
+      const dx = clampUnit((e.clientX - (r.left + r.width / 2)) / (window.innerWidth / 2));
+      const dy = clampUnit((e.clientY - (r.top + r.height / 2)) / (window.innerHeight / 2));
+      tiltY.set(dx * 8);
+      tiltX.set(dy * -6);
+      glareX.set(((e.clientX - r.left) / r.width) * 100);
+      glareY.set(((e.clientY - r.top) / r.height) * 100);
+    };
+    const onLeave = () => {
+      tiltX.set(0);
+      tiltY.set(0);
+    };
+    window.addEventListener("pointermove", onMove, { passive: true });
+    document.documentElement.addEventListener("pointerleave", onLeave);
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      document.documentElement.removeEventListener("pointerleave", onLeave);
+      onLeave();
+    };
+  }, [reduce, onScreen, tiltX, tiltY, glareX, glareY]);
+
+  // Keys play on press and on release; keyboard use plays the press.
+  const viaPointer = useRef(false);
+  const pressKey = (sound: "press" | "space" | "enter") => {
+    viaPointer.current = true;
+    playKey(sound, { gain: sound === "enter" ? 0.6 : 0.5 });
+  };
+  const releaseKey = (sound: "release" | "releaseEnter" = "release") => playKey(sound, { gain: 0.3 });
+
   return (
     <div className="relative mx-auto w-full max-w-[540px]">
       {/* Soft pink glow on the "table" under the device */}
-      <div aria-hidden className="absolute inset-x-10 -bottom-8 h-16 rounded-full bg-primary/30 blur-3xl" />
+      <motion.div aria-hidden style={{ x: glowX }} className="absolute inset-x-10 -bottom-8 h-16 rounded-full bg-primary/30 blur-3xl" />
 
-      <div
+      <motion.div
         ref={root}
+        style={{ rotateX: tiltX, rotateY: tiltY, transformPerspective: 1200 }}
+        onPointerEnter={() => prepareSounds()}
+        onFocus={() => prepareSounds()}
         className="relative rounded-[30px] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--primary)_78%,white),var(--primary)_55%)] p-6 shadow-[inset_0_1px_0_rgb(255_255_255/0.4),inset_0_-5px_0_rgb(0_0_0/0.14),0_30px_60px_-24px_color-mix(in_oklab,var(--primary)_70%,black)]"
       >
         <Screw className="top-3.5 left-3.5" />
@@ -89,11 +160,21 @@ export function PriceMeter() {
             <OppiziSymbol cropped className="h-3 w-auto" />
             EDDM price meter
           </span>
-          <span aria-hidden className="grid grid-cols-8 gap-1">
-            {Array.from({ length: 16 }, (_, i) => (
-              <span key={i} className="size-1 rounded-full bg-black/20" />
-            ))}
-          </span>
+          <button
+            type="button"
+            onClick={toggleSound}
+            aria-pressed={sound}
+            aria-label="Key sounds"
+            title={sound ? "Key sounds on" : "Key sounds off"}
+            className="flex cursor-pointer items-center gap-2 rounded-md p-1 text-white/80 outline-none hover:text-white focus-visible:ring-3 focus-visible:ring-white/70"
+          >
+            {sound ? <IconVolume className="size-3.5" /> : <IconVolumeOff className="size-3.5" />}
+            <span aria-hidden className="grid grid-cols-8 gap-1">
+              {Array.from({ length: 16 }, (_, i) => (
+                <span key={i} className={cn("size-1 rounded-full transition-colors", sound ? "bg-black/20" : "bg-black/10")} />
+              ))}
+            </span>
+          </button>
         </div>
 
         {/* The screen */}
@@ -137,7 +218,17 @@ export function PriceMeter() {
         {/* Homes: − / fader / + */}
         <div className="mt-5 px-1">
           <div className="flex items-center gap-3">
-            <button type="button" aria-label="1,000 fewer homes" onClick={() => set(homes - step)} className={cn(keycap, "grid size-10 shrink-0 place-items-center rounded-xl")}>
+            <button
+              type="button"
+              aria-label="1,000 fewer homes"
+              onPointerDown={() => pressKey("space")}
+              onPointerUp={() => releaseKey()}
+              onClick={(e) => {
+                if (e.detail === 0) playKey("space");
+                set(homes - step);
+              }}
+              className={cn(keycap, lift, "grid size-10 shrink-0 place-items-center rounded-xl")}
+            >
               <IconMinus className="size-4" />
             </button>
             <Slider
@@ -147,7 +238,10 @@ export function PriceMeter() {
               max={max}
               step={step}
               largeStep={5000}
-              onValueChange={set}
+              onValueChange={(v) => {
+                set(v);
+                playKey("tick", { gain: 0.22, pitch: 0.85 + (0.35 * (v - min)) / (max - min) });
+              }}
               getAriaValueText={(_, v: number) => `${fmt(v)} homes`}
               className={cn(
                 "[&_[data-slot=slider-track]]:h-2.5 [&_[data-slot=slider-track]]:bg-black/20 [&_[data-slot=slider-track]]:shadow-[inset_0_1px_2px_rgb(0_0_0/0.25)]",
@@ -157,7 +251,17 @@ export function PriceMeter() {
                 "[&_[data-slot=slider-thumb]]:[background:repeating-linear-gradient(90deg,rgb(0_0_0/0.18)_0_1.5px,transparent_1.5px_4px)_center/10px_12px_no-repeat,white]"
               )}
             />
-            <button type="button" aria-label="1,000 more homes" onClick={() => set(homes + step)} className={cn(keycap, "grid size-10 shrink-0 place-items-center rounded-xl")}>
+            <button
+              type="button"
+              aria-label="1,000 more homes"
+              onPointerDown={() => pressKey("space")}
+              onPointerUp={() => releaseKey()}
+              onClick={(e) => {
+                if (e.detail === 0) playKey("space");
+                set(homes + step);
+              }}
+              className={cn(keycap, lift, "grid size-10 shrink-0 place-items-center rounded-xl")}
+            >
               <IconPlus className="size-4" />
             </button>
           </div>
@@ -175,7 +279,12 @@ export function PriceMeter() {
             {pricing.sizes.map((s) => {
               const on = s.name === sizeName;
               return (
-                <label key={s.name} className="cursor-pointer">
+                <label
+                  key={s.name}
+                  className="cursor-pointer"
+                  onPointerDown={() => pressKey("press")}
+                  onPointerUp={() => releaseKey()}
+                >
                   <input
                     type="radio"
                     name="size"
@@ -184,6 +293,8 @@ export function PriceMeter() {
                     onChange={() => {
                       sweep.current?.stop();
                       setSizeName(s.name);
+                      if (!viaPointer.current) playKey("press"); // arrow keys
+                      viaPointer.current = false;
                     }}
                     className="peer sr-only"
                   />
@@ -191,7 +302,7 @@ export function PriceMeter() {
                     className={cn(
                       keycap,
                       "relative flex h-full flex-col items-center gap-1.5 rounded-xl px-1 pt-3 pb-2 text-center peer-focus-visible:ring-3",
-                      on && pressed
+                      on ? pressed : lift
                     )}
                   >
                     <SizeGlyph size={s} active={on} />
@@ -214,11 +325,17 @@ export function PriceMeter() {
         {/* The big key */}
         <Link
           href="/contact"
-          className={cn(keycap, "mt-5 flex h-14 items-center justify-center gap-2 rounded-2xl font-semibold text-primary")}
+          onPointerDown={() => pressKey("enter")}
+          onPointerUp={() => releaseKey("releaseEnter")}
+          className={cn(keycap, lift, "group mt-5 flex h-14 items-center justify-center gap-2 rounded-2xl font-semibold text-primary")}
         >
-          {pricing.cta} <IconArrowRight className="size-4" aria-hidden />
+          {pricing.cta}{" "}
+          <IconArrowRight className="size-4 transition-transform duration-200 group-hover:translate-x-1" aria-hidden />
         </Link>
-      </div>
+
+        {/* Glare, following the pointer */}
+        <motion.div aria-hidden style={{ background: glare }} className="pointer-events-none absolute inset-0 rounded-[30px]" />
+      </motion.div>
     </div>
   );
 }
