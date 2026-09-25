@@ -227,21 +227,20 @@ export function PriceMeter() {
 
           {/* The screen */}
           <div className="rounded-2xl bg-card p-5 shadow-[inset_0_2px_8px_rgb(0_0_0/0.14)] ring-1 ring-black/10">
-            <div className="flex items-end justify-between gap-4">
-              <div className="min-w-0">
-                <p className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">Estimate</p>
-                <p className="mt-1 font-heading text-4xl font-bold tracking-tight sm:text-5xl" aria-hidden>
-                  <RollingNumber value={usd(total)} />
-                </p>
-                <p className="sr-only" aria-live="polite">
-                  {usd(total)} for {fmt(homes)} homes with a {size.name} postcard, {perPiece} per piece.
-                </p>
-              </div>
-              <div aria-hidden className="shrink-0 space-y-0.5 text-right text-sm tabular-nums">
-                <p className="font-semibold">{perPiece} each</p>
-                <p className="text-muted-foreground">{fmt(homes)} homes</p>
-                <p className="text-muted-foreground">{size.name} postcard</p>
-              </div>
+            {/* The two figures: what it costs, and how many homes it reaches */}
+            <p className="sr-only" aria-live="polite">
+              {usd(total)} for {fmt(homes)} homes with a {size.name} postcard, {perPiece} per piece.
+            </p>
+            {/* Labels share a line, and so do the figures (bottoms aligned) */}
+            <div aria-hidden className="grid grid-cols-[1fr_auto] items-end gap-x-4 gap-y-1">
+              <p className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">Estimate</p>
+              <p className="text-right text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">Homes</p>
+              <p className="font-heading text-4xl font-bold tracking-tight sm:text-5xl">
+                <RollingNumber value={usd(total)} />
+              </p>
+              <p className="text-right font-heading text-2xl font-bold tracking-tight sm:text-3xl">
+                <RollingNumber value={fmt(homes)} />
+              </p>
             </div>
             {/* Level meter: one segment per 1,000 homes, the current one a little taller */}
             <div aria-hidden className="mt-5 flex h-4 items-end gap-0.5 sm:gap-[3px]">
@@ -263,7 +262,18 @@ export function PriceMeter() {
             </div>
             <div aria-hidden className="mt-2 flex justify-between text-[11px] text-muted-foreground tabular-nums">
               <span>{fmt(min)}</span>
-              <span>{fmt(max)} homes</span>
+              <span>{fmt(max)}</span>
+            </div>
+            {/* The details behind the estimate */}
+            <div aria-hidden className="mt-4 flex justify-between gap-4 border-t border-dashed pt-3 text-sm">
+              <span>
+                <span className="font-semibold tabular-nums">{perPiece}</span>
+                <span className="text-muted-foreground"> each, all-in</span>
+              </span>
+              <span className="text-muted-foreground">
+                {size.name}
+                <span className="hidden sm:inline"> · {size.dims} in</span>
+              </span>
             </div>
           </div>
 
@@ -331,7 +341,7 @@ export function PriceMeter() {
           <fieldset className="mt-5 px-1">
             <legend className="sr-only">Postcard size</legend>
             <div className="grid grid-cols-5 gap-1.5 max-[360px]:grid-cols-3 max-[360px]:gap-2 sm:gap-2">
-              {pricing.sizes.map((s, i) => {
+              {pricing.sizes.map((s) => {
                 const on = s.name === sizeName;
                 return (
                   <label
@@ -359,13 +369,6 @@ export function PriceMeter() {
                         held === s.name ? pressed : lift
                       )}
                     >
-                      {/* Printed legend, like a keyboard's second label: its shortcut */}
-                      <span
-                        aria-hidden
-                        className="absolute top-1.5 left-2 hidden text-[10px] leading-none font-medium text-muted-foreground/70 tabular-nums pointer-fine:block"
-                      >
-                        {i + 1}
-                      </span>
                       <SizeGlyph size={s} active={on} />
                       <span className={cn("block text-[10px] leading-tight font-semibold tracking-tight transition-colors sm:text-[11px] sm:tracking-normal", on && "text-primary")}>
                         {s.name}
