@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 // The "EDDM price meter": a flat, product-like object (after the postage meters post
 // offices use to price mail) instead of a form. A light screen shows the estimate in
 // rolling digits and a level meter; a fader with − / + sets the homes; five keycaps
-// pick the postcard size (the chosen one stays pressed, its light on); a big key asks
+// pick the postcard size (the chosen one stays pressed, its shape and name pink); a big key asks
 // for the quote. The first time it's on screen the fader glides up to 15,000 once.
 
 type Size = (typeof pricing.sizes)[number];
@@ -76,12 +76,12 @@ export function PriceMeter() {
 
       <div
         ref={root}
-        className="relative rounded-[30px] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--primary)_78%,white),var(--primary)_55%)] p-4 shadow-[inset_0_1px_0_rgb(255_255_255/0.4),inset_0_-5px_0_rgb(0_0_0/0.14),0_30px_60px_-24px_color-mix(in_oklab,var(--primary)_70%,black)] max-[360px]:p-3 sm:p-5"
+        className="relative rounded-[30px] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--primary)_78%,white),var(--primary)_55%)] p-6 shadow-[inset_0_1px_0_rgb(255_255_255/0.4),inset_0_-5px_0_rgb(0_0_0/0.14),0_30px_60px_-24px_color-mix(in_oklab,var(--primary)_70%,black)]"
       >
-        <Screw className="top-2.5 left-2.5" />
-        <Screw className="top-2.5 right-2.5" />
-        <Screw className="bottom-2.5 left-2.5" />
-        <Screw className="right-2.5 bottom-2.5" />
+        <Screw className="top-3.5 left-3.5" />
+        <Screw className="top-3.5 right-3.5" />
+        <Screw className="bottom-3.5 left-3.5" />
+        <Screw className="right-3.5 bottom-3.5" />
 
         {/* Top plate: the maker's mark and a speaker grille */}
         <div className="flex items-center justify-between px-2 pt-1 pb-3 text-white">
@@ -108,11 +108,11 @@ export function PriceMeter() {
                 {usd(total)} for {fmt(homes)} homes with a {size.name} postcard, {perPiece} per piece.
               </p>
             </div>
-            <dl aria-hidden className="shrink-0 space-y-1 text-right text-xs tabular-nums">
-              <Row label="Per piece" value={perPiece} />
-              <Row label="Homes" value={fmt(homes)} />
-              <Row label="Postcard" value={size.name} />
-            </dl>
+            <div aria-hidden className="shrink-0 space-y-0.5 text-right text-sm tabular-nums">
+              <p className="font-semibold">{perPiece} each</p>
+              <p className="text-muted-foreground">{fmt(homes)} homes</p>
+              <p className="text-muted-foreground">{size.name} postcard</p>
+            </div>
           </div>
           {/* Level meter: one segment per 1,000 homes, the current one a little taller */}
           <div aria-hidden className="mt-5 flex h-4 items-end gap-0.5 sm:gap-[3px]">
@@ -171,7 +171,7 @@ export function PriceMeter() {
         {/* Postcard size keys */}
         <fieldset className="mt-5 px-1">
           <legend className="sr-only">Postcard size</legend>
-          <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
+          <div className="grid grid-cols-5 gap-1.5 max-[360px]:grid-cols-3 max-[360px]:gap-2 sm:gap-2">
             {pricing.sizes.map((s) => {
               const on = s.name === sizeName;
               return (
@@ -194,16 +194,10 @@ export function PriceMeter() {
                       on && pressed
                     )}
                   >
-                    {/* The key's light */}
-                    <span
-                      aria-hidden
-                      className={cn(
-                        "absolute top-1.5 right-1.5 size-1.5 rounded-full transition-colors",
-                        on ? "bg-primary shadow-[0_0_6px_var(--primary)]" : "bg-muted-foreground/25"
-                      )}
-                    />
                     <SizeGlyph size={s} active={on} />
-                    <span className="block text-[10px] leading-tight font-semibold tracking-tight sm:text-[11px] sm:tracking-normal">{s.name}</span>
+                    <span className={cn("block text-[10px] leading-tight font-semibold tracking-tight transition-colors sm:text-[11px] sm:tracking-normal", on && "text-primary")}>
+                      {s.name}
+                    </span>
                     <span className="hidden text-[10px] leading-tight whitespace-nowrap text-muted-foreground sm:block">
                       {s.dims}
                     </span>
@@ -229,14 +223,6 @@ export function PriceMeter() {
   );
 }
 
-function Row({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex justify-end gap-2">
-      <dt className="text-muted-foreground">{label}</dt>
-      <dd className="min-w-14 font-semibold">{value}</dd>
-    </div>
-  );
-}
 
 function Screw({ className }: { className: string }) {
   return (
