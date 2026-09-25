@@ -21,7 +21,7 @@ import { cn } from "@/lib/utils";
 // The "EDDM price meter": a flat, product-like object (after the postage meters post
 // offices use to price mail) instead of a form. A light screen shows the estimate in
 // rolling digits and a level meter; a fader with − / + sets the homes; five keycaps
-// pick the postcard size (the chosen one stays pressed, its shape and name pink); a big key asks
+// pick the postcard size (the chosen one shows its shape and name in pink); a big key asks
 // for the quote. The first time it's on screen the fader glides up to 15,000 once.
 // It tilts a little toward the pointer, and its keys clack
 // (Cream switch samples; the speaker grille turns the sound off).
@@ -129,8 +129,7 @@ export function PriceMeter() {
 
   // Your own keyboard works the meter while it's mostly on screen: ← → or − + for the
   // homes (hold to repeat), 1–5 for the postcard size. The matching key presses and
-  // clicks. Ignored while typing in a field, with modifier keys, or when a control
-  // inside the meter has focus (the fader and size keys handle their own keys).
+  // clicks. Ignored while typing in a field or with modifier keys.
   const [held, setHeld] = useState<string | null>(null);
   const mostlyOnScreen = useInView(root, { amount: 0.5 });
   useEffect(() => {
@@ -138,9 +137,18 @@ export function PriceMeter() {
     const onDown = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement | null;
       if (e.metaKey || e.ctrlKey || e.altKey) return;
-      if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
-      if (t && t !== document.body && root.current?.contains(t)) return;
+      // Typing in a text field (not the meter's own radio keys or fader).
+      const typing =
+        t?.isContentEditable ||
+        t?.tagName === "TEXTAREA" ||
+        t?.tagName === "SELECT" ||
+        (t instanceof HTMLInputElement && !["radio", "checkbox", "range", "button", "submit"].includes(t.type));
+      if (typing) return;
       const k = e.key;
+      // A focused control inside the meter already handles the arrows (the fader steps,
+      // the size keys move between sizes); digits and − / + still work.
+      const arrow = k === "ArrowLeft" || k === "ArrowRight";
+      if (arrow && t && t !== document.body && root.current?.contains(t)) return;
       const key =
         k === "ArrowLeft" || k === "-" || k === "_" ? "minus"
         : k === "ArrowRight" || k === "+" || k === "=" ? "plus"
@@ -340,7 +348,7 @@ export function PriceMeter() {
                     className={cn(
                       keycap,
                       "relative flex h-full flex-col items-center gap-1.5 rounded-xl px-1 pt-3 pb-2 text-center peer-focus-visible:ring-3",
-                      on ? pressed : lift
+                      held === s.name ? pressed : lift
                     )}
                   >
                     <SizeGlyph size={s} active={on} />
