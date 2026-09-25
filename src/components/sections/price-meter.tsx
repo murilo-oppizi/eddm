@@ -129,13 +129,12 @@ export function PriceMeter() {
     };
   }, [reduce, onScreen, tiltX, tiltY, glareX, glareY]);
 
-  // Keys play on press and on release; keyboard use plays the press.
+  // Keys play when pressed (click-in only); keyboard use plays the press too.
   const viaPointer = useRef(false);
   const pressKey = (sound: "press" | "space" | "enter") => {
     viaPointer.current = true;
     playKey(sound, { gain: sound === "enter" ? 0.6 : 0.5 });
   };
-  const releaseKey = (sound: "release" | "releaseEnter" = "release") => playKey(sound, { gain: 0.3 });
 
   return (
     <div className="relative mx-auto w-full max-w-[540px]">
@@ -222,7 +221,6 @@ export function PriceMeter() {
               type="button"
               aria-label="1,000 fewer homes"
               onPointerDown={() => pressKey("space")}
-              onPointerUp={() => releaseKey()}
               onClick={(e) => {
                 if (e.detail === 0) playKey("space");
                 set(homes - step);
@@ -255,7 +253,6 @@ export function PriceMeter() {
               type="button"
               aria-label="1,000 more homes"
               onPointerDown={() => pressKey("space")}
-              onPointerUp={() => releaseKey()}
               onClick={(e) => {
                 if (e.detail === 0) playKey("space");
                 set(homes + step);
@@ -283,7 +280,6 @@ export function PriceMeter() {
                   key={s.name}
                   className="cursor-pointer"
                   onPointerDown={() => pressKey("press")}
-                  onPointerUp={() => releaseKey()}
                 >
                   <input
                     type="radio"
@@ -326,7 +322,6 @@ export function PriceMeter() {
         <Link
           href="/contact"
           onPointerDown={() => pressKey("enter")}
-          onPointerUp={() => releaseKey("releaseEnter")}
           className={cn(keycap, lift, "group mt-5 flex h-14 items-center justify-center gap-2 rounded-2xl font-semibold text-primary")}
         >
           {pricing.cta}{" "}

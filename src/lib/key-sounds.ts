@@ -12,12 +12,10 @@ const FILES = {
   tick: "press-generic-r0",
   space: "press-space",
   enter: "press-enter",
-  release: "release-generic",
-  releaseEnter: "release-enter",
 } as const;
 
 type Sample = keyof typeof FILES;
-export type KeySound = "press" | "release" | "space" | "enter" | "releaseEnter" | "tick";
+export type KeySound = "press" | "space" | "enter" | "tick";
 
 const STORAGE_KEY = "eddm-key-sounds";
 let ctx: AudioContext | null = null;
