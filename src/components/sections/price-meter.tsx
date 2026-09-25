@@ -61,6 +61,10 @@ const pressed =
 const lift =
   "hover:-translate-y-px hover:shadow-[0_0_0_1px_rgb(0_0_0/0.06),0_2px_2px_rgb(0_0_0/0.1),0_4px_0_rgb(0_0_0/0.2),inset_0_3px_0_rgb(255_255_255/1)]";
 
+// A debossed plate on the device body: darker, pressed in, with a light lower edge.
+const plate =
+  "inline-flex h-7 items-center rounded-full bg-black/20 text-white shadow-[inset_0_1px_2px_rgb(0_0_0/0.3),0_1px_0_rgb(255_255_255/0.3)]";
+
 // The sound switch, shared by every meter on the page and remembered in the browser.
 const soundListeners = new Set<() => void>();
 const subscribeSound = (cb: () => void) => {
@@ -195,16 +199,17 @@ export function PriceMeter() {
           style={{ rotateX: tiltX, rotateY: tiltY, transformPerspective: 1200 }}
           onPointerEnter={() => prepareSounds()}
           onFocus={() => prepareSounds()}
-          className="relative rounded-[30px] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--primary)_78%,white),var(--primary)_55%)] p-6 shadow-[inset_0_1px_0_rgb(255_255_255/0.4),inset_0_-5px_0_rgb(0_0_0/0.14),0_30px_60px_-24px_color-mix(in_oklab,var(--primary)_70%,black)]"
+          className="relative rounded-[30px] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--primary)_86%,white),var(--primary)_55%)] p-6 shadow-[inset_0_1px_0_rgb(255_255_255/0.4),inset_0_-5px_0_rgb(0_0_0/0.14),0_30px_60px_-24px_color-mix(in_oklab,var(--primary)_70%,black)]"
         >
           <Screw className="top-3.5 left-3.5" />
           <Screw className="top-3.5 right-3.5" />
           <Screw className="bottom-3.5 left-3.5" />
           <Screw className="right-3.5 bottom-3.5" />
 
-          {/* Top plate: the maker's mark and a speaker grille */}
-          <div className="flex items-center justify-between px-2 pt-1 pb-3 text-white">
-            <span className="flex items-center gap-2 text-xs font-semibold tracking-wide">
+          {/* Top plate: the maker's nameplate and the speaker, both debossed into the body
+              (a darker, inset plate with a light lower edge), so white reads clearly */}
+          <div className="flex items-center justify-between pb-4">
+            <span className={cn(plate, "gap-2 px-3 text-xs font-semibold tracking-wide")}>
               <OppiziSymbol cropped className="h-3 w-auto" />
               EDDM price meter
             </span>
@@ -214,12 +219,15 @@ export function PriceMeter() {
               aria-pressed={sound}
               aria-label="Key sounds"
               title={sound ? "Key sounds on" : "Key sounds off"}
-              className="flex cursor-pointer items-center gap-2 rounded-md p-1 text-white/80 outline-none hover:text-white focus-visible:ring-3 focus-visible:ring-ring/50"
+              className={cn(
+                plate,
+                "cursor-pointer gap-2 px-2.5 outline-none transition-colors hover:bg-black/25 focus-visible:ring-3 focus-visible:ring-ring/50"
+              )}
             >
-              {sound ? <IconVolume className="size-3.5" /> : <IconVolumeOff className="size-3.5" />}
-              <span aria-hidden className="grid grid-cols-8 gap-1">
-                {Array.from({ length: 16 }, (_, i) => (
-                  <span key={i} className={cn("size-1 rounded-full transition-colors", sound ? "bg-black/20" : "bg-black/10")} />
+              {sound ? <IconVolume className="size-3.5" /> : <IconVolumeOff className="size-3.5 opacity-70" />}
+              <span aria-hidden className="grid grid-cols-6 gap-[3px]">
+                {Array.from({ length: 12 }, (_, i) => (
+                  <span key={i} className={cn("size-[3px] rounded-full transition-colors", sound ? "bg-white/70" : "bg-white/30")} />
                 ))}
               </span>
             </button>
