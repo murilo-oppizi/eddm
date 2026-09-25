@@ -8,7 +8,7 @@ import { pricing } from "@/content/site";
 // Text on the left, the price meter on the right (stacked on phones).
 export function Pricing() {
   return (
-    <section id="pricing" className="scroll-mt-20 overflow-hidden border-y bg-muted/40 py-20 lg:py-28">
+    <section id="pricing" className="scroll-mt-20 overflow-x-clip border-y bg-muted/40 py-20 lg:py-28">
       <div className="container-page grid items-center gap-16 lg:grid-cols-[1fr_1.1fr] lg:gap-20">
         <div className="space-y-10">
           <SectionHeading

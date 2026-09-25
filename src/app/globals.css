@@ -90,6 +90,16 @@
   }
 }
 
+/* A postage stamp's perforated edge: half-circle bites every 12px around the border.
+   The content box stays solid; only the 6px padding ring is punched. Keep the size a
+   multiple of 12px so the bites land evenly. (Shadows need drop-shadow on a wrapper.) */
+@utility stamp-perforated {
+  padding: 6px;
+  mask:
+    linear-gradient(#000 0 0) content-box,
+    radial-gradient(circle 3.5px, #0000 97%, #000) -6px -6px / 12px 12px;
+}
+
 /* "AI is working" ring: a pink-to-indigo arc that circles an element. Put it on a
    layer just behind the element (see hero-composition.tsx). */
 @property --glow-angle {

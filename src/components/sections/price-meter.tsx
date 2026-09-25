@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { IconArrowRight, IconMinus, IconPlus, IconVolume, IconVolumeOff } from "@tabler/icons-react";
 import {
   animate,
@@ -26,7 +27,8 @@ import { cn } from "@/lib/utils";
 // pick the postcard size (the chosen one shows its shape and name in pink); a big key asks
 // for the quote. The first time it's on screen the fader glides up to 15,000 once.
 // It tilts a little toward the pointer, and its keys clack
-// (Cream switch samples; the speaker grille turns the sound off).
+// (Cream switch samples; the speaker grille turns the sound off). Asking for the quote
+// prints a postage stamp with the estimate out of the slot on top, then opens Contact.
 
 type Size = (typeof pricing.sizes)[number];
 const { min, max, step, initial } = pricing.homes;
@@ -49,6 +51,13 @@ function totalFor(size: Size, homes: number) {
 const usd = (n: number) => `$${Math.round(n).toLocaleString("en-US")}`;
 const fmt = (n: number) => n.toLocaleString("en-US");
 const clamp = (n: number) => Math.min(max, Math.max(min, n));
+
+// The stamp feeds out in three steps, like a meter's printer, then rests a beat before
+// the page moves on. FEED_STEPS are when each step starts (seconds), for the ticks.
+const FEED = 0.7;
+const FEED_STEPS = [0, 0.21, 0.42];
+const NAVIGATE_AFTER = 1300; // ms after the press
+type Stamp = { total: string; homes: string; size: string; date: string };
 
 // Keycaps: off-white (the design system's gray-100, dark in dark mode) so a crisp white
 // highlight shows along the top edge, like a real keycap catching the light; a hairline
@@ -181,6 +190,30 @@ export function PriceMeter() {
     };
   }, [mostlyOnScreen]);
 
+  // The quote key prints the stamp, then goes to Contact. Opening in a new tab
+  // (⌘/Ctrl/Shift-click) and reduced motion skip straight to the link.
+  const router = useRouter();
+  const [stamp, setStamp] = useState<Stamp | null>(null);
+  const timers = useRef<number[]>([]);
+  useEffect(() => () => timers.current.forEach(clearTimeout), []);
+  const printQuote = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    if (e.detail === 0) playKey("enter", { gain: 0.6 }); // Enter key
+    if (reduce || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+    e.preventDefault();
+    if (stamp) return;
+    sweep.current?.stop();
+    setStamp({
+      total: usd(total),
+      homes: fmt(homes),
+      size: size.name,
+      date: new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }).toUpperCase(),
+    });
+    timers.current = [
+      ...FEED_STEPS.map((t) => window.setTimeout(() => playKey("tick", { gain: 0.35, pitch: 0.75 }), t * 1000 + 60)),
+      window.setTimeout(() => router.push("/contact"), NAVIGATE_AFTER),
+    ];
+  };
+
   // Keys play when pressed (click-in only); keyboard use plays the press too.
   const viaPointer = useRef(false);
   const pressKey = (sound: "press" | "space" | "enter") => {
@@ -205,6 +238,22 @@ export function PriceMeter() {
           <Screw className="top-3.5 right-3.5" />
           <Screw className="bottom-3.5 left-3.5" />
           <Screw className="right-3.5 bottom-3.5" />
+
+          {/* The printer: a slot along the top edge, and the stamp that feeds out of it.
+              The stamp sits behind the slot's lip, so it looks like it comes from inside. */}
+          <div aria-hidden className="pointer-events-none absolute bottom-[calc(100%-4px)] left-1/2 z-10 -translate-x-1/2 overflow-hidden px-5 pt-5">
+            {stamp && (
+              <motion.div
+                initial={{ y: "100%" }}
+                animate={{ y: ["100%", "68%", "68%", "36%", "36%", "4%", "4%", "0%"] }}
+                transition={{ duration: FEED, times: [0, 0.14, 0.3, 0.44, 0.6, 0.74, 0.86, 1], ease: "easeOut" }}
+                className="drop-shadow-[0_4px_6px_rgb(0_0_0/0.18)]"
+              >
+                <PrintedStamp {...stamp} />
+              </motion.div>
+            )}
+          </div>
+          <span aria-hidden className="absolute top-0 left-1/2 z-20 h-[5px] w-[196px] -translate-x-1/2 rounded-b-[4px] bg-black/35 shadow-[inset_0_2px_2px_rgb(0_0_0/0.35),0_1px_0_rgb(255_255_255/0.3)]" />
 
           {/* Top plate: the maker's nameplate and the speaker, both debossed into the body
               (a darker, inset plate with a light lower edge), so white reads clearly */}
@@ -395,7 +444,9 @@ export function PriceMeter() {
           {/* The big key */}
           <Link
             href="/contact"
+            onPointerEnter={() => router.prefetch("/contact")}
             onPointerDown={() => pressKey("enter")}
+            onClick={printQuote}
             className={cn(keycap, lift, "group mt-5 flex h-14 items-center justify-center gap-2 rounded-2xl font-semibold text-primary")}
           >
             {pricing.cta}{" "}
@@ -449,6 +500,36 @@ function RollingNumber({ value }: { value: string }) {
         );
       })}
     </span>
+  );
+}
+
+/**
+ * The stamp the meter prints: perforated paper with the estimate in pink "meter ink",
+ * the classic wavy cancellation lines and today's date.
+ */
+function PrintedStamp({ total, homes, size, date }: Stamp) {
+  return (
+    <div className="stamp-perforated h-[120px] w-[168px] bg-white">
+      <div className="relative flex h-full flex-col overflow-hidden rounded-[2px] border border-primary/60 px-2.5 pt-2 pb-1.5 text-primary">
+        <div className="flex items-center justify-between text-[8px] leading-none font-bold tracking-[0.12em] uppercase">
+          <span className="flex items-center gap-1">
+            <OppiziSymbol cropped className="h-[7px] w-auto" />
+            EDDM · Estimate
+          </span>
+        </div>
+        {/* Cancellation waves, behind the figure */}
+        <svg viewBox="0 0 60 30" className="absolute top-[26px] -right-1 w-[70px] opacity-35" fill="none" stroke="currentColor" strokeWidth="1.4">
+          {[4, 11, 18, 25].map((y) => (
+            <path key={y} d={`M0 ${y} q 7.5 -4 15 0 t 15 0 t 15 0 t 15 0`} />
+          ))}
+        </svg>
+        <p className="relative mt-auto font-heading text-[26px] leading-none font-bold tracking-tight tabular-nums">{total}</p>
+        <p className="relative mt-1 text-[10px] leading-none font-semibold">{homes} homes · {size}</p>
+        <p className="mt-2 border-t border-dashed border-primary/40 pt-1 text-[7.5px] leading-none font-semibold tracking-[0.12em] opacity-80">
+          {date}
+        </p>
+      </div>
+    </div>
   );
 }
 
