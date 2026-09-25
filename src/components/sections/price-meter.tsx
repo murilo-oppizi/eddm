@@ -34,6 +34,9 @@ import { cn } from "@/lib/utils";
 type Size = (typeof pricing.sizes)[number];
 const { min, max, step, initial } = pricing.homes;
 const HOMES_PER_SEGMENT = 1000;
+const NOTCH_EVERY = 5000; // the fader's notch marks (and firmer ticks)
+const NOTCHES = Array.from({ length: Math.floor((max - 1) / NOTCH_EVERY) }, (_, i) => (i + 1) * NOTCH_EVERY).filter((v) => v > min);
+const FADER_CAP = 40; // px, the fader cap's width (w-10); its center travels inset by half
 const SEGMENTS = max / HOMES_PER_SEGMENT;
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -406,8 +409,20 @@ export function PriceMeter() {
                 largeStep={5000}
                 onValueChange={(v) => {
                   set(v);
-                  playKey("tick", { gain: 0.22, pitch: 0.85 + (0.35 * (v - min)) / (max - min) });
+                  // Passing a notch clicks a little firmer.
+                  playKey("tick", { gain: v % NOTCH_EVERY === 0 ? 0.4 : 0.22, pitch: 0.85 + (0.35 * (v - min)) / (max - min) });
                 }}
+                track={NOTCHES.map((v) => (
+                  <span
+                    key={v}
+                    aria-hidden
+                    className={cn(
+                      "absolute top-1/2 h-1 w-0.5 -translate-x-1/2 -translate-y-1/2 rounded-full transition-colors",
+                      v <= homes ? "bg-black/15" : "bg-white/35"
+                    )}
+                    style={{ left: `calc(${FADER_CAP / 2}px + ${(v - min) / (max - min)} * (100% - ${FADER_CAP}px))` }}
+                  />
+                ))}
                 getAriaValueText={(_, v: number) => `${fmt(v)} homes`}
                 className={cn(
                   "[&_[data-slot=slider-track]]:h-2.5 [&_[data-slot=slider-track]]:bg-black/20 [&_[data-slot=slider-track]]:shadow-[inset_0_1px_2px_rgb(0_0_0/0.25)]",

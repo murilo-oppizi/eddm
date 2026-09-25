@@ -1,7 +1,8 @@
 "use client"
 
 // shadcn's Slider (base-nova, Base UI), single thumb. A bigger thumb than the default so
-// it's easy to grab on touch screens.
+// it's easy to grab on touch screens. `track` adds decoration inside the track, over the
+// filled range (e.g. notch marks).
 
 import { Slider as SliderPrimitive } from "@base-ui/react/slider"
 import { cn } from "cn"
@@ -10,9 +11,10 @@ function Slider({
   className,
   getAriaLabel,
   getAriaValueText,
+  track,
   ...props
 }: SliderPrimitive.Root.Props<number> &
-  Pick<SliderPrimitive.Thumb.Props, "getAriaLabel" | "getAriaValueText">) {
+  Pick<SliderPrimitive.Thumb.Props, "getAriaLabel" | "getAriaValueText"> & { track?: React.ReactNode }) {
   return (
     <SliderPrimitive.Root
       data-slot="slider"
@@ -26,6 +28,7 @@ function Slider({
           className="relative h-2 w-full grow overflow-hidden rounded-full bg-muted select-none"
         >
           <SliderPrimitive.Indicator data-slot="slider-range" className="h-full bg-primary select-none" />
+          {track}
         </SliderPrimitive.Track>
         <SliderPrimitive.Thumb
           data-slot="slider-thumb"
