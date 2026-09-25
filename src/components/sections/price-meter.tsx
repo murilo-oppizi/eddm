@@ -235,10 +235,11 @@ export function PriceMeter() {
             <div aria-hidden className="grid grid-cols-[1fr_auto] items-end gap-x-4 gap-y-1">
               <p className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">Estimate</p>
               <p className="text-right text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">Homes</p>
-              <p className="font-heading text-4xl font-bold tracking-tight sm:text-5xl">
+              {/* Same size and weight, so the two read as a pair */}
+              <p className="font-heading text-3xl font-bold tracking-tight sm:text-4xl">
                 <RollingNumber value={usd(total)} />
               </p>
-              <p className="text-right font-heading text-2xl font-bold tracking-tight sm:text-3xl">
+              <p className="text-right font-heading text-3xl font-bold tracking-tight sm:text-4xl">
                 <RollingNumber value={fmt(homes)} />
               </p>
             </div>
