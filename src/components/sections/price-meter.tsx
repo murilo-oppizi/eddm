@@ -48,15 +48,16 @@ const usd = (n: number) => `$${Math.round(n).toLocaleString("en-US")}`;
 const fmt = (n: number) => n.toLocaleString("en-US");
 const clamp = (n: number) => Math.min(max, Math.max(min, n));
 
-// Keycaps (white, dark in dark mode), after Aceternity's keyboard: a hairline edge, a
-// soft drop and a bright top highlight, over our deeper "travel" shadow. Pressed keys
-// sink 2px, shrink a hair and lose some highlight.
+// Keycaps: off-white (the design system's gray-100, dark in dark mode) so a crisp white
+// highlight shows along the top edge, like a real keycap catching the light; a hairline
+// edge and soft drop over our deeper "travel" shadow. Pressed keys sink 2px, shrink a
+// hair and lose some highlight.
 const keycap =
-  "bg-card text-card-foreground shadow-[0_0_0_1px_rgb(0_0_0/0.06),0_1px_1px_rgb(0_0_0/0.1),0_3px_0_rgb(0_0_0/0.2),inset_0_1px_0_rgb(255_255_255/0.95)] transition-[translate,scale,box-shadow] duration-100 active:translate-y-[2px] active:scale-[0.98] active:shadow-[0_0_0_1px_rgb(0_0_0/0.06),0_1px_0_rgb(0_0_0/0.2),inset_0_1px_0_rgb(255_255_255/0.5)] outline-none focus-visible:ring-3 focus-visible:ring-white/70";
+  "bg-[var(--ds-tw-gray-100)] text-card-foreground dark:bg-card shadow-[0_0_0_1px_rgb(0_0_0/0.06),0_1px_1px_rgb(0_0_0/0.1),0_3px_0_rgb(0_0_0/0.2),inset_0_2px_0_rgb(255_255_255/1)] dark:shadow-[0_0_0_1px_rgb(0_0_0/0.06),0_1px_1px_rgb(0_0_0/0.1),0_3px_0_rgb(0_0_0/0.2),inset_0_2px_0_rgb(255_255_255/0.12)] transition-[translate,scale,box-shadow] duration-100 active:translate-y-[2px] active:scale-[0.98] active:shadow-[0_0_0_1px_rgb(0_0_0/0.06),0_1px_0_rgb(0_0_0/0.2),inset_0_1px_0_rgb(255_255_255/0.5)] outline-none focus-visible:ring-3 focus-visible:ring-white/70";
 const pressed =
   "translate-y-[2px] scale-[0.98] shadow-[0_0_0_1px_rgb(0_0_0/0.06),0_1px_0_rgb(0_0_0/0.2),inset_0_1px_0_rgb(255_255_255/0.5)]";
 const lift =
-  "hover:-translate-y-px hover:shadow-[0_0_0_1px_rgb(0_0_0/0.06),0_2px_2px_rgb(0_0_0/0.1),0_4px_0_rgb(0_0_0/0.2),inset_0_1px_0_rgb(255_255_255/0.95)]";
+  "hover:-translate-y-px hover:shadow-[0_0_0_1px_rgb(0_0_0/0.06),0_2px_2px_rgb(0_0_0/0.1),0_4px_0_rgb(0_0_0/0.2),inset_0_2px_0_rgb(255_255_255/1)]";
 
 // The sound switch, shared by every meter on the page and remembered in the browser.
 const soundListeners = new Set<() => void>();
