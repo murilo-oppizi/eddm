@@ -7,8 +7,6 @@ import {
   animate,
   motion,
   useInView,
-  useMotionTemplate,
-  useMotionValue,
   useReducedMotion,
   useSpring,
   useTransform,
@@ -25,7 +23,7 @@ import { cn } from "@/lib/utils";
 // rolling digits and a level meter; a fader with − / + sets the homes; five keycaps
 // pick the postcard size (the chosen one stays pressed, its shape and name pink); a big key asks
 // for the quote. The first time it's on screen the fader glides up to 15,000 once.
-// It tilts a little toward the pointer, with a glare that follows it, and its keys clack
+// It tilts a little toward the pointer, and its keys clack
 // (Cream switch samples; the speaker grille turns the sound off).
 
 type Size = (typeof pricing.sizes)[number];
@@ -95,12 +93,9 @@ export function PriceMeter() {
 
   const sound = useSyncExternalStore(subscribeSound, soundsOn, () => true);
 
-  // Tilt toward the pointer (anywhere on screen, gently), with a glare under it.
+  // Tilt toward the pointer (anywhere on screen, gently); the floor glow shifts the other way.
   const tiltX = useSpring(0, { stiffness: 140, damping: 18, mass: 0.6 });
   const tiltY = useSpring(0, { stiffness: 140, damping: 18, mass: 0.6 });
-  const glareX = useMotionValue(50);
-  const glareY = useMotionValue(20);
-  const glare = useMotionTemplate`radial-gradient(360px circle at ${glareX}% ${glareY}%, rgb(255 255 255 / 0.22), transparent 65%)`;
   const glowX = useTransform(tiltY, (v) => v * -3);
   const onScreen = useInView(root, { amount: 0.2 });
   useEffect(() => {
@@ -113,8 +108,6 @@ export function PriceMeter() {
       const dy = clampUnit((e.clientY - (r.top + r.height / 2)) / (window.innerHeight / 2));
       tiltY.set(dx * 8);
       tiltX.set(dy * -6);
-      glareX.set(((e.clientX - r.left) / r.width) * 100);
-      glareY.set(((e.clientY - r.top) / r.height) * 100);
     };
     const onLeave = () => {
       tiltX.set(0);
@@ -127,7 +120,7 @@ export function PriceMeter() {
       document.documentElement.removeEventListener("pointerleave", onLeave);
       onLeave();
     };
-  }, [reduce, onScreen, tiltX, tiltY, glareX, glareY]);
+  }, [reduce, onScreen, tiltX, tiltY]);
 
   // Keys play when pressed (click-in only); keyboard use plays the press too.
   const viaPointer = useRef(false);
@@ -328,8 +321,6 @@ export function PriceMeter() {
           <IconArrowRight className="size-4 transition-transform duration-200 group-hover:translate-x-1" aria-hidden />
         </Link>
 
-        {/* Glare, following the pointer */}
-        <motion.div aria-hidden style={{ background: glare }} className="pointer-events-none absolute inset-0 rounded-[30px]" />
       </motion.div>
     </div>
   );
