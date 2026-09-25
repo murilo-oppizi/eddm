@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { createPortal } from "react-dom";
 import { IconArrowRight, IconMinus, IconPlus, IconVolume, IconVolumeOff } from "@tabler/icons-react";
 import {
   animate,
@@ -13,12 +13,14 @@ import {
   useTransform,
 } from "motion/react";
 
+import { PrintedStamp } from "@/components/sections/printed-stamp";
 import { OppiziSymbol } from "@/components/site/logo";
 import { Kbd } from "@/components/ui/kbd";
 import { Slider } from "@/components/ui/slider";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { pricing } from "@/content/site";
 import { playKey, prepareSounds, setSoundsOn, soundsOn } from "@/lib/key-sounds";
+import { placeStamp, STAMP_H, STAMP_SPOT_ID, STAMP_TILT, STAMP_W, type Stamp } from "@/lib/quote-stamp";
 import { cn } from "@/lib/utils";
 
 // The "EDDM price meter": a flat, product-like object (after the postage meters post
@@ -28,7 +30,8 @@ import { cn } from "@/lib/utils";
 // for the quote. The first time it's on screen the fader glides up to 15,000 once.
 // It tilts a little toward the pointer, and its keys clack
 // (Cream switch samples; the speaker grille turns the sound off). Asking for the quote
-// prints a postage stamp with the estimate out of the slot on top, then opens Contact.
+// prints a postage stamp with the estimate out of a slot at the bottom; it then floats
+// along as the page glides down to the "Ready to reach every door?" card, and lands on it.
 
 type Size = (typeof pricing.sizes)[number];
 const { min, max, step, initial } = pricing.homes;
@@ -52,12 +55,14 @@ const usd = (n: number) => `$${Math.round(n).toLocaleString("en-US")}`;
 const fmt = (n: number) => n.toLocaleString("en-US");
 const clamp = (n: number) => Math.min(max, Math.max(min, n));
 
-// The stamp feeds out in three steps, like a meter's printer, then rests a beat before
-// the page moves on. FEED_STEPS are when each step starts (seconds), for the ticks.
+// The stamp feeds out in three steps, like a meter's printer, and rests a beat before it
+// takes off. FEED_STEPS are when each step starts (seconds), for the ticks.
 const FEED = 0.7;
 const FEED_STEPS = [0, 0.21, 0.42];
-const NAVIGATE_AFTER = 1300; // ms after the press
-type Stamp = { total: string; homes: string; size: string; date: string };
+const TAKE_OFF = 1050; // ms after the press
+const glide = [0.65, 0, 0.35, 1] as const;
+
+type Flight = { stamp: Stamp; left: number; top: number; x: number; y: number; scale: number; duration: number };
 
 // Keycaps: off-white (the design system's gray-100, dark in dark mode) so a crisp white
 // highlight shows along the top edge, like a real keycap catching the light; a hairline
@@ -190,27 +195,95 @@ export function PriceMeter() {
     };
   }, [mostlyOnScreen]);
 
-  // The quote key prints the stamp, then goes to Contact. Opening in a new tab
-  // (⌘/Ctrl/Shift-click) and reduced motion skip straight to the link.
-  const router = useRouter();
-  const [stamp, setStamp] = useState<Stamp | null>(null);
+  // The quote key prints the stamp, which then flies (in a fixed layer above the page)
+  // to its spot on the "Ready to reach every door?" card while the page glides there.
+  // Scrolling or typing mid-flight lands it at once. Reduced motion skips the show:
+  // the stamp is simply on the card when the page jumps there.
+  const [printing, setPrinting] = useState<Stamp | null>(null);
+  const [flight, setFlight] = useState<Flight | null>(null);
+  const feedRef = useRef<HTMLDivElement>(null);
   const timers = useRef<number[]>([]);
-  useEffect(() => () => timers.current.forEach(clearTimeout), []);
+  const glideAnim = useRef<ReturnType<typeof animate> | null>(null);
+  const landRef = useRef<() => void>(() => {});
+  useEffect(
+    () => () => {
+      timers.current.forEach(clearTimeout);
+      glideAnim.current?.stop();
+      landRef.current();
+    },
+    []
+  );
+
+  const cardScroll = (spot: HTMLElement) => {
+    // Center the card (with the stamp's overhang) in the view, as far as the page allows.
+    const card = (spot.parentElement ?? spot).getBoundingClientRect();
+    const overhang = STAMP_H / 2;
+    const ideal = window.scrollY + card.top - overhang - (window.innerHeight - card.height - overhang) / 2;
+    return Math.max(0, Math.min(ideal, document.documentElement.scrollHeight - window.innerHeight));
+  };
+
+  const takeOff = (stamp: Stamp) => {
+    const from = feedRef.current?.getBoundingClientRect();
+    const spot = document.getElementById(STAMP_SPOT_ID);
+    setPrinting(null);
+    if (!from || !spot) return placeStamp(stamp);
+    const endScroll = cardScroll(spot);
+    const delta = endScroll - window.scrollY;
+    const to = spot.getBoundingClientRect(); // unrotated; the tilt is on the stamp inside
+    const cx = from.left + from.width / 2;
+    const cy = from.top + from.height / 2;
+    const duration = Math.min(1.6, 0.9 + Math.abs(delta) / 3000);
+    setFlight({
+      stamp,
+      left: cx - STAMP_W / 2,
+      top: cy - STAMP_H / 2,
+      x: to.left + to.width / 2 - cx,
+      y: to.top + to.height / 2 - delta - cy,
+      scale: to.width / STAMP_W,
+      duration,
+    });
+
+    let landed = false;
+    const land = () => {
+      if (landed) return;
+      landed = true;
+      glideAnim.current?.stop();
+      ["wheel", "touchstart", "keydown"].forEach((t) => window.removeEventListener(t, land));
+      placeStamp(stamp);
+      setFlight(null);
+      playKey("press", { gain: 0.55, pitch: 0.8 });
+    };
+    landRef.current = land;
+    ["wheel", "touchstart", "keydown"].forEach((t) => window.addEventListener(t, land, { passive: true }));
+    glideAnim.current = animate(window.scrollY, endScroll, {
+      duration,
+      ease: glide,
+      onUpdate: (v) => window.scrollTo({ top: v, behavior: "instant" }),
+    });
+  };
+
   const printQuote = (e: React.MouseEvent<HTMLAnchorElement>) => {
     if (e.detail === 0) playKey("enter", { gain: 0.6 }); // Enter key
-    if (reduce || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;
+    if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return; // new tab
     e.preventDefault();
-    if (stamp) return;
+    if (printing || flight) return;
     sweep.current?.stop();
-    setStamp({
+    const stamp: Stamp = {
       total: usd(total),
       homes: fmt(homes),
       size: size.name,
       date: new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" }).toUpperCase(),
-    });
+    };
+    const spot = document.getElementById(STAMP_SPOT_ID);
+    if (reduce) {
+      placeStamp(stamp);
+      if (spot) window.scrollTo({ top: cardScroll(spot), behavior: "instant" });
+      return;
+    }
+    setPrinting(stamp);
     timers.current = [
       ...FEED_STEPS.map((t) => window.setTimeout(() => playKey("tick", { gain: 0.35, pitch: 0.75 }), t * 1000 + 60)),
-      window.setTimeout(() => router.push("/contact"), NAVIGATE_AFTER),
+      window.setTimeout(() => takeOff(stamp), TAKE_OFF),
     ];
   };
 
@@ -239,21 +312,22 @@ export function PriceMeter() {
           <Screw className="bottom-3.5 left-3.5" />
           <Screw className="right-3.5 bottom-3.5" />
 
-          {/* The printer: a slot along the top edge, and the stamp that feeds out of it.
+          {/* The printer: a slot along the bottom edge, and the stamp that feeds out of it.
               The stamp sits behind the slot's lip, so it looks like it comes from inside. */}
-          <div aria-hidden className="pointer-events-none absolute bottom-[calc(100%-4px)] left-1/2 z-10 -translate-x-1/2 overflow-hidden px-5 pt-5">
-            {stamp && (
+          <div aria-hidden className="pointer-events-none absolute top-[calc(100%-4px)] left-1/2 z-10 -translate-x-1/2 overflow-hidden px-5 pb-5">
+            {printing && (
               <motion.div
-                initial={{ y: "100%" }}
-                animate={{ y: ["100%", "68%", "68%", "36%", "36%", "4%", "4%", "0%"] }}
+                ref={feedRef}
+                initial={{ y: "-100%" }}
+                animate={{ y: ["-100%", "-68%", "-68%", "-36%", "-36%", "-4%", "-4%", "0%"] }}
                 transition={{ duration: FEED, times: [0, 0.14, 0.3, 0.44, 0.6, 0.74, 0.86, 1], ease: "easeOut" }}
                 className="drop-shadow-[0_4px_6px_rgb(0_0_0/0.18)]"
               >
-                <PrintedStamp {...stamp} />
+                <PrintedStamp {...printing} />
               </motion.div>
             )}
           </div>
-          <span aria-hidden className="absolute top-0 left-1/2 z-20 h-[5px] w-[196px] -translate-x-1/2 rounded-b-[4px] bg-black/35 shadow-[inset_0_2px_2px_rgb(0_0_0/0.35),0_1px_0_rgb(255_255_255/0.3)]" />
+          <span aria-hidden className="absolute bottom-0 left-1/2 z-20 h-[5px] w-[196px] -translate-x-1/2 rounded-t-[4px] bg-black/35 shadow-[inset_0_-2px_2px_rgb(0_0_0/0.35)]" />
 
           {/* Top plate: the maker's nameplate and the speaker, both debossed into the body
               (a darker, inset plate with a light lower edge), so white reads clearly */}
@@ -443,8 +517,7 @@ export function PriceMeter() {
 
           {/* The big key */}
           <Link
-            href="/contact"
-            onPointerEnter={() => router.prefetch("/contact")}
+            href="/#get-started"
             onPointerDown={() => pressKey("enter")}
             onClick={printQuote}
             className={cn(keycap, lift, "group mt-5 flex h-14 items-center justify-center gap-2 rounded-2xl font-semibold text-primary")}
@@ -455,6 +528,42 @@ export function PriceMeter() {
 
         </motion.div>
       </div>
+
+      {/* The stamp in flight: fixed above the page, so it stays in view while the page
+          glides down. It lifts (bigger, softer shadow), turns, and presses down on landing. */}
+      {flight &&
+        createPortal(
+          <motion.div
+            aria-hidden
+            className="pointer-events-none fixed z-[60]"
+            style={{ left: flight.left, top: flight.top, width: STAMP_W, height: STAMP_H }}
+            initial={{ x: 0, y: 0, scale: 1, rotate: 0 }}
+            animate={{
+              x: flight.x,
+              y: flight.y,
+              scale: [1, Math.max(1, flight.scale) * 1.1, flight.scale * 0.96, flight.scale],
+              rotate: [0, -4, STAMP_TILT + 1, STAMP_TILT],
+              filter: [
+                "drop-shadow(0 4px 6px rgb(0 0 0 / 0.18))",
+                "drop-shadow(0 20px 22px rgb(0 0 0 / 0.22))",
+                "drop-shadow(0 3px 4px rgb(0 0 0 / 0.22))",
+                "drop-shadow(0 4px 6px rgb(0 0 0 / 0.2))",
+              ],
+            }}
+            transition={{
+              duration: flight.duration,
+              times: [0, 0.45, 0.88, 1],
+              ease: "easeInOut",
+              // The path follows the page's glide, so the two move as one.
+              x: { duration: flight.duration, ease: glide },
+              y: { duration: flight.duration, ease: glide },
+            }}
+            onAnimationComplete={() => landRef.current()}
+          >
+            <PrintedStamp {...flight.stamp} />
+          </motion.div>,
+          document.body
+        )}
     </TooltipProvider>
   );
 }
@@ -500,36 +609,6 @@ function RollingNumber({ value }: { value: string }) {
         );
       })}
     </span>
-  );
-}
-
-/**
- * The stamp the meter prints: perforated paper with the estimate in pink "meter ink",
- * the classic wavy cancellation lines and today's date.
- */
-function PrintedStamp({ total, homes, size, date }: Stamp) {
-  return (
-    <div className="stamp-perforated h-[120px] w-[168px] bg-white">
-      <div className="relative flex h-full flex-col overflow-hidden rounded-[2px] border border-primary/60 px-2.5 pt-2 pb-1.5 text-primary">
-        <div className="flex items-center justify-between text-[8px] leading-none font-bold tracking-[0.12em] uppercase">
-          <span className="flex items-center gap-1">
-            <OppiziSymbol cropped className="h-[7px] w-auto" />
-            EDDM · Estimate
-          </span>
-        </div>
-        {/* Cancellation waves, behind the figure */}
-        <svg viewBox="0 0 60 30" className="absolute top-[26px] -right-1 w-[70px] opacity-35" fill="none" stroke="currentColor" strokeWidth="1.4">
-          {[4, 11, 18, 25].map((y) => (
-            <path key={y} d={`M0 ${y} q 7.5 -4 15 0 t 15 0 t 15 0 t 15 0`} />
-          ))}
-        </svg>
-        <p className="relative mt-auto font-heading text-[26px] leading-none font-bold tracking-tight tabular-nums">{total}</p>
-        <p className="relative mt-1 text-[10px] leading-none font-semibold">{homes} homes · {size}</p>
-        <p className="mt-2 border-t border-dashed border-primary/40 pt-1 text-[7.5px] leading-none font-semibold tracking-[0.12em] opacity-80">
-          {date}
-        </p>
-      </div>
-    </div>
   );
 }
 
