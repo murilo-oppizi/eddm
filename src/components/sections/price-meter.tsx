@@ -334,7 +334,7 @@ export function PriceMeter() {
           <div className="flex items-center justify-between pb-4">
             <span className={cn(plate, "gap-2 px-3 text-xs font-semibold tracking-wide")}>
               <OppiziSymbol cropped className="h-3 w-auto" />
-              EDDM price meter
+              EDDM Price Meter
             </span>
             <button
               type="button"
