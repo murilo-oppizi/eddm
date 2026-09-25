@@ -97,7 +97,7 @@ export const aiPlanning = {
       ],
     },
     {
-      chip: "Find routes",
+      chip: "Find the best routes",
       icon: "mapSearch",
       area: "Bay Ridge",
       brief:
@@ -112,7 +112,7 @@ export const aiPlanning = {
       },
     },
     {
-      chip: "Learn from results",
+      chip: "Learn from past campaigns",
       icon: "trending",
       area: "Astoria",
       brief: "My Astoria mailing got 212 scans. What should I change for the next one?",

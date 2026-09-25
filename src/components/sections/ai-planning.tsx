@@ -470,7 +470,7 @@ function Response({
 }
 
 /**
- * The "Find routes" answer: the ranked routes on a map, each fading in with its match
+ * The "Find the best routes" answer: the ranked routes on a map, each fading in with its match
  * score. The view is framed around them, closer in on narrow cards so they stay legible.
  */
 function RoutesAnswer({ map, visible }: { map: RouteMap; visible: (line: number) => boolean }) {
