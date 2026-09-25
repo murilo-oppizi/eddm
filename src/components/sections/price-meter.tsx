@@ -60,7 +60,8 @@ const clamp = (n: number) => Math.min(max, Math.max(min, n));
 // takes off. FEED_STEPS are when each step starts (seconds), for the ticks.
 const FEED = 0.7;
 const FEED_STEPS = [0, 0.21, 0.42];
-const TAKE_OFF = 1050; // ms after the press
+const TAKE_OFF = 1050; // ms after printing starts
+const MAKE_ROOM = 0.45; // s to glide the page up when the stamp would print off screen
 const glide = [0.65, 0, 0.35, 1] as const;
 
 type Flight = { stamp: Stamp; left: number; top: number; x: number; y: number; scale: number; duration: number };
@@ -176,6 +177,7 @@ export function PriceMeter() {
   const feedRef = useRef<HTMLDivElement>(null);
   const timers = useRef<number[]>([]);
   const glideAnim = useRef<ReturnType<typeof animate> | null>(null);
+  const busy = useRef(false); // from the press until the stamp lands
   const landRef = useRef<() => void>(() => {});
   useEffect(
     () => () => {
@@ -198,7 +200,10 @@ export function PriceMeter() {
     const from = feedRef.current?.getBoundingClientRect();
     const spot = document.getElementById(STAMP_SPOT_ID);
     setPrinting(null);
-    if (!from || !spot) return placeStamp(stamp);
+    if (!from || !spot) {
+      busy.current = false;
+      return placeStamp(stamp);
+    }
     const endScroll = cardScroll(spot);
     const delta = endScroll - window.scrollY;
     const to = spot.getBoundingClientRect(); // unrotated; the tilt is on the stamp inside
@@ -219,6 +224,7 @@ export function PriceMeter() {
     const land = () => {
       if (landed) return;
       landed = true;
+      busy.current = false;
       glideAnim.current?.stop();
       ["wheel", "touchstart", "keydown"].forEach((t) => window.removeEventListener(t, land));
       placeStamp(stamp);
@@ -238,7 +244,7 @@ export function PriceMeter() {
     if (e.detail === 0) playKey("enter", { gain: 0.6 }); // Enter key
     if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return; // new tab
     e.preventDefault();
-    if (printing || flight) return;
+    if (busy.current) return;
     sweep.current?.stop();
     const stamp: Stamp = {
       total: usd(total),
@@ -252,10 +258,25 @@ export function PriceMeter() {
       if (spot) window.scrollTo({ top: cardScroll(spot), behavior: "instant" });
       return;
     }
-    setPrinting(stamp);
+    busy.current = true;
+    // If the stamp would print below the window, first glide the page up just enough
+    // to see it come out (with a little breathing room), then print.
+    const device = root.current?.getBoundingClientRect();
+    const short = device ? device.bottom + STAMP_H + 32 - window.innerHeight : 0;
+    const lead = short > 0 ? MAKE_ROOM : 0;
+    if (short > 0) {
+      glideAnim.current = animate(window.scrollY, window.scrollY + short, {
+        duration: MAKE_ROOM,
+        ease,
+        onUpdate: (v) => window.scrollTo({ top: v, behavior: "instant" }),
+      });
+    }
     timers.current = [
-      ...FEED_STEPS.map((t) => window.setTimeout(() => playKey("tick", { gain: 0.35, pitch: 0.75 }), t * 1000 + 60)),
-      window.setTimeout(() => takeOff(stamp), TAKE_OFF),
+      window.setTimeout(() => setPrinting(stamp), lead * 1000),
+      ...FEED_STEPS.map((t) =>
+        window.setTimeout(() => playKey("tick", { gain: 0.35, pitch: 0.75 }), (lead + t) * 1000 + 60)
+      ),
+      window.setTimeout(() => takeOff(stamp), lead * 1000 + TAKE_OFF),
     ];
   };
 
