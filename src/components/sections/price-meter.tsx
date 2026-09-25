@@ -48,23 +48,15 @@ const usd = (n: number) => `$${Math.round(n).toLocaleString("en-US")}`;
 const fmt = (n: number) => n.toLocaleString("en-US");
 const clamp = (n: number) => Math.min(max, Math.max(min, n));
 
-// Keycaps with Aceternity's Keyboard recipe, at 1.5–2× since our keys are bigger:
-// light grey keys with a soft dark hairline all around, a faint drop, and a white
-// highlight along the top edge (it only shows because the key isn't pure white).
-// Pressed: 98% scale, slightly see-through (so a hint of the pink body shows), and the
-// highlight moves outside and dims.
-// (Written out in full: Tailwind only generates classes it can read literally.)
-const keycap = cn(
-  "bg-muted text-foreground transition-[scale,background-color,box-shadow] duration-75 outline-none focus-visible:ring-3 focus-visible:ring-white/70",
-  "shadow-[0_0_1.5px_rgb(0_0_0/0.5),0_2px_2px_rgb(0_0_0/0.1),inset_0_2px_0_rgb(255_255_255/1)]",
-  "dark:shadow-[0_0_1.5px_rgb(0_0_0/0.5),0_2px_2px_rgb(0_0_0/0.1),inset_0_2px_0_rgb(255_255_255/0.12)]",
-  "active:scale-[0.98] active:bg-muted/80 active:shadow-[0_0_1.5px_rgb(0_0_0/0.5),0_2px_2px_rgb(0_0_0/0.1),0_2px_0_rgb(255_255_255/0.5)]"
-);
-const pressed = cn(
-  "scale-[0.98] bg-muted/80 shadow-[0_0_1.5px_rgb(0_0_0/0.5),0_2px_2px_rgb(0_0_0/0.1),0_2px_0_rgb(255_255_255/0.5)]",
-  "dark:shadow-[0_0_1.5px_rgb(0_0_0/0.5),0_2px_2px_rgb(0_0_0/0.1),0_2px_0_rgb(255_255_255/0.1)]"
-);
-const lift = "hover:bg-background";
+// Keycaps (white, dark in dark mode), after Aceternity's keyboard: a hairline edge, a
+// soft drop and a bright top highlight, over our deeper "travel" shadow. Pressed keys
+// sink 2px, shrink a hair and lose some highlight.
+const keycap =
+  "bg-card text-card-foreground shadow-[0_0_0_1px_rgb(0_0_0/0.06),0_1px_1px_rgb(0_0_0/0.1),0_3px_0_rgb(0_0_0/0.2),inset_0_1px_0_rgb(255_255_255/0.95)] transition-[translate,scale,box-shadow] duration-100 active:translate-y-[2px] active:scale-[0.98] active:shadow-[0_0_0_1px_rgb(0_0_0/0.06),0_1px_0_rgb(0_0_0/0.2),inset_0_1px_0_rgb(255_255_255/0.5)] outline-none focus-visible:ring-3 focus-visible:ring-white/70";
+const pressed =
+  "translate-y-[2px] scale-[0.98] shadow-[0_0_0_1px_rgb(0_0_0/0.06),0_1px_0_rgb(0_0_0/0.2),inset_0_1px_0_rgb(255_255_255/0.5)]";
+const lift =
+  "hover:-translate-y-px hover:shadow-[0_0_0_1px_rgb(0_0_0/0.06),0_2px_2px_rgb(0_0_0/0.1),0_4px_0_rgb(0_0_0/0.2),inset_0_1px_0_rgb(255_255_255/0.95)]";
 
 // The sound switch, shared by every meter on the page and remembered in the browser.
 const soundListeners = new Set<() => void>();
@@ -290,9 +282,9 @@ export function PriceMeter() {
               className={cn(
                 "[&_[data-slot=slider-track]]:h-2.5 [&_[data-slot=slider-track]]:bg-black/20 [&_[data-slot=slider-track]]:shadow-[inset_0_1px_2px_rgb(0_0_0/0.25)]",
                 "[&_[data-slot=slider-range]]:bg-white/85",
-                "[&_[data-slot=slider-thumb]]:h-7 [&_[data-slot=slider-thumb]]:w-10 [&_[data-slot=slider-thumb]]:rounded-lg [&_[data-slot=slider-thumb]]:border-0 [&_[data-slot=slider-thumb]]:shadow-[0_0_1.5px_rgb(0_0_0/0.5),0_2px_2px_rgb(0_0_0/0.1),inset_0_2px_0_rgb(255_255_255/1)] [&_[data-slot=slider-thumb]]:ring-white/50",
+                "[&_[data-slot=slider-thumb]]:h-7 [&_[data-slot=slider-thumb]]:w-10 [&_[data-slot=slider-thumb]]:rounded-lg [&_[data-slot=slider-thumb]]:border-0 [&_[data-slot=slider-thumb]]:shadow-[0_3px_0_rgb(0_0_0/0.22)] [&_[data-slot=slider-thumb]]:ring-white/50",
                 // Grip lines on the fader cap
-                "[&_[data-slot=slider-thumb]]:[background:repeating-linear-gradient(90deg,rgb(0_0_0/0.18)_0_1.5px,transparent_1.5px_4px)_center/10px_12px_no-repeat,var(--muted)]"
+                "[&_[data-slot=slider-thumb]]:[background:repeating-linear-gradient(90deg,rgb(0_0_0/0.18)_0_1.5px,transparent_1.5px_4px)_center/10px_12px_no-repeat,white]"
               )}
             />
             <button
