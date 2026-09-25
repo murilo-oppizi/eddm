@@ -324,8 +324,8 @@ export function PriceMeter() {
             </button>
           </div>
 
-          {/* The screen */}
-          <div className="rounded-2xl bg-card p-5 shadow-[inset_0_2px_8px_rgb(0_0_0/0.14)] ring-1 ring-black/10">
+          {/* The screen, with a faint pixel grid like a real display */}
+          <div className="lcd-grid rounded-2xl bg-card p-5 shadow-[inset_0_2px_8px_rgb(0_0_0/0.14)] ring-1 ring-black/10">
             {/* The two figures: what it costs, and how many homes it reaches */}
             <p className="sr-only" aria-live="polite">
               {usd(total)} for {fmt(homes)} homes with a {size.name} postcard, {perPiece} per piece.

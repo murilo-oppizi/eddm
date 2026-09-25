@@ -100,6 +100,19 @@
     radial-gradient(circle 3.5px, #0000 97%, #000) -6px -6px / 12px 12px;
 }
 
+/* A display's pixel grid: tiny dots every 4px in a whisper of the text color, over
+   whatever background the element already has (the price meter's screen). Dots read as
+   a screen where lines read as graph paper. Flat, no gloss. */
+@utility lcd-grid {
+  background-image: radial-gradient(
+    circle at center,
+    color-mix(in oklab, var(--foreground) 7%, transparent) 0.6px,
+    transparent 0.9px
+  );
+  background-size: 4px 4px;
+  background-position: center;
+}
+
 /* "AI is working" ring: a pink-to-indigo arc that circles an element. Put it on a
    layer just behind the element (see hero-composition.tsx). */
 @property --glow-angle {
