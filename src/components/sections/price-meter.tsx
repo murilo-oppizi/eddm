@@ -333,7 +333,7 @@ export function PriceMeter() {
               (a darker, inset plate with a light lower edge), so white reads clearly */}
           <div className="flex items-center justify-between pb-4">
             <span className={cn(plate, "gap-2 px-3 text-xs font-semibold tracking-wide")}>
-              <OppiziSymbol cropped className="h-3 w-auto" />
+              <OppiziSymbol cropped className="h-2.5 w-auto" />
               EDDM Price Meter
             </span>
             <button
