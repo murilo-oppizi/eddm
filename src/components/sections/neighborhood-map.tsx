@@ -22,7 +22,7 @@ import {
   type MotionValue,
 } from "motion/react";
 
-import { StreetGrid, toMap, toPoints } from "@/components/sections/illustrated-map";
+import { GRID_TRANSFORM, StreetGrid, toMap, toPoints } from "@/components/sections/illustrated-map";
 import { Button } from "@/components/ui/button";
 import { audiences, site } from "@/content/site";
 import { playKey } from "@/lib/key-sounds";
@@ -35,9 +35,10 @@ import { cn } from "@/lib/utils";
 // on purpose, like mapcn's markers and routes: a dot with a white ring and a halo, a fine
 // outline over a pale fill. Businesses already visited stay behind as small dots. The last
 // step (`active` = the number of businesses) zooms out to the whole city, every business
-// and route at once; then the map folds up like paper (in half, then in half again) and
-// flips over into a postcard from "Your business", which gets its EDDM postage stamped on
-// and carries the call to action.
+// and route at once, plus an empty spot: a dashed pink "?" pin, "Your business?". After a
+// beat it's claimed (solid pink, its own route traces), and then the map folds up like paper
+// (in half, then in half again) and flips over into that business's postcard, which gets
+// its EDDM postage stamped on and carries the call to action.
 
 type Industry = (typeof audiences.industries)[number];
 type Tone = Industry["tone"] | "brand"; // brand pink: "Your business"
@@ -63,6 +64,12 @@ const scenes: { at: Step; route: Step[]; name: string; reach: string }[] = [
   { at: [0, 13], name: "BED-STUY", route: [[0, -3], [1, -3], [1, -1], [2, -1], [2, 2], [1, 2], [1, 3], [-1, 3], [-1, 0], [0, 0]], reach: "1 route · 657 homes" },
 ];
 const OVERVIEW = scenes.length;
+
+/** "Your business": the empty spot in the city view (between Dumbo, Williamsburg and
+ *  Greenpoint), and the route it gets once claimed. */
+const YOU = { at: [-1, -9] as Step, route: [[-1, -2], [1, -2], [1, -1], [2, -1], [2, 2], [-1, 2]] as Step[] };
+/** When the spot is claimed, and so when the fold can start (ms into the city view). */
+const CLAIM_AT = 1800;
 
 const icons: Record<Industry["icon"], TablerIcon> = {
   restaurant: IconToolsKitchen2,
@@ -98,7 +105,7 @@ const routePath = (n: number) =>
 
 /** The whole city: every route in view, with a margin, at the card's aspect. */
 const CITY = (() => {
-  const pts = scenes.flatMap((s) => s.route.map(([i, j]) => toMap(i + s.at[0], j + s.at[1])));
+  const pts = [...scenes, YOU].flatMap((s) => s.route.map(([i, j]) => toMap(i + s.at[0], j + s.at[1])));
   const xs = pts.map((p) => p.x);
   const ys = pts.map((p) => p.y);
   const pad = 40;
@@ -285,7 +292,83 @@ function MapArt({
         />
       ))}
     </AnimatePresence>
+
+    {/* "Your business?": the empty spot, claimed after a beat (already claimed in the
+        folding copies, or when flung past). Remounts, so it starts empty each visit. */}
+    {city && <YourSpot claimed={still || instant} />}
   </motion.svg>
+  );
+}
+
+/**
+ * "Your business" on the city map: first a dashed pink "?" pin, pulsing gently, tagged
+ * "Your business?"; then, at CLAIM_AT, a solid pink pin (the others' style) with its own
+ * route tracing around it, tagged "Your business".
+ */
+function YourSpot({ claimed: start }: { claimed: boolean }) {
+  const [claimed, setClaimed] = useState(start);
+  useEffect(() => {
+    if (start) return;
+    const t = window.setTimeout(() => setClaimed(true), CLAIM_AT);
+    return () => clearTimeout(t);
+  }, [start]);
+  const at = toMap(YOU.at[0] + 0.5, YOU.at[1] + 0.5);
+  const size = ZOOM * 0.8;
+  const d = `M${toPoints(YOU.route.map((p) => shift(p, YOU.at))).replaceAll(" ", " L")} Z`;
+  return (
+    <>
+      {claimed && (
+        <g transform={GRID_TRANSFORM}>
+          <motion.path
+            d={d}
+            className="fill-brand/10 stroke-brand"
+            strokeWidth={2 * ZOOM * 0.75}
+            strokeOpacity="0.85"
+            strokeLinejoin="round"
+            initial={start ? false : { pathLength: 0, fillOpacity: 0 }}
+            animate={{ pathLength: 1, fillOpacity: 1 }}
+            transition={{ pathLength: { delay: 0.15, duration: 0.6, ease: "easeInOut" }, fillOpacity: { delay: 0.5, duration: 0.4 } }}
+          />
+        </g>
+      )}
+      {claimed ? (
+        <Pin at={at} tone={paint.brand} size={size} delay={0} instant={start} />
+      ) : (
+        <motion.g
+          transform={`translate(${at.x} ${at.y}) scale(${size})`}
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.8, duration: 0.3 }}
+        >
+          <motion.circle
+            r="15"
+            className="fill-brand"
+            animate={{ opacity: [0.06, 0.2, 0.06], scale: [0.85, 1.1, 0.85] }}
+            transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
+          />
+          <circle r="7.5" className="fill-card stroke-brand" strokeWidth="1.6" strokeDasharray="3 2.4" />
+          <text y="3.2" textAnchor="middle" className="fill-brand text-[9px] font-bold">
+            ?
+          </text>
+        </motion.g>
+      )}
+      {/* The tag under the pin, arriving with it */}
+      <motion.g
+        transform={`translate(${at.x} ${at.y + 17 * size}) scale(${size})`}
+        initial={start ? false : { opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.8, duration: 0.3 }}
+      >
+        <rect x="-33" y="-7.5" width="66" height="15" rx="7.5" className={claimed ? "fill-brand" : "fill-card stroke-brand/40"} strokeWidth="1" />
+        <text
+          y="2.6"
+          textAnchor="middle"
+          className={cn("text-[7.5px] font-semibold", claimed ? "fill-primary-foreground" : "fill-brand")}
+        >
+          {claimed ? "Your business" : "Your business?"}
+        </text>
+      </motion.g>
+    </>
   );
 }
 
@@ -310,10 +393,10 @@ function ReachLabel({ industry, reach, instant }: { industry: Industry; reach: s
   );
 }
 
-// The fold, in ms after the city view appears: a beat to take in the city, two folds,
-// then the flip into the postcard.
+// The fold, in ms after the city view appears: after the spot is claimed and its route is
+// drawn, two folds, then the flip into the postcard.
 const FOLD = 0.5; // s per fold
-const STAGES = [2300, 2850, 3400, 3680];
+const STAGES = [CLAIM_AT + 1200, CLAIM_AT + 1750, CLAIM_AT + 2300, CLAIM_AT + 2580];
 // Warm paper, a touch darker toward one corner, for the back of the folded map.
 const paper = "border bg-[linear-gradient(155deg,var(--card)_35%,color-mix(in_oklab,var(--card)_92%,var(--foreground)))]";
 const face = "absolute inset-0 [backface-visibility:hidden]";

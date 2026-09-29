@@ -114,6 +114,9 @@ const parks = [...PARK].map((key) => {
   return blockAt(i, j);
 });
 
+/** Puts grid-unit drawings (i × AVENUE_GAP, j × STREET_GAP) on the streets. */
+export const GRID_TRANSFORM = `translate(${ROUTE_CENTER.x} ${ROUTE_CENTER.y}) rotate(${GRID_ANGLE})`;
+
 /**
  * The streets themselves: blocks, parks and a Broadway-like diagonal, in a group rotated
  * like the grid. `children` draw inside that group, in grid units × gaps (avenue i,
@@ -122,7 +125,7 @@ const parks = [...PARK].map((key) => {
 export function StreetGrid({ children }: { children?: React.ReactNode }) {
   const blocksId = `${useId()}blocks`;
   return (
-    <g transform={`translate(${ROUTE_CENTER.x} ${ROUTE_CENTER.y}) rotate(${GRID_ANGLE})`}>
+    <g transform={GRID_TRANSFORM}>
       {/* The pattern tile starts on a wide avenue (i = 0), so it lines up with the grid. */}
       <defs>
         <pattern id={blocksId} width={TILE.w} height={TILE.h} patternUnits="userSpaceOnUse">
