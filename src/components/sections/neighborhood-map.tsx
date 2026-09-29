@@ -143,7 +143,9 @@ export function NeighborhoodMap({
       vw.set(to.w);
       return;
     }
-    const opts = { duration: active === OVERVIEW ? 1.4 : 1.1, ease: glide };
+    // Quick, so a business is readable almost as soon as its row arrives: the motion is a
+    // flourish, not something to wait for.
+    const opts = { duration: active === OVERVIEW ? 1 : 0.6, ease: glide };
     const anims = [animate(vx, to.x, opts), animate(vy, to.y, opts), animate(vw, to.w, opts)];
     return () => anims.forEach((a) => a.stop());
   }, [active, reduce, vx, vy, vw]);
@@ -220,8 +222,8 @@ function MapArt({
             animate={{ pathLength: 1, fillOpacity: 1 }}
             exit={{ opacity: 0, transition: { duration: 0.3 } }}
             transition={{
-              pathLength: { delay: (city ? 1 : 0.8) + k * 0.12, duration: 0.8, ease: "easeInOut" },
-              fillOpacity: { delay: (city ? 1.5 : 1.3) + k * 0.12, duration: 0.5 },
+              pathLength: { delay: (city ? 0.4 : 0.3) + k * 0.08, duration: 0.5, ease: "easeInOut" },
+              fillOpacity: { delay: (city ? 0.7 : 0.55) + k * 0.08, duration: 0.35 },
             }}
           />
         ))}
@@ -265,7 +267,7 @@ function MapArt({
           at={pinAt(n)}
           tone={toneOf(n)}
           size={city ? ZOOM * 0.8 : 1}
-          delay={city ? 0.9 + k * 0.12 : 0.6}
+          delay={city ? 0.35 + k * 0.08 : 0.2}
         />
       ))}
     </AnimatePresence>
@@ -279,7 +281,7 @@ function ReachLabel({ industry, reach }: { industry: Industry; reach: string }) 
   return (
     <motion.div
       initial={{ opacity: 0, y: 6 }}
-      animate={{ opacity: 1, y: 0, transition: { delay: 1.1, duration: 0.4 } }}
+      animate={{ opacity: 1, y: 0, transition: { delay: 0.35, duration: 0.3 } }}
       exit={{ opacity: 0, transition: { duration: 0.2 } }}
       className="absolute top-3 left-3 flex items-center gap-2 rounded-lg border bg-card py-1.5 pr-3 pl-2 shadow-md sm:top-4 sm:left-4 sm:gap-2.5 sm:py-2 sm:pr-3.5 sm:pl-2.5"
     >
@@ -472,7 +474,7 @@ function Pin({
         className={tone.fill}
         initial={{ opacity: 0, scale: 0.4 }}
         animate={{ opacity: 0.14, scale: 1 }}
-        transition={{ delay: delay + 0.15, duration: 0.6, ease: "easeOut" }}
+        transition={{ delay: delay + 0.15, duration: 0.45, ease: "easeOut" }}
       />
       <motion.circle
         r="7"
@@ -481,7 +483,7 @@ function Pin({
         strokeWidth="1.5"
         initial={{ opacity: 0, scale: 1 }}
         animate={{ opacity: [0, 0.6, 0], scale: [1, 1, 4.2] }}
-        transition={{ delay: delay + 0.1, duration: 1.1, times: [0, 0.1, 1], ease: "easeOut" }}
+        transition={{ delay: delay + 0.1, duration: 0.9, times: [0, 0.1, 1], ease: "easeOut" }}
       />
       <motion.circle
         r="6"
@@ -489,7 +491,7 @@ function Pin({
         className={cn(tone.fill, "stroke-card drop-shadow-[0_1px_2px_rgb(0_0_0/0.3)]")}
         initial={{ scale: 0 }}
         animate={{ scale: [0, 1.2, 1] }}
-        transition={{ delay, duration: 0.45, times: [0, 0.6, 1], ease: "easeOut" }}
+        transition={{ delay, duration: 0.35, times: [0, 0.6, 1], ease: "easeOut" }}
       />
     </motion.g>
   );

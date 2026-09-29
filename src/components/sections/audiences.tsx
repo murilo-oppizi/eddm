@@ -193,7 +193,7 @@ function FloatingPostcard({ industry, index }: { industry: Industry | null; inde
             key={index}
             className="absolute inset-x-0 bottom-0"
             initial={{ opacity: 0, y: 30, rotate: -8 }}
-            animate={{ opacity: 1, y: 0, rotate: -3, transition: { type: "spring", stiffness: 180, damping: 22, delay: 0.9 } }}
+            animate={{ opacity: 1, y: 0, rotate: -3, transition: { type: "spring", stiffness: 220, damping: 24, delay: 0.3 } }}
             exit={{ opacity: 0, y: -16, rotate: 2, transition: { duration: 0.25 } }}
           >
             <div className="animate-[float-y_6s_ease-in-out_infinite] [--float-distance:6px] motion-reduce:animate-none">
