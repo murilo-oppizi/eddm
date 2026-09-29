@@ -12,15 +12,17 @@ import {
 } from "@tabler/icons-react";
 import { AnimatePresence, animate, motion, useMotionValue, useReducedMotion, useTransform } from "motion/react";
 
-import { AVENUE_GAP, STREET_GAP, StreetGrid, toMap, toPoints } from "@/components/sections/illustrated-map";
+import { StreetGrid, toMap, toPoints } from "@/components/sections/illustrated-map";
 import { audiences } from "@/content/site";
 import { cn } from "@/lib/utils";
 
 // "Who it's for" as one city: every kind of business has its own neighborhood on the same
-// hand-drawn streets as the hero. Picking one glides the camera there, drops its pin in
-// its color, traces the EDDM routes it would mail, and lights up the homes they reach in
-// a wave from the pin. Businesses already visited stay behind as small dots. Its postcard
-// floats in the corner, like the cards over the hero's map.
+// hand-drawn streets as the hero. Picking one glides the camera there; its pin (the
+// hero's dot, in its color) pops in with one soft ripple, and the EDDM route it would mail
+// traces along the streets. Kept light on purpose, like mapcn's markers and routes: a
+// dot with a white ring and a halo, a fine outline over a pale fill. Businesses already
+// visited stay behind as small dots. Its postcard floats in the corner, like the cards
+// over the hero's map.
 
 type Industry = (typeof audiences.industries)[number];
 type Step = [number, number];
@@ -32,57 +34,17 @@ const FOCUS = { x: 0.4, y: 0.5 };
 const glide = [0.65, 0, 0.35, 1] as const;
 
 /**
- * Each business: where it is (grid block), its routes (street-following outlines, in grid
- * units from that block), and the reach shown on its label. Placeholder numbers.
+ * Each business: its block, the one route it mails (a street-following outline in grid
+ * units from that block, about the size of the hero's), and the reach on its label.
+ * Placeholder numbers.
  */
-const scenes: { at: Step; routes: Step[][]; reach: string }[] = [
-  // Café: its own blocks plus two small routes either side — delivery distance.
-  {
-    at: [0, 0],
-    routes: [
-      [[-1, -2], [2, -2], [2, 3], [-1, 3]],
-      [[2, -1], [3, -1], [3, 2], [2, 2]],
-      [[-2, 0], [-1, 0], [-1, 3], [-2, 3]],
-    ],
-    reach: "3 routes · 1,284 homes",
-  },
-  // Realtor: one big farm area that follows the streets.
-  {
-    at: [6, -10],
-    routes: [[[-2, -3], [1, -3], [1, -2], [2, -2], [2, 3], [0, 3], [0, 4], [-2, 4]]],
-    reach: "1 route · 846 homes",
-  },
-  // Salon: two routes side by side.
-  {
-    at: [-6, 9],
-    routes: [
-      [[-1, -2], [1, -2], [1, 2], [-1, 2]],
-      [[1, -1], [3, -1], [3, 2], [1, 2]],
-    ],
-    reach: "2 routes · 1,012 homes",
-  },
-  // Home services: three routes of homeowners.
-  {
-    at: [8, 8],
-    routes: [
-      [[-2, -3], [0, -3], [0, 0], [-2, 0]],
-      [[0, -2], [2, -2], [2, 3], [0, 3]],
-      [[-2, 1], [0, 1], [0, 4], [-2, 4]],
-    ],
-    reach: "3 routes · 1,530 homes",
-  },
-  // Gym: a wide block of the neighborhood around the new location.
-  {
-    at: [-8, -8],
-    routes: [[[-1, -3], [2, -3], [2, 3], [-1, 3]]],
-    reach: "1 route · 972 homes",
-  },
-  // Store: a stepped route toward the main street.
-  {
-    at: [2, 18],
-    routes: [[[-2, -2], [0, -2], [0, -1], [2, -1], [2, 2], [1, 2], [1, 3], [-2, 3]]],
-    reach: "1 route · 1,106 homes",
-  },
+const scenes: { at: Step; route: Step[]; reach: string }[] = [
+  { at: [0, 0], route: [[-1, -2], [1, -2], [1, -1], [2, -1], [2, 2], [0, 2], [0, 3], [-1, 3]], reach: "1 route · 548 homes" },
+  { at: [6, -10], route: [[-1, -3], [1, -3], [1, 3], [0, 3], [0, 4], [-1, 4]], reach: "1 route · 612 homes" },
+  { at: [-6, 9], route: [[0, -2], [2, -2], [2, 1], [1, 1], [1, 3], [-1, 3], [-1, -1], [0, -1]], reach: "1 route · 486 homes" },
+  { at: [8, 8], route: [[-1, -3], [1, -3], [1, -2], [2, -2], [2, 3], [-1, 3]], reach: "1 route · 734 homes" },
+  { at: [-8, -8], route: [[-1, -2], [2, -2], [2, 1], [1, 1], [1, 2], [-1, 2]], reach: "1 route · 529 homes" },
+  { at: [2, 18], route: [[0, -3], [1, -3], [1, -1], [2, -1], [2, 2], [1, 2], [1, 3], [-1, 3], [-1, 0], [0, 0]], reach: "1 route · 657 homes" },
 ];
 
 const icons: Record<Industry["icon"], TablerIcon> = {
@@ -96,40 +58,12 @@ const icons: Record<Industry["icon"], TablerIcon> = {
 
 // SVG paint per tone (written out in full so Tailwind generates each class).
 const paint: Record<Industry["tone"], { fill: string; soft: string; stroke: string; text: string }> = {
-  brand: { fill: "fill-brand", soft: "fill-brand/15", stroke: "stroke-brand", text: "text-brand" },
-  info: { fill: "fill-info", soft: "fill-info/15", stroke: "stroke-info", text: "text-info" },
-  success: { fill: "fill-success", soft: "fill-success/15", stroke: "stroke-success", text: "text-success" },
-  warning: { fill: "fill-warning", soft: "fill-warning/15", stroke: "stroke-warning", text: "text-warning" },
-  ai: { fill: "fill-ai", soft: "fill-ai/15", stroke: "stroke-ai", text: "text-ai" },
+  brand: { fill: "fill-brand", soft: "fill-brand/10", stroke: "stroke-brand", text: "text-brand" },
+  info: { fill: "fill-info", soft: "fill-info/10", stroke: "stroke-info", text: "text-info" },
+  success: { fill: "fill-success", soft: "fill-success/10", stroke: "stroke-success", text: "text-success" },
+  warning: { fill: "fill-warning", soft: "fill-warning/10", stroke: "stroke-warning", text: "text-warning" },
+  ai: { fill: "fill-ai", soft: "fill-ai/10", stroke: "stroke-ai", text: "text-ai" },
 };
-
-/** Ray casting: is (x, y) inside the polygon? Grid units. */
-function inside([x, y]: Step, poly: Step[]) {
-  let hit = false;
-  for (let a = 0, b = poly.length - 1; a < poly.length; b = a++) {
-    const [xa, ya] = poly[a];
-    const [xb, yb] = poly[b];
-    if (ya > y !== yb > y && x < ((xb - xa) * (y - ya)) / (yb - ya) + xa) hit = !hit;
-  }
-  return hit;
-}
-
-/** The homes a scene reaches: three dots along each block inside its routes, each with
- *  its distance from the business (for the wave). In grid units from the scene's origin. */
-function homesOf(routes: Step[][]) {
-  const blocks = new Map<string, Step>();
-  for (const poly of routes) {
-    const is = poly.map(([i]) => i);
-    const js = poly.map(([, j]) => j);
-    for (let i = Math.min(...is); i < Math.max(...is); i++)
-      for (let j = Math.min(...js); j < Math.max(...js); j++)
-        if (inside([i + 0.5, j + 0.5], poly)) blocks.set(`${i},${j}`, [i, j]);
-  }
-  return [...blocks.values()].flatMap(([i, j]) =>
-    [0.22, 0.5, 0.78].map((f) => ({ i: i + f, j: j + 0.5, d: Math.hypot(i + f - 0.5, (j + 0.5 - 0.5) * 0.45) }))
-  );
-}
-const homes = scenes.map((s) => homesOf(s.routes));
 
 /** Where the camera looks to put scene `n`'s business at FOCUS. */
 function viewFor(n: number) {
@@ -186,44 +120,24 @@ export function NeighborhoodMap({
         <motion.svg viewBox={viewBox} className="absolute inset-0 size-full">
           <rect x={-2000} y={-2000} width={4000} height={4000} className="fill-card" />
           <StreetGrid>
-            {/* The active scene: its routes trace along the streets, then fill; its homes
-                light up in a wave from the business. Swapped as a whole. */}
+            {/* The active business's route: a fine outline that traces along the streets,
+                then a pale fill. Swapped as a whole. */}
             <AnimatePresence>
-              <motion.g
+              <motion.path
                 key={active}
-                initial={{ opacity: 1 }}
+                d={`M${toPoints(scene.route.map((p) => shift(p, scene.at))).replaceAll(" ", " L")} Z`}
+                className={cn(tone.soft, tone.stroke)}
+                strokeWidth="2"
+                strokeOpacity="0.85"
+                strokeLinejoin="round"
+                initial={{ pathLength: 0, fillOpacity: 0, opacity: 1 }}
+                animate={{ pathLength: 1, fillOpacity: 1 }}
                 exit={{ opacity: 0, transition: { duration: 0.3 } }}
-              >
-                {scene.routes.map((poly, r) => (
-                  <motion.path
-                    key={r}
-                    d={`M${toPoints(poly.map((p) => shift(p, scene.at))).replaceAll(" ", " L")} Z`}
-                    className={cn(tone.soft, tone.stroke)}
-                    strokeWidth="2.5"
-                    strokeLinejoin="round"
-                    initial={{ pathLength: 0, fillOpacity: 0 }}
-                    animate={{ pathLength: 1, fillOpacity: 1 }}
-                    transition={{
-                      pathLength: { delay: 0.75 + r * 0.15, duration: 0.7, ease: "easeInOut" },
-                      fillOpacity: { delay: 1.2 + r * 0.15, duration: 0.5 },
-                    }}
-                  />
-                ))}
-                {homes[active].map((h, k) => (
-                  <circle
-                    key={k}
-                    cx={(h.i + scene.at[0]) * AVENUE_GAP}
-                    cy={(h.j + scene.at[1]) * STREET_GAP}
-                    r="2.2"
-                    className={cn(
-                      tone.fill,
-                      "origin-center transform-fill animate-in fade-in zoom-in-0 animation-duration-300 motion-reduce:animate-none"
-                    )}
-                    // Fill mode inline: as a class, cn() would drop it as a clash with the fill color.
-                    style={{ animationDelay: `${1.25 + h.d * 0.12}s`, animationFillMode: "both" }}
-                  />
-                ))}
-              </motion.g>
+                transition={{
+                  pathLength: { delay: 0.8, duration: 0.8, ease: "easeInOut" },
+                  fillOpacity: { delay: 1.3, duration: 0.5 },
+                }}
+              />
             </AnimatePresence>
           </StreetGrid>
 
@@ -236,7 +150,7 @@ export function NeighborhoodMap({
                 key={n}
                 cx={p.x}
                 cy={p.y}
-                r="4.5"
+                r="4"
                 strokeWidth="2"
                 className={cn(paint[audiences.industries[n].tone].fill, "stroke-card")}
               />
@@ -245,7 +159,7 @@ export function NeighborhoodMap({
 
           {/* The business: a pin in its color that drops onto its block. */}
           <AnimatePresence>
-            <Pin key={active} at={toMap(scene.at[0] + 0.5, scene.at[1] + 0.5)} Icon={Icon} tone={tone} />
+            <Pin key={active} at={toMap(scene.at[0] + 0.5, scene.at[1] + 0.5)} tone={tone} />
           </AnimatePresence>
         </motion.svg>
 
@@ -273,36 +187,35 @@ export function NeighborhoodMap({
   );
 }
 
-/** A map pin in the business's color with its icon, dropping in with a little squash. */
-function Pin({ at, Icon, tone }: { at: { x: number; y: number }; Icon: TablerIcon; tone: (typeof paint)[keyof typeof paint] }) {
+/** The business: the hero's dot pin in its color (white ring, soft shadow). It pops in
+ *  and sends out one soft ripple, then keeps a faint halo. */
+function Pin({ at, tone }: { at: { x: number; y: number }; tone: (typeof paint)[keyof typeof paint] }) {
   return (
-    <g transform={`translate(${at.x} ${at.y}) scale(1.35)`}>
-      {/* Its shadow on the street, which firms up as the pin lands */}
-      <motion.ellipse
-        rx="7"
-        ry="2.5"
-        className="fill-foreground/20"
+    <motion.g transform={`translate(${at.x} ${at.y})`} exit={{ opacity: 0, transition: { duration: 0.25 } }}>
+      <motion.circle
+        r="15"
+        className={tone.fill}
         initial={{ opacity: 0, scale: 0.4 }}
-        animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0 }}
-        transition={{ delay: 0.55, duration: 0.35 }}
+        animate={{ opacity: 0.14, scale: 1 }}
+        transition={{ delay: 0.75, duration: 0.6, ease: "easeOut" }}
       />
-      <motion.g
-        style={{ originX: 0.5, originY: 1 }}
-        initial={{ y: -26, opacity: 0, scaleX: 1, scaleY: 1 }}
-        animate={{ y: [-26, 0, 0, 0], opacity: 1, scaleX: [1, 1, 1.14, 1], scaleY: [1, 1, 0.84, 1] }}
-        exit={{ opacity: 0, scale: 0.6, transition: { duration: 0.25 } }}
-        transition={{ delay: 0.5, duration: 0.55, times: [0, 0.55, 0.75, 1], ease: "easeOut", opacity: { delay: 0.5, duration: 0.15 } }}
-      >
-        {/* Teardrop, tip at 0,0 */}
-        <path
-          d="M0 0 C -2 -6, -11 -11, -11 -20 A 11 11 0 1 1 11 -20 C 11 -11, 2 -6, 0 0 Z"
-          className={cn(tone.fill, "stroke-card")}
-          strokeWidth="2"
-        />
-        <circle cy="-20" r="7.5" className="fill-card" />
-        <Icon x={-5} y={-25} width={10} height={10} strokeWidth={2.4} className={tone.text} />
-      </motion.g>
-    </g>
+      <motion.circle
+        r="7"
+        fill="none"
+        className={tone.stroke}
+        strokeWidth="1.5"
+        initial={{ opacity: 0, scale: 1 }}
+        animate={{ opacity: [0, 0.6, 0], scale: [1, 1, 4.2] }}
+        transition={{ delay: 0.7, duration: 1.1, times: [0, 0.1, 1], ease: "easeOut" }}
+      />
+      <motion.circle
+        r="6"
+        strokeWidth="3"
+        className={cn(tone.fill, "stroke-card drop-shadow-[0_1px_2px_rgb(0_0_0/0.3)]")}
+        initial={{ scale: 0 }}
+        animate={{ scale: [0, 1.2, 1] }}
+        transition={{ delay: 0.6, duration: 0.45, times: [0, 0.6, 1], ease: "easeOut" }}
+      />
+    </motion.g>
   );
 }
