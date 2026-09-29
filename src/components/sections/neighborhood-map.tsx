@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   IconArrowRight,
@@ -15,12 +15,8 @@ import {
 import {
   AnimatePresence,
   animate,
-  easeIn,
-  easeInOut,
-  easeOut,
   motion,
   useMotionValue,
-  useMotionValueEvent,
   useReducedMotion,
   useTransform,
   type MotionValue,
@@ -122,15 +118,12 @@ export function NeighborhoodMap({
   active,
   seen,
   instant = false,
-  finale,
   children,
 }: {
   /** A business's index, or the number of businesses for the whole city. */
   active: number;
   /** Show it finished, without the entrance (the page is being scrolled fast). */
   instant?: boolean;
-  /** The finale's progress, 0 → 1 (see F): drives the city zoom-out and the fold. */
-  finale: MotionValue<number>;
   /** Businesses already visited: their pins stay on as small dots. */
   seen: Set<number>;
   /** Floats over the map: the postcard, or the city view's call to action. */
@@ -144,9 +137,8 @@ export function NeighborhoodMap({
   const vw = useMotionValue(start.w);
   const viewBox = useTransform(() => `${vx.get()} ${vy.get()} ${vw.get()} ${(vw.get() * VIEW.h) / VIEW.w}`);
 
-  // Glide to the chosen neighborhood (jump with reduced motion, or when the page is flying
-  // past). The city view instead follows the finale's progress, pulling out from wherever
-  // the camera was.
+  // Glide to the chosen neighborhood or out to the city (jump with reduced motion, or
+  // when the page is flying past).
   useEffect(() => {
     const to = viewFor(active);
     if (reduce || instant) {
@@ -155,34 +147,24 @@ export function NeighborhoodMap({
       vw.set(to.w);
       return;
     }
-    if (active === OVERVIEW) {
-      const from = { x: vx.get(), y: vy.get(), w: vw.get() };
-      const follow = (p: number) => {
-        const z = easeInOut(Math.min(1, Math.max(0, p / ZOOM_END)));
-        vx.set(from.x + (to.x - from.x) * z);
-        vy.set(from.y + (to.y - from.y) * z);
-        vw.set(from.w + (to.w - from.w) * z);
-      };
-      follow(finale.get());
-      return finale.on("change", follow);
-    }
     // Quick, so a business is readable almost as soon as its row arrives: the motion is a
     // flourish, not something to wait for.
     const opts = { duration: active === OVERVIEW ? 1 : 0.6, ease: glide };
     const anims = [animate(vx, to.x, opts), animate(vy, to.y, opts), animate(vw, to.w, opts)];
     return () => anims.forEach((a) => a.stop());
-  }, [active, reduce, instant, finale, vx, vy, vw]);
+  }, [active, reduce, instant, vx, vy, vw]);
 
   const industry = city ? null : audiences.industries[active];
-  // Once the fold starts, the paper pieces stand in for the map card.
-  const cardVisibility = useTransform(finale, (p) => (p >= F.fold1[0] ? "hidden" : "visible"));
+  // The finale's fold: once it starts, the paper pieces stand in for the map card.
+  const [fold, setFold] = useState(0);
+  const folded = city && fold > 0;
 
   return (
     <div className="relative">
-      <motion.div
+      <div
         aria-hidden
-        className="relative overflow-hidden rounded-xl border bg-card shadow-lg"
-        style={{ aspectRatio: `${VIEW.w} / ${VIEW.h}`, visibility: cardVisibility }}
+        className={cn("relative overflow-hidden rounded-xl border bg-card shadow-lg", folded && "invisible")}
+        style={{ aspectRatio: `${VIEW.w} / ${VIEW.h}` }}
       >
         <MapArt active={active} seen={seen} viewBox={viewBox} instant={instant} />
 
@@ -194,9 +176,16 @@ export function NeighborhoodMap({
             <ReachLabel key={active} industry={industry} reach={scenes[active].reach} instant={instant} />
           )}
         </AnimatePresence>
-      </motion.div>
+      </div>
       <AnimatePresence>
-        {city && <FoldFinale key="fold" map={<MapArt active={active} seen={seen} viewBox={viewBox} still />} progress={finale} />}
+        {city && (
+          <FoldFinale
+            key="fold"
+            map={<MapArt active={active} seen={seen} viewBox={viewBox} still />}
+            reduce={!!reduce}
+            onStage={setFold}
+          />
+        )}
       </AnimatePresence>
       {children}
     </div>
@@ -315,114 +304,118 @@ function ReachLabel({ industry, reach, instant }: { industry: Industry; reach: s
   );
 }
 
-// The finale's timeline, as fractions of its progress (0 → 1): the camera pulls out to the
-// city, a beat to take it in, two folds, the turn, the postcard coming round, the stamp.
-// On desktop the progress is the scroll through the "Your business" row; on phones it plays.
-const ZOOM_END = 0.26;
-const F = { fold1: [0.3, 0.46], fold2: [0.46, 0.62], turn: [0.62, 0.7], grow: [0.7, 0.86], stamp: [0.86, 0.94] } as const;
-const mid = ([a, b]: readonly [number, number]) => (a + b) / 2;
+// The fold, in ms after the city view appears: a beat to take in the city, two folds,
+// then the flip into the postcard.
+const FOLD = 0.5; // s per fold
+const STAGES = [2300, 2850, 3400, 3680];
 // Warm paper, a touch darker toward one corner, for the back of the folded map.
 const paper = "border bg-[linear-gradient(155deg,var(--card)_35%,color-mix(in_oklab,var(--card)_92%,var(--foreground)))]";
 const face = "absolute inset-0 [backface-visibility:hidden]";
 
-/** A flap's shade: deepens toward the crease on its front, then lifts off its back as it lands. */
-function useShade(progress: MotionValue<number>, range: readonly [number, number]) {
-  return {
-    front: useTransform(progress, [range[0], mid(range)], [0, 0.14]),
-    back: useTransform(progress, [mid(range), range[1]], [0.14, 0]),
-  };
-}
-
 /**
  * The finale: over the city view, the map folds in half (left over right), in half again
- * (top down), and the folded square turns over into the "Your business" postcard. Every
- * piece follows `progress`, so scrolling back up unfolds it.
+ * (top down), and the folded square flips over into the "Your business" postcard. Leaving
+ * it fades the postcard away and the map comes back.
  */
-function FoldFinale({ map, progress }: { map: React.ReactNode; progress: MotionValue<number> }) {
-  const during = ([a, b]: readonly [number, number]) => (v: number) => (v >= a && v < b ? "block" : "none");
-  const show1 = useTransform(progress, during(F.fold1));
-  const show2 = useTransform(progress, during(F.fold2));
-  const show3 = useTransform(progress, during(F.turn));
-  const show4 = useTransform(progress, (v) => (v >= F.grow[0] ? "grid" : "none"));
-  const flap1 = useTransform(progress, [...F.fold1], [0, 180], { ease: easeInOut });
-  const flap2 = useTransform(progress, [...F.fold2], [0, -180], { ease: easeInOut });
-  const turn = useTransform(progress, [...F.turn], [0, 90], { ease: easeIn });
-  const grow = { ease: easeOut };
-  const card = {
-    rotateY: useTransform(progress, [...F.grow], [-90, 0], grow),
-    x: useTransform(progress, [...F.grow], ["28.4%", "0%"], grow),
-    y: useTransform(progress, [...F.grow], ["33.5%", "0%"], grow),
-    scaleX: useTransform(progress, [...F.grow], [0.568, 1], grow),
-    scaleY: useTransform(progress, [...F.grow], [0.669, 1], grow),
-  };
-  const shade1 = useShade(progress, F.fold1);
-  const shade2 = useShade(progress, F.fold2);
-  const shade = (opacity: MotionValue<number>) => (
-    <motion.span className="absolute inset-0 rounded-[inherit] bg-foreground" style={{ opacity }} />
+function FoldFinale({ map, reduce, onStage }: { map: React.ReactNode; reduce: boolean; onStage: (n: number) => void }) {
+  const [stage, setStage] = useState(0);
+  useEffect(() => {
+    const go = (n: number) => {
+      setStage(n);
+      onStage(n);
+    };
+    const timers = reduce ? [window.setTimeout(() => go(4), 0)] : STAGES.map((t, k) => window.setTimeout(() => go(k + 1), t));
+    return () => {
+      timers.forEach(clearTimeout);
+      onStage(0);
+    };
+  }, [reduce, onStage]);
+
+  // A flap's two faces: shade deepens toward the fold, then lifts as it lands.
+  const shade = (back: boolean) => (
+    <motion.span
+      className="absolute inset-0 rounded-[inherit] bg-foreground"
+      initial={{ opacity: back ? 0.14 : 0 }}
+      animate={{ opacity: back ? 0 : 0.14 }}
+      transition={{ duration: FOLD / 2, delay: back ? FOLD / 2 : 0, ease: back ? "easeOut" : "easeIn" }}
+    />
   );
 
   return (
     <motion.div className="absolute inset-0" exit={{ opacity: 0, transition: { duration: 0.3 } }}>
       {/* 1. Left half folds over the right, showing the map's plain back. */}
-      <motion.div aria-hidden className="absolute inset-0 [perspective:1400px]" style={{ display: show1 }}>
-        <div className="absolute inset-y-0 right-0 w-1/2 overflow-hidden rounded-r-xl border bg-card shadow-lg">
-          <div className="absolute inset-y-0 right-0 w-[200%]">{map}</div>
-        </div>
-        <motion.div
-          className="absolute inset-y-0 left-0 w-1/2 [transform-style:preserve-3d]"
-          style={{ originX: 1, rotateY: flap1 }}
-        >
-          <div className={cn(face, "overflow-hidden rounded-l-xl border bg-card")}>
-            <div className="absolute inset-y-0 left-0 w-[200%]">{map}</div>
-            {shade(shade1.front)}
+      {stage === 1 && (
+        <div aria-hidden className="absolute inset-0 [perspective:1400px]">
+          <div className="absolute inset-y-0 right-0 w-1/2 overflow-hidden rounded-r-xl border bg-card shadow-lg">
+            <div className="absolute inset-y-0 right-0 w-[200%]">{map}</div>
           </div>
-          <div className={cn(face, "rounded-l-xl [transform:rotateY(180deg)]", paper)}>{shade(shade1.back)}</div>
-        </motion.div>
-      </motion.div>
+          <motion.div
+            className="absolute inset-y-0 left-0 w-1/2 [transform-style:preserve-3d]"
+            style={{ originX: 1 }}
+            initial={{ rotateY: 0 }}
+            animate={{ rotateY: 180 }}
+            transition={{ duration: FOLD, ease: "easeInOut" }}
+          >
+            <div className={cn(face, "overflow-hidden rounded-l-xl border bg-card")}>
+              <div className="absolute inset-y-0 left-0 w-[200%]">{map}</div>
+              {shade(false)}
+            </div>
+            <div className={cn(face, "rounded-l-xl [transform:rotateY(180deg)]", paper)}>{shade(true)}</div>
+          </motion.div>
+        </div>
+      )}
 
       {/* 2. The folded half folds again, top down. */}
-      <motion.div aria-hidden className="absolute inset-y-0 right-0 w-1/2 [perspective:1400px]" style={{ display: show2 }}>
-        <div className={cn("absolute inset-x-0 bottom-0 h-1/2 rounded-br-xl shadow-lg", paper)} />
-        <motion.div
-          className="absolute inset-x-0 top-0 h-1/2 [transform-style:preserve-3d]"
-          style={{ originY: 1, rotateX: flap2 }}
-        >
-          <div className={cn(face, "rounded-tr-xl", paper)}>{shade(shade2.front)}</div>
-          <div className={cn(face, "rounded-br-xl [transform:rotateX(180deg)]", paper)}>{shade(shade2.back)}</div>
-        </motion.div>
-      </motion.div>
+      {stage === 2 && (
+        <div aria-hidden className="absolute inset-y-0 right-0 w-1/2 [perspective:1400px]">
+          <div className={cn("absolute inset-x-0 bottom-0 h-1/2 rounded-br-xl shadow-lg", paper)} />
+          <motion.div
+            className="absolute inset-x-0 top-0 h-1/2 [transform-style:preserve-3d]"
+            style={{ originY: 1 }}
+            initial={{ rotateX: 0 }}
+            animate={{ rotateX: -180 }}
+            transition={{ duration: FOLD, ease: "easeInOut" }}
+          >
+            <div className={cn(face, "rounded-tr-xl", paper)}>{shade(false)}</div>
+            <div className={cn(face, "rounded-br-xl [transform:rotateX(180deg)]", paper)}>{shade(true)}</div>
+          </motion.div>
+        </div>
+      )}
 
       {/* 3. The folded square turns edge-on… */}
-      <motion.div aria-hidden className="absolute right-0 bottom-0 h-1/2 w-1/2 [perspective:1400px]" style={{ display: show3 }}>
-        <motion.div className={cn("absolute inset-0 rounded-xl shadow-lg", paper)} style={{ rotateY: turn }} />
-      </motion.div>
+      {stage === 3 && (
+        <div aria-hidden className="absolute right-0 bottom-0 h-1/2 w-1/2 [perspective:1400px]">
+          <motion.div
+            className={cn("absolute inset-0 rounded-xl shadow-lg", paper)}
+            initial={{ rotateY: 0 }}
+            animate={{ rotateY: 90 }}
+            transition={{ duration: 0.28, ease: "easeIn" }}
+          />
+        </div>
+      )}
 
       {/* 4. …and comes round as the postcard, growing to the middle as it turns. The
           start lines it up with the folded square (quarter size, bottom-right corner). */}
-      <motion.div className="absolute inset-0 place-items-center [perspective:1400px]" style={{ display: show4 }}>
-        <motion.div className="w-[88%]" style={card}>
-          <CityPostcard progress={progress} />
-        </motion.div>
-      </motion.div>
+      {stage === 4 && (
+        <div className="absolute inset-0 grid place-items-center [perspective:1400px]">
+          <motion.div
+            className="w-[88%]"
+            initial={{ x: "28.4%", y: "33.5%", scaleX: 0.568, scaleY: 0.669, rotateY: -90 }}
+            animate={{ x: 0, y: 0, scaleX: 1, scaleY: 1, rotateY: 0 }}
+            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <CityPostcard />
+          </motion.div>
+        </div>
+      )}
     </motion.div>
   );
 }
 
 /** The back of "Your business"'s postcard: the message and the call to action on the left;
  *  the EDDM postage (stamped on as it lands) and the address on the right. */
-function CityPostcard({ progress }: { progress: MotionValue<number> }) {
+function CityPostcard() {
   const { cta } = audiences.overview;
-  const stamp = {
-    opacity: useTransform(progress, [F.stamp[0], F.stamp[0] + 0.02], [0, 1]),
-    scale: useTransform(progress, [...F.stamp], [1.6, 1], { ease: easeOut }),
-    rotate: useTransform(progress, [...F.stamp], [-9, -3], { ease: easeOut }),
-  };
-  // The thunk, once, as the stamp lands on the way forward.
-  const landed = F.stamp[1] - 0.02;
-  useMotionValueEvent(progress, "change", (v) => {
-    const before = progress.getPrevious() ?? 0;
-    if (before < landed && v >= landed) playKey("press", { gain: 0.5, pitch: 0.8 });
-  });
   return (
     <div className="@container grid aspect-[9/6.25] grid-cols-[1.35fr_1fr] overflow-hidden rounded-xl border bg-card shadow-xl">
       <div className="flex flex-col justify-between p-[5.5cqw]">
@@ -446,7 +439,10 @@ function CityPostcard({ progress }: { progress: MotionValue<number> }) {
       <div aria-hidden className="flex flex-col justify-between border-l border-dashed p-[4.5cqw]">
         <motion.div
           className="ml-auto w-[78%] border border-foreground/70 px-[1.5cqw] py-[1.2cqw] text-center text-[1.9cqw] leading-tight font-semibold tracking-wide text-foreground/80 uppercase"
-          style={stamp}
+          initial={{ opacity: 0, scale: 1.6, rotate: -9 }}
+          animate={{ opacity: 1, scale: 1, rotate: -3 }}
+          transition={{ type: "spring", stiffness: 420, damping: 18, delay: 0.55 }}
+          onAnimationStart={() => window.setTimeout(() => playKey("press", { gain: 0.5, pitch: 0.8 }), 650)}
         >
           PRSRT STD
           <br />
