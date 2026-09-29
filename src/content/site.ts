@@ -196,11 +196,17 @@ export const audiences = {
     {
       name: "Retail stores",
       icon: "retail",
-      tone: "brand",
+      tone: "neutral",
       body: "Bring foot traffic to a grand opening, a seasonal sale or a new collection.",
       postcard: { business: "Maple & Co.", headline: "Grand opening Saturday", offer: "20% off everything, all weekend", cta: "Scan for directions" },
     },
   ],
+  // The last row: the map zooms out to show every business above at once.
+  overview: {
+    name: "Your business",
+    body: "Every business on this map started with the streets around it. Pick yours.",
+    reach: "6 businesses · 3,566 homes",
+  },
 } as const
 
 // Facts checked against oppizi.com and eddm.com (Sept 2026).
