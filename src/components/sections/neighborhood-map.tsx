@@ -117,10 +117,13 @@ function viewFor(n: number) {
 export function NeighborhoodMap({
   active,
   seen,
+  instant = false,
   children,
 }: {
   /** A business's index, or the number of businesses for the whole city. */
   active: number;
+  /** Show it finished, without the entrance (the page is being scrolled fast). */
+  instant?: boolean;
   /** Businesses already visited: their pins stay on as small dots. */
   seen: Set<number>;
   /** Floats over the map: the postcard, or the city view's call to action. */
@@ -134,10 +137,11 @@ export function NeighborhoodMap({
   const vw = useMotionValue(start.w);
   const viewBox = useTransform(() => `${vx.get()} ${vy.get()} ${vw.get()} ${(vw.get() * VIEW.h) / VIEW.w}`);
 
-  // Glide to the chosen neighborhood or out to the city (jump with reduced motion).
+  // Glide to the chosen neighborhood or out to the city (jump with reduced motion, or
+  // when the page is flying past).
   useEffect(() => {
     const to = viewFor(active);
-    if (reduce) {
+    if (reduce || instant) {
       vx.set(to.x);
       vy.set(to.y);
       vw.set(to.w);
@@ -148,7 +152,7 @@ export function NeighborhoodMap({
     const opts = { duration: active === OVERVIEW ? 1 : 0.6, ease: glide };
     const anims = [animate(vx, to.x, opts), animate(vy, to.y, opts), animate(vw, to.w, opts)];
     return () => anims.forEach((a) => a.stop());
-  }, [active, reduce, vx, vy, vw]);
+  }, [active, reduce, instant, vx, vy, vw]);
 
   const industry = city ? null : audiences.industries[active];
   // The finale's fold: once it starts, the paper pieces stand in for the map card.
@@ -162,13 +166,14 @@ export function NeighborhoodMap({
         className={cn("relative overflow-hidden rounded-xl border bg-card shadow-lg", folded && "invisible")}
         style={{ aspectRatio: `${VIEW.w} / ${VIEW.h}` }}
       >
-        <MapArt active={active} seen={seen} viewBox={viewBox} />
+        <MapArt active={active} seen={seen} viewBox={viewBox} instant={instant} />
 
         {/* A business's reach, as a label in the hero's style (the city view has its call
             to action instead). */}
-        <AnimatePresence mode="wait">
+        {/* Labels cross-fade (they overlap), so a new one never waits for the last to leave. */}
+        <AnimatePresence>
           {industry && (
-            <ReachLabel key={active} industry={industry} reach={scenes[active].reach} />
+            <ReachLabel key={active} industry={industry} reach={scenes[active].reach} instant={instant} />
           )}
         </AnimatePresence>
       </div>
@@ -194,11 +199,13 @@ function MapArt({
   seen,
   viewBox,
   still = false,
+  instant = false,
 }: {
   active: number;
   seen: Set<number>;
   viewBox: MotionValue<string>;
   still?: boolean;
+  instant?: boolean;
 }) {
   const city = active === OVERVIEW;
   const shown = city ? scenes.map((_, n) => n) : [active];
@@ -218,7 +225,7 @@ function MapArt({
             strokeWidth={city ? 2 * ZOOM * 0.75 : 2}
             strokeOpacity="0.85"
             strokeLinejoin="round"
-            initial={{ pathLength: 0, fillOpacity: 0, opacity: 1 }}
+            initial={instant ? false : { pathLength: 0, fillOpacity: 0, opacity: 1 }}
             animate={{ pathLength: 1, fillOpacity: 1 }}
             exit={{ opacity: 0, transition: { duration: 0.3 } }}
             transition={{
@@ -268,6 +275,7 @@ function MapArt({
           tone={toneOf(n)}
           size={city ? ZOOM * 0.8 : 1}
           delay={city ? 0.35 + k * 0.08 : 0.2}
+          instant={instant}
         />
       ))}
     </AnimatePresence>
@@ -276,11 +284,11 @@ function MapArt({
 }
 
 /** The business and how many homes its route reaches, in the corner. */
-function ReachLabel({ industry, reach }: { industry: Industry; reach: string }) {
+function ReachLabel({ industry, reach, instant }: { industry: Industry; reach: string; instant: boolean }) {
   const Icon = icons[industry.icon];
   return (
     <motion.div
-      initial={{ opacity: 0, y: 6 }}
+      initial={instant ? false : { opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0, transition: { delay: 0.35, duration: 0.3 } }}
       exit={{ opacity: 0, transition: { duration: 0.2 } }}
       className="absolute top-3 left-3 flex items-center gap-2 rounded-lg border bg-card py-1.5 pr-3 pl-2 shadow-md sm:top-4 sm:left-4 sm:gap-2.5 sm:py-2 sm:pr-3.5 sm:pl-2.5"
@@ -461,18 +469,21 @@ function Pin({
   tone,
   size,
   delay,
+  instant,
 }: {
   at: { x: number; y: number };
   tone: (typeof paint)[Tone];
   size: number;
   delay: number;
+  /** Already landed: no pop, no ripple. */
+  instant: boolean;
 }) {
   return (
     <motion.g transform={`translate(${at.x} ${at.y}) scale(${size})`} exit={{ opacity: 0, transition: { duration: 0.25 } }}>
       <motion.circle
         r="15"
         className={tone.fill}
-        initial={{ opacity: 0, scale: 0.4 }}
+        initial={instant ? false : { opacity: 0, scale: 0.4 }}
         animate={{ opacity: 0.14, scale: 1 }}
         transition={{ delay: delay + 0.15, duration: 0.45, ease: "easeOut" }}
       />
@@ -482,15 +493,15 @@ function Pin({
         className={tone.stroke}
         strokeWidth="1.5"
         initial={{ opacity: 0, scale: 1 }}
-        animate={{ opacity: [0, 0.6, 0], scale: [1, 1, 4.2] }}
+        animate={instant ? { opacity: 0 } : { opacity: [0, 0.6, 0], scale: [1, 1, 4.2] }}
         transition={{ delay: delay + 0.1, duration: 0.9, times: [0, 0.1, 1], ease: "easeOut" }}
       />
       <motion.circle
         r="6"
         strokeWidth="3"
         className={cn(tone.fill, "stroke-card drop-shadow-[0_1px_2px_rgb(0_0_0/0.3)]")}
-        initial={{ scale: 0 }}
-        animate={{ scale: [0, 1.2, 1] }}
+        initial={instant ? false : { scale: 0 }}
+        animate={{ scale: instant ? 1 : [0, 1.2, 1] }}
         transition={{ delay, duration: 0.35, times: [0, 0.6, 1], ease: "easeOut" }}
       />
     </motion.g>

@@ -12,7 +12,7 @@ import {
   IconToolsKitchen2,
   type TablerIcon,
 } from "@tabler/icons-react";
-import { AnimatePresence, MotionConfig, motion } from "motion/react";
+import { AnimatePresence, MotionConfig, motion, useScroll, useVelocity } from "motion/react";
 
 import { NeighborhoodMap } from "@/components/sections/neighborhood-map";
 import { SectionHeading } from "@/components/sections/section-heading";
@@ -59,11 +59,18 @@ const rows = [
   { name: audiences.overview.name, body: audiences.overview.body, Icon: IconMapPins, tone: tones.neutral },
 ];
 
+/** Page scroll speed (px/s) above which a business appears already finished: someone
+ *  flinging past shouldn't see half-drawn routes. */
+const FLING = 2500;
+
 export function Audiences() {
   const [active, setActive] = useState(0);
+  const [instant, setInstant] = useState(false);
   const [seen, setSeen] = useState(() => new Set([0]));
-  const show = (i: number) => {
+  const speed = useVelocity(useScroll().scrollY);
+  const show = (i: number, fast = false) => {
     setActive(i);
+    setInstant(fast);
     setSeen((prev) => (prev.has(i) ? prev : new Set(prev).add(i)));
   };
   const desktop = () => window.matchMedia("(min-width: 64rem)").matches;
@@ -95,8 +102,8 @@ export function Audiences() {
   };
 
   const map = (
-    <NeighborhoodMap active={active} seen={seen}>
-      <FloatingPostcard industry={audiences.industries[active] ?? null} index={active} />
+    <NeighborhoodMap active={active} seen={seen} instant={instant}>
+      <FloatingPostcard industry={audiences.industries[active] ?? null} index={active} instant={instant} />
     </NeighborhoodMap>
   );
 
@@ -123,7 +130,7 @@ export function Audiences() {
                 <motion.li
                   key={row.name}
                   // Desktop: becomes active while it crosses the middle band of the screen.
-                  onViewportEnter={() => desktop() && !locked() && show(i)}
+                  onViewportEnter={() => desktop() && !locked() && show(i, Math.abs(speed.get()) > FLING)}
                   viewport={{ margin: "-45% 0px -45% 0px" }}
                   className="flex w-[85%] shrink-0 snap-start flex-col sm:w-[60%] lg:block lg:w-auto lg:py-10"
                 >
@@ -184,7 +191,7 @@ function Row({
 
 /** The active industry's postcard, floating over the map's corner like the cards over
  *  the hero's map: dealt in when the industry changes, then drifting gently. */
-function FloatingPostcard({ industry, index }: { industry: Industry | null; index: number }) {
+function FloatingPostcard({ industry, index, instant }: { industry: Industry | null; index: number; instant: boolean }) {
   return (
     <div className="pointer-events-none absolute -right-3 -bottom-10 w-[46%] sm:-right-6">
       <AnimatePresence initial={false}>
@@ -192,7 +199,7 @@ function FloatingPostcard({ industry, index }: { industry: Industry | null; inde
           <motion.div
             key={index}
             className="absolute inset-x-0 bottom-0"
-            initial={{ opacity: 0, y: 30, rotate: -8 }}
+            initial={instant ? false : { opacity: 0, y: 30, rotate: -8 }}
             animate={{ opacity: 1, y: 0, rotate: -3, transition: { type: "spring", stiffness: 220, damping: 24, delay: 0.3 } }}
             exit={{ opacity: 0, y: -16, rotate: 2, transition: { duration: 0.25 } }}
           >
