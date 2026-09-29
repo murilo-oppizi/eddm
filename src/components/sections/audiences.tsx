@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import {
   IconBarbell,
   IconHomeDollar,
@@ -13,13 +13,15 @@ import {
 } from "@tabler/icons-react";
 import { AnimatePresence, MotionConfig, motion } from "motion/react";
 
+import { NeighborhoodMap } from "@/components/sections/neighborhood-map";
 import { SectionHeading } from "@/components/sections/section-heading";
 import { audiences } from "@/content/site";
 import { cn } from "@/lib/utils";
 
-// "Who it's for": a sticky postcard (left) swaps to each industry's mailer as its row
-// scrolls through the middle of the screen (right) — every EDDM customer ends up with a
-// postcard, so we show theirs. On phones each row carries its own postcard instead.
+// "Who it's for": a sticky map of one city (left) glides to each industry's neighborhood
+// as its row scrolls through the middle of the screen (right): its pin drops, its routes
+// trace and the homes they reach light up, with its postcard floating over the corner.
+// On phones the map sits above a swipeable row of industries and follows the one in view.
 
 type Industry = (typeof audiences.industries)[number];
 
@@ -43,6 +45,29 @@ const tones: Record<Industry["tone"], { panel: string; text: string; icon: strin
 
 export function Audiences() {
   const [active, setActive] = useState(0);
+  const [seen, setSeen] = useState(() => new Set([0]));
+  const show = (i: number) => {
+    setActive(i);
+    setSeen((prev) => (prev.has(i) ? prev : new Set(prev).add(i)));
+  };
+  const desktop = () => window.matchMedia("(min-width: 64rem)").matches;
+
+  // Phones: the slide that's snapped into view picks the neighborhood.
+  const rail = useRef<HTMLOListElement>(null);
+  const onRailScroll = () => {
+    const el = rail.current;
+    const first = el?.firstElementChild as HTMLElement | null;
+    if (!el || !first || desktop()) return;
+    const stride = first.offsetWidth + parseFloat(getComputedStyle(el).columnGap || "0");
+    const i = Math.min(audiences.industries.length - 1, Math.max(0, Math.round(el.scrollLeft / stride)));
+    if (i !== active) show(i);
+  };
+
+  const map = (
+    <NeighborhoodMap active={active} seen={seen}>
+      <FloatingPostcard industry={audiences.industries[active]} index={active} />
+    </NeighborhoodMap>
+  );
 
   return (
     <MotionConfig reducedMotion="user">
@@ -51,29 +76,27 @@ export function Audiences() {
           <SectionHeading eyebrow={audiences.eyebrow} title={audiences.title} body={audiences.body} />
 
           <div className="grid gap-12 lg:grid-cols-[1.05fr_1fr] lg:gap-16">
-            {/* Sticky postcard pile (desktop) */}
-            <div className="hidden lg:block">
-              <div className="sticky top-[calc(50vh-11rem)]">
-                <PostcardPile industry={audiences.industries[active]} index={active} />
-              </div>
+            {/* The map: sticky beside the list on desktop, above the carousel on phones
+                (with room below for the postcard's overhang). */}
+            <div className="pb-10 lg:pb-0">
+              <div className="lg:sticky lg:top-[calc(50vh-15rem)]">{map}</div>
             </div>
 
-            {/* Phones: a swipeable carousel, one industry + postcard per slide.
-                Desktop: a tall list that scrolls past the sticky postcard. */}
-            <ol className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-px-4 px-4 pb-4 [scrollbar-width:none] sm:-mx-6 sm:scroll-px-6 sm:px-6 lg:mx-0 lg:block lg:snap-none lg:overflow-visible lg:px-0 lg:py-[18vh] [&::-webkit-scrollbar]:hidden">
+            {/* Phones: a swipeable carousel, one industry per slide.
+                Desktop: a tall list that scrolls past the sticky map. */}
+            <ol
+              ref={rail}
+              onScroll={onRailScroll}
+              className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-px-4 px-4 pb-4 [scrollbar-width:none] sm:-mx-6 sm:scroll-px-6 sm:px-6 lg:mx-0 lg:block lg:snap-none lg:overflow-visible lg:px-0 lg:py-[18vh] [&::-webkit-scrollbar]:hidden">
               {audiences.industries.map((industry, i) => (
                 <motion.li
                   key={industry.name}
-                  // Becomes active while it crosses the middle band of the screen.
-                  onViewportEnter={() => setActive(i)}
+                  // Desktop: becomes active while it crosses the middle band of the screen.
+                  onViewportEnter={() => desktop() && show(i)}
                   viewport={{ margin: "-45% 0px -45% 0px" }}
                   className="flex w-[85%] shrink-0 snap-start flex-col sm:w-[60%] lg:block lg:w-auto lg:py-10"
                 >
                   <IndustryRow industry={industry} active={i === active} />
-                  {/* Phones: the postcard sits with its row; rows stretch so postcards line up. */}
-                  <div className="mt-5 lg:hidden">
-                    <Postcard industry={industry} />
-                  </div>
                 </motion.li>
               ))}
             </ol>
@@ -112,26 +135,22 @@ function IndustryRow({ industry, active }: { industry: Industry; active: boolean
   );
 }
 
-/** The active postcard, dealt on top of two blank cards so it reads as a pile of mail. */
-function PostcardPile({ industry, index }: { industry: Industry; index: number }) {
+/** The active industry's postcard, floating over the map's corner like the cards over
+ *  the hero's map: dealt in when the industry changes, then drifting gently. */
+function FloatingPostcard({ industry, index }: { industry: Industry; index: number }) {
   return (
-    <div className="relative mx-auto w-full max-w-xl" aria-hidden>
-      <div className="absolute inset-0 translate-x-3 translate-y-4 rotate-[4deg] rounded-xl border bg-card shadow-sm" />
-      <div className="absolute inset-0 -translate-x-2 translate-y-2 rotate-[-5deg] rounded-xl border bg-card shadow-sm" />
-      {/* Holds the pile's size while cards swap, so nothing below jumps. */}
-      <div className="invisible">
-        <Postcard industry={industry} />
-      </div>
+    <div className="pointer-events-none absolute -right-3 -bottom-10 w-[46%] sm:-right-6">
       <AnimatePresence initial={false}>
         <motion.div
           key={index}
-          className="absolute inset-0"
-          initial={{ opacity: 0, y: 40, rotate: -8 }}
-          animate={{ opacity: 1, y: 0, rotate: -1.5 }}
-          exit={{ opacity: 0, y: -24, rotate: 4, transition: { duration: 0.3 } }}
-          transition={{ type: "spring", stiffness: 180, damping: 22 }}
+          className="absolute inset-x-0 bottom-0"
+          initial={{ opacity: 0, y: 30, rotate: -8 }}
+          animate={{ opacity: 1, y: 0, rotate: -3, transition: { type: "spring", stiffness: 180, damping: 22, delay: 0.9 } }}
+          exit={{ opacity: 0, y: -16, rotate: 2, transition: { duration: 0.25 } }}
         >
-          <Postcard industry={industry} elevated />
+          <div className="animate-[float-y_6s_ease-in-out_infinite] [--float-distance:6px] motion-reduce:animate-none">
+            <Postcard industry={industry} elevated />
+          </div>
         </motion.div>
       </AnimatePresence>
     </div>
