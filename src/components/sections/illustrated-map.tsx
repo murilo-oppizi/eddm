@@ -13,15 +13,18 @@ import { cn } from "@/lib/utils";
 
 const W = 400;
 const H = 440;
+export const MAP_H = H;
 /** Route centre in the card — the composition's pin sits here. */
 export const ROUTE_CENTER = { x: 170, y: 238 };
 
 const GRID_ANGLE = -28; // degrees, roughly Williamsburg's street grid
-const AVENUE_GAP = 44; // centreline to centreline
-const STREET_GAP = 20;
+export const AVENUE_GAP = 44; // centreline to centreline
+export const STREET_GAP = 20;
 const STREET_W = 4;
-const COLS = 11; // blocks each side of centre — enough to cover the widest card when rotated
-const ROWS = 19;
+// Blocks each side of centre: enough for the widest card, and for the "Who it's for"
+// map, which pans across several neighborhoods. (It's one pattern-filled rect, so size is free.)
+const COLS = 18;
+const ROWS = 40;
 
 /** Every third avenue is a wide one, like Bedford or Driggs. */
 const isMajorAvenue = (i: number) => i % 3 === 0;
@@ -60,7 +63,7 @@ const RANKED_ROUTES: [number, number][][] = [
 ];
 
 /** Where a point in grid units lands on the map (the grid is rotated around ROUTE_CENTER). */
-function toMap(i: number, j: number) {
+export function toMap(i: number, j: number) {
   const a = (GRID_ANGLE * Math.PI) / 180;
   const u = i * AVENUE_GAP;
   const v = j * STREET_GAP;
@@ -82,7 +85,7 @@ export const RANKED_FOCUS = (() => {
   return { x: (Math.min(...xs) + Math.max(...xs)) / 2, y: (Math.min(...ys) + Math.max(...ys)) / 2 };
 })();
 
-const toPoints = (steps: [number, number][]) =>
+export const toPoints = (steps: [number, number][]) =>
   steps.map(([i, j]) => `${i * AVENUE_GAP},${j * STREET_GAP}`).join(" ");
 const routePoints = toPoints(ROUTE_STEPS);
 const aiRoutePoints = toPoints(AI_ROUTE_STEPS);
@@ -110,6 +113,35 @@ const parks = [...PARK].map((key) => {
   const [i, j] = key.split(",").map(Number);
   return blockAt(i, j);
 });
+
+/**
+ * The streets themselves: blocks, parks and a Broadway-like diagonal, in a group rotated
+ * like the grid. `children` draw inside that group, in grid units × gaps (avenue i,
+ * street j is at i × AVENUE_GAP, j × STREET_GAP), so overlays can sit on the streets.
+ */
+export function StreetGrid({ children }: { children?: React.ReactNode }) {
+  const blocksId = `${useId()}blocks`;
+  return (
+    <g transform={`translate(${ROUTE_CENTER.x} ${ROUTE_CENTER.y}) rotate(${GRID_ANGLE})`}>
+      {/* The pattern tile starts on a wide avenue (i = 0), so it lines up with the grid. */}
+      <defs>
+        <pattern id={blocksId} width={TILE.w} height={TILE.h} patternUnits="userSpaceOnUse">
+          {tileBlocks.map((b) => (
+            <rect key={b.x} {...b} rx="1.5" className="fill-subtle/70" />
+          ))}
+        </pattern>
+      </defs>
+      <rect {...{ x: GRID.x, y: GRID.y, width: GRID.w, height: GRID.h }} fill={`url(#${blocksId})`} />
+      {parks.map((b) => (
+        <rect key={`${b.x},${b.y}`} {...b} rx="1.5" className="fill-success-subtle" />
+      ))}
+
+      {/* A diagonal like Broadway, cutting across the grid */}
+      <line x1={-840} y1={450} x2={840} y2={-310} className="stroke-card" strokeWidth="8" />
+      {children}
+    </g>
+  );
+}
 
 export type SelectionMode = "route" | "area";
 
@@ -145,7 +177,6 @@ export function IllustratedMap({
   view?: { x: number; y: number; w: number; h: number };
 }) {
   const route = mode === "route";
-  const blocksId = `${useId()}blocks`;
   return (
     <svg
       viewBox={view ? `${view.x} ${view.y} ${view.w} ${view.h}` : `0 0 ${width} ${H}`}
@@ -162,23 +193,7 @@ export function IllustratedMap({
         className="fill-card"
       />
 
-      <g transform={`translate(${ROUTE_CENTER.x} ${ROUTE_CENTER.y}) rotate(${GRID_ANGLE})`}>
-        {/* The pattern tile starts on a wide avenue (i = 0), so it lines up with the grid. */}
-        <defs>
-          <pattern id={blocksId} width={TILE.w} height={TILE.h} patternUnits="userSpaceOnUse">
-            {tileBlocks.map((b) => (
-              <rect key={b.x} {...b} rx="1.5" className="fill-subtle/70" />
-            ))}
-          </pattern>
-        </defs>
-        <rect {...{ x: GRID.x, y: GRID.y, width: GRID.w, height: GRID.h }} fill={`url(#${blocksId})`} />
-        {parks.map((b) => (
-          <rect key={`${b.x},${b.y}`} {...b} rx="1.5" className="fill-success-subtle" />
-        ))}
-
-        {/* A diagonal like Broadway, cutting across the grid */}
-        <line x1={-420} y1={260} x2={420} y2={-120} className="stroke-card" strokeWidth="8" />
-
+      <StreetGrid>
         {/* The AI's ranked routes, in order */}
         {ranked?.map((r, i) => (
           <polygon
@@ -217,7 +232,7 @@ export function IllustratedMap({
             />
           </>
         )}
-      </g>
+      </StreetGrid>
 
       {/* Match pills on the ranked routes, drawn upright over the rotated grid */}
       {ranked?.map((r, i) => {
