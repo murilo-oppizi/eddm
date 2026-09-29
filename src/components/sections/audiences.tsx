@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   IconBarbell,
   IconHomeDollar,
@@ -12,7 +12,17 @@ import {
   IconToolsKitchen2,
   type TablerIcon,
 } from "@tabler/icons-react";
-import { AnimatePresence, MotionConfig, motion, useScroll, useVelocity } from "motion/react";
+import {
+  AnimatePresence,
+  MotionConfig,
+  animate,
+  motion,
+  useMotionValue,
+  useMotionValueEvent,
+  useReducedMotion,
+  useScroll,
+  useVelocity,
+} from "motion/react";
 
 import { NeighborhoodMap } from "@/components/sections/neighborhood-map";
 import { SectionHeading } from "@/components/sections/section-heading";
@@ -23,7 +33,9 @@ import { cn } from "@/lib/utils";
 // as its row scrolls through the middle of the screen (right): its pin pops in and its
 // route traces, with its postcard floating over the corner. The last row, "Your business",
 // zooms out to the whole city, which then folds up into its own postcard with the call to
-// action (see neighborhood-map.tsx). On phones the
+// action (see neighborhood-map.tsx). On desktop that finale follows the scroll: the row and
+// the map hold for about a screen while it plays, so it can't be scrolled past half-done,
+// and scrolling back unfolds it. On phones the
 // map sits above a swipeable row of industries and follows the one in view. Rows are
 // clickable everywhere: they scroll into place and move the map.
 
@@ -62,18 +74,37 @@ const rows = [
 /** Page scroll speed (px/s) above which a business appears already finished: someone
  *  flinging past shouldn't see half-drawn routes. */
 const FLING = 2500;
+const desktop = () => window.matchMedia("(min-width: 64rem)").matches;
 
 export function Audiences() {
   const [active, setActive] = useState(0);
   const [instant, setInstant] = useState(false);
   const [seen, setSeen] = useState(() => new Set([0]));
   const speed = useVelocity(useScroll().scrollY);
+  const reduce = useReducedMotion();
+
+  // The finale's progress (0 → 1). Desktop: the scroll through the "Your business" row (it
+  // and the map hold still meanwhile). Phones, where the rows swipe sideways: it plays on
+  // its own once that card is chosen. Reduced motion: straight to the postcard.
+  const finale = useMotionValue(0);
+  const finaleRow = useRef<HTMLLIElement>(null);
+  const finaleScroll = useScroll({ target: finaleRow, offset: ["start center", "end center"] }).scrollYProgress;
+  useMotionValueEvent(finaleScroll, "change", (v) => {
+    if (desktop()) finale.set(reduce ? (v > 0 ? 1 : 0) : v);
+  });
+  const city = active === rows.length - 1;
+  useEffect(() => {
+    if (desktop()) return;
+    if (!city) return finale.set(0);
+    if (reduce) return finale.set(1);
+    const play = animate(finale, 1, { duration: 2.6, ease: "linear" });
+    return () => play.stop();
+  }, [city, reduce, finale]);
   const show = (i: number, fast = false) => {
     setActive(i);
     setInstant(fast);
     setSeen((prev) => (prev.has(i) ? prev : new Set(prev).add(i)));
   };
-  const desktop = () => window.matchMedia("(min-width: 64rem)").matches;
   // While a clicked row scrolls into place, the rows it passes don't take over the map.
   const lock = useRef({ on: false, timer: 0 });
   const locked = () => lock.current.on;
@@ -102,7 +133,7 @@ export function Audiences() {
   };
 
   const map = (
-    <NeighborhoodMap active={active} seen={seen} instant={instant}>
+    <NeighborhoodMap active={active} seen={seen} instant={instant} finale={finale}>
       <FloatingPostcard industry={audiences.industries[active] ?? null} index={active} instant={instant} />
     </NeighborhoodMap>
   );
@@ -129,12 +160,24 @@ export function Audiences() {
               {rows.map((row, i) => (
                 <motion.li
                   key={row.name}
+                  ref={i === rows.length - 1 ? finaleRow : undefined}
                   // Desktop: becomes active while it crosses the middle band of the screen.
                   onViewportEnter={() => desktop() && !locked() && show(i, Math.abs(speed.get()) > FLING)}
                   viewport={{ margin: "-45% 0px -45% 0px" }}
                   className="flex w-[85%] shrink-0 snap-start flex-col sm:w-[60%] lg:block lg:w-auto lg:py-10"
                 >
-                  <Row {...row} active={i === active} onChoose={(el) => choose(i, el)} />
+                  {i === rows.length - 1 ? (
+                    <>
+                      {/* The finale row stays in the middle of the screen, beside the map,
+                          through a screen of extra scroll while the map folds up. */}
+                      <div className="lg:sticky lg:top-[calc(50vh-4rem)]">
+                        <Row {...row} active={i === active} onChoose={(el) => choose(i, el)} />
+                      </div>
+                      <div aria-hidden className="hidden lg:block lg:h-[90vh]" />
+                    </>
+                  ) : (
+                    <Row {...row} active={i === active} onChoose={(el) => choose(i, el)} />
+                  )}
                 </motion.li>
               ))}
             </ol>
