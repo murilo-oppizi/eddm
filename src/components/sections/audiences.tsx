@@ -1,10 +1,8 @@
 "use client";
 
 import { useRef, useState } from "react";
-import Link from "next/link";
 import {
   IconBarbell,
-  IconArrowRight,
   IconHomeDollar,
   IconMapPins,
   IconQrcode,
@@ -18,14 +16,14 @@ import { AnimatePresence, MotionConfig, motion } from "motion/react";
 
 import { NeighborhoodMap } from "@/components/sections/neighborhood-map";
 import { SectionHeading } from "@/components/sections/section-heading";
-import { Button } from "@/components/ui/button";
-import { audiences, site } from "@/content/site";
+import { audiences } from "@/content/site";
 import { cn } from "@/lib/utils";
 
 // "Who it's for": a sticky map of one city (left) glides to each industry's neighborhood
 // as its row scrolls through the middle of the screen (right): its pin pops in and its
 // route traces, with its postcard floating over the corner. The last row, "Your business",
-// zooms out to the whole city, with a call to action where the postcard was. On phones the
+// zooms out to the whole city, which then folds up into its own postcard with the call to
+// action (see neighborhood-map.tsx). On phones the
 // map sits above a swipeable row of industries and follows the one in view. Rows are
 // clickable everywhere: they scroll into place and move the map.
 
@@ -40,15 +38,14 @@ const icons: Record<Industry["icon"], TablerIcon> = {
   retail: IconShoppingBag,
 };
 
-// Each industry's mailer gets its own tint from the Oppizi tokens. `dot` is its map pin's
-// color, for the call to action's row of businesses.
-const tones: Record<Industry["tone"], { panel: string; text: string; icon: string; dot: string }> = {
-  brand: { panel: "bg-brand-subtle", text: "text-brand-subtle-foreground", icon: "text-brand", dot: "bg-brand" },
-  info: { panel: "bg-info-subtle", text: "text-info-subtle-foreground", icon: "text-info", dot: "bg-info" },
-  success: { panel: "bg-success-subtle", text: "text-success-subtle-foreground", icon: "text-success", dot: "bg-success" },
-  warning: { panel: "bg-warning-subtle", text: "text-warning-subtle-foreground", icon: "text-warning", dot: "bg-warning" },
-  ai: { panel: "bg-ai-subtle", text: "text-ai-subtle-foreground", icon: "text-ai", dot: "bg-ai" },
-  neutral: { panel: "bg-muted", text: "text-foreground", icon: "text-foreground", dot: "bg-foreground" },
+// Each industry's mailer gets its own tint from the Oppizi tokens.
+const tones: Record<Industry["tone"], { panel: string; text: string; icon: string }> = {
+  brand: { panel: "bg-brand-subtle", text: "text-brand-subtle-foreground", icon: "text-brand" },
+  info: { panel: "bg-info-subtle", text: "text-info-subtle-foreground", icon: "text-info" },
+  success: { panel: "bg-success-subtle", text: "text-success-subtle-foreground", icon: "text-success" },
+  warning: { panel: "bg-warning-subtle", text: "text-warning-subtle-foreground", icon: "text-warning" },
+  ai: { panel: "bg-ai-subtle", text: "text-ai-subtle-foreground", icon: "text-ai" },
+  neutral: { panel: "bg-muted", text: "text-foreground", icon: "text-foreground" },
 };
 
 /** The list: every industry, then "Your business" (the city view). */
@@ -59,7 +56,7 @@ const rows = [
     Icon: icons[industry.icon],
     tone: tones[industry.tone],
   })),
-  { name: audiences.overview.name, body: audiences.overview.body, Icon: IconMapPins, tone: tones.neutral, cta: true },
+  { name: audiences.overview.name, body: audiences.overview.body, Icon: IconMapPins, tone: tones.neutral },
 ];
 
 export function Audiences() {
@@ -100,7 +97,6 @@ export function Audiences() {
   const map = (
     <NeighborhoodMap active={active} seen={seen}>
       <FloatingPostcard industry={audiences.industries[active] ?? null} index={active} />
-      <CityCta show={active === audiences.industries.length} />
     </NeighborhoodMap>
   );
 
@@ -149,13 +145,9 @@ function Row({
   body,
   Icon,
   tone,
-  cta,
   active,
   onChoose,
-}: { name: string; body: string; Icon: TablerIcon; tone: (typeof tones)[keyof typeof tones]; cta?: boolean } & {
-  active: boolean;
-  onChoose: (row: HTMLElement) => void;
-}) {
+}: (typeof rows)[number] & { active: boolean; onChoose: (row: HTMLElement) => void }) {
   return (
     <div
       className={cn(
@@ -184,20 +176,7 @@ function Row({
             {name}
           </button>
         </h3>
-        <p className={cn("mt-1 text-muted-foreground", cta && "hidden lg:block")}>{body}</p>
-        {/* Phones: the city view's call to action lives here, under the map, instead of
-            over it (a phone's map is too small to cover). Above the card-wide button. */}
-        {cta && (
-          <p className="mt-1 lg:hidden">
-            <span className="font-medium">{audiences.overview.cta.title}</span>{" "}
-            <span className="text-muted-foreground">{audiences.overview.cta.body}</span>
-          </p>
-        )}
-        {cta && (
-          <Button nativeButton={false} render={<Link href={site.primaryCta.href} />} className="relative z-10 mt-4 lg:hidden">
-            {site.primaryCta.label} <IconArrowRight className="size-4" aria-hidden />
-          </Button>
-        )}
+        <p className="mt-1 text-muted-foreground">{body}</p>
       </div>
     </div>
   );
@@ -224,39 +203,6 @@ function FloatingPostcard({ industry, index }: { industry: Industry | null; inde
         )}
       </AnimatePresence>
     </div>
-  );
-}
-
-/** The city view's call to action (desktop), floating over the map's bottom edge where the
- *  postcard was, a little wider than the map like the cards over the hero's: the
- *  businesses on the map as a row of their pin colors, a nudge, and the button. */
-function CityCta({ show }: { show: boolean }) {
-  return (
-    <AnimatePresence>
-      {show && (
-        <motion.div
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0, transition: { type: "spring", stiffness: 180, damping: 22, delay: 1.6 } }}
-          exit={{ opacity: 0, y: 12, transition: { duration: 0.25 } }}
-          className="absolute -inset-x-6 -bottom-12 hidden items-center gap-5 rounded-xl border bg-card py-4 pr-4 pl-5 shadow-xl lg:flex"
-        >
-          <div className="flex flex-1 items-center gap-4">
-            <span aria-hidden className="flex shrink-0 -space-x-1.5">
-              {audiences.industries.map((industry) => (
-                <span key={industry.name} className={cn("size-4 rounded-full ring-2 ring-card", tones[industry.tone].dot)} />
-              ))}
-            </span>
-            <p className="text-sm leading-snug">
-              <span className="font-semibold">{audiences.overview.cta.title}</span>{" "}
-              <span className="text-muted-foreground">{audiences.overview.cta.body}</span>
-            </p>
-          </div>
-          <Button nativeButton={false} render={<Link href={site.primaryCta.href} />} className="shrink-0">
-            {site.primaryCta.label} <IconArrowRight className="size-4" aria-hidden />
-          </Button>
-        </motion.div>
-      )}
-    </AnimatePresence>
   );
 }
 

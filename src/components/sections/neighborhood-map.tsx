@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
 import {
+  IconArrowRight,
   IconBarbell,
   IconHomeDollar,
   IconScissors,
@@ -10,10 +12,20 @@ import {
   IconToolsKitchen2,
   type TablerIcon,
 } from "@tabler/icons-react";
-import { AnimatePresence, animate, motion, useMotionValue, useReducedMotion, useTransform } from "motion/react";
+import {
+  AnimatePresence,
+  animate,
+  motion,
+  useMotionValue,
+  useReducedMotion,
+  useTransform,
+  type MotionValue,
+} from "motion/react";
 
 import { StreetGrid, toMap, toPoints } from "@/components/sections/illustrated-map";
-import { audiences } from "@/content/site";
+import { Button } from "@/components/ui/button";
+import { audiences, site } from "@/content/site";
+import { playKey } from "@/lib/key-sounds";
 import { cn } from "@/lib/utils";
 
 // "Who it's for" as one city: every kind of business has its own neighborhood on the same
@@ -23,7 +35,9 @@ import { cn } from "@/lib/utils";
 // on purpose, like mapcn's markers and routes: a dot with a white ring and a halo, a fine
 // outline over a pale fill. Businesses already visited stay behind as small dots. The last
 // step (`active` = the number of businesses) zooms out to the whole city, every business
-// and route at once, centred above a call to action (passed in as children).
+// and route at once; then the map folds up like paper (in half, then in half again) and
+// flips over into a postcard from "Your business", which gets its EDDM postage stamped on
+// and carries the call to action.
 
 type Industry = (typeof audiences.industries)[number];
 type Tone = Industry["tone"];
@@ -135,84 +149,18 @@ export function NeighborhoodMap({
   }, [active, reduce, vx, vy, vw]);
 
   const industry = city ? null : audiences.industries[active];
-  const shown = city ? scenes.map((_, n) => n) : [active];
+  // The finale's fold: once it starts, the paper pieces stand in for the map card.
+  const [fold, setFold] = useState(0);
+  const folded = city && fold > 0;
 
   return (
     <div className="relative">
       <div
         aria-hidden
-        className="relative overflow-hidden rounded-xl border bg-card shadow-lg"
+        className={cn("relative overflow-hidden rounded-xl border bg-card shadow-lg", folded && "invisible")}
         style={{ aspectRatio: `${VIEW.w} / ${VIEW.h}` }}
       >
-        <motion.svg viewBox={viewBox} className="absolute inset-0 size-full">
-          <rect x={-3000} y={-3000} width={6000} height={6000} className="fill-card" />
-          <StreetGrid>
-            {/* Routes: the active business's, or every one in the city view. Each traces
-                along the streets as a fine outline, then takes a pale fill. */}
-            <AnimatePresence>
-              {shown.map((n, k) => (
-                <motion.path
-                  key={`${city ? "city" : "one"}-${n}`}
-                  d={routePath(n)}
-                  className={cn(toneOf(n).soft, toneOf(n).stroke)}
-                  // Thicker in the city view, so it reads about the same on screen.
-                  strokeWidth={city ? 2 * ZOOM * 0.75 : 2}
-                  strokeOpacity="0.85"
-                  strokeLinejoin="round"
-                  initial={{ pathLength: 0, fillOpacity: 0, opacity: 1 }}
-                  animate={{ pathLength: 1, fillOpacity: 1 }}
-                  exit={{ opacity: 0, transition: { duration: 0.3 } }}
-                  transition={{
-                    pathLength: { delay: (city ? 1 : 0.8) + k * 0.12, duration: 0.8, ease: "easeInOut" },
-                    fillOpacity: { delay: (city ? 1.5 : 1.3) + k * 0.12, duration: 0.5 },
-                  }}
-                />
-              ))}
-            </AnimatePresence>
-          </StreetGrid>
-
-          {/* Neighborhood names above each route, like the hero's "WILLIAMSBURG" (hidden
-              in the city view, where they'd be too small to read). */}
-          {scenes.map((s) => {
-            const p = toMap(s.at[0] + 0.5, s.at[1] - 4.2);
-            return (
-              <text
-                key={s.name}
-                x={p.x}
-                y={p.y}
-                textAnchor="middle"
-                className={cn(
-                  "fill-muted-foreground text-[9px] font-semibold tracking-[0.25em] transition-opacity duration-500",
-                  city ? "opacity-0" : "opacity-100"
-                )}
-              >
-                {s.name}
-              </text>
-            );
-          })}
-
-          {/* Businesses visited so far stay as small dots in their color. */}
-          {!city &&
-            scenes.map((_, n) => {
-              if (n === active || !seen.has(n)) return null;
-              const p = pinAt(n);
-              return <circle key={n} cx={p.x} cy={p.y} r="4" strokeWidth="2" className={cn(toneOf(n).fill, "stroke-card")} />;
-            })}
-
-          {/* Pins: the active business's, or every one in the city view (scaled up so they
-              stay about the same size on screen). */}
-          <AnimatePresence>
-            {shown.map((n, k) => (
-              <Pin
-                key={`${city ? "city" : "one"}-${n}`}
-                at={pinAt(n)}
-                tone={toneOf(n)}
-                size={city ? ZOOM * 0.8 : 1}
-                delay={city ? 0.9 + k * 0.12 : 0.6}
-              />
-            ))}
-          </AnimatePresence>
-        </motion.svg>
+        <MapArt active={active} seen={seen} viewBox={viewBox} />
 
         {/* A business's reach, as a label in the hero's style (the city view has its call
             to action instead). */}
@@ -222,8 +170,106 @@ export function NeighborhoodMap({
           )}
         </AnimatePresence>
       </div>
+      <AnimatePresence>
+        {city && (
+          <FoldFinale
+            key="fold"
+            map={<MapArt active={active} seen={seen} viewBox={viewBox} still />}
+            reduce={!!reduce}
+            onStage={setFold}
+          />
+        )}
+      </AnimatePresence>
       {children}
     </div>
+  );
+}
+
+/** The map itself, framed by the camera's `viewBox`. `still` skips the entrance
+ *  animations: the folding paper shows copies of the map as it already is. */
+function MapArt({
+  active,
+  seen,
+  viewBox,
+  still = false,
+}: {
+  active: number;
+  seen: Set<number>;
+  viewBox: MotionValue<string>;
+  still?: boolean;
+}) {
+  const city = active === OVERVIEW;
+  const shown = city ? scenes.map((_, n) => n) : [active];
+  return (
+  <motion.svg viewBox={viewBox} className="absolute inset-0 size-full">
+    <rect x={-3000} y={-3000} width={6000} height={6000} className="fill-card" />
+    <StreetGrid>
+      {/* Routes: the active business's, or every one in the city view. Each traces
+          along the streets as a fine outline, then takes a pale fill. */}
+      <AnimatePresence initial={!still}>
+        {shown.map((n, k) => (
+          <motion.path
+            key={`${city ? "city" : "one"}-${n}`}
+            d={routePath(n)}
+            className={cn(toneOf(n).soft, toneOf(n).stroke)}
+            // Thicker in the city view, so it reads about the same on screen.
+            strokeWidth={city ? 2 * ZOOM * 0.75 : 2}
+            strokeOpacity="0.85"
+            strokeLinejoin="round"
+            initial={{ pathLength: 0, fillOpacity: 0, opacity: 1 }}
+            animate={{ pathLength: 1, fillOpacity: 1 }}
+            exit={{ opacity: 0, transition: { duration: 0.3 } }}
+            transition={{
+              pathLength: { delay: (city ? 1 : 0.8) + k * 0.12, duration: 0.8, ease: "easeInOut" },
+              fillOpacity: { delay: (city ? 1.5 : 1.3) + k * 0.12, duration: 0.5 },
+            }}
+          />
+        ))}
+      </AnimatePresence>
+    </StreetGrid>
+
+    {/* Neighborhood names above each route, like the hero's "WILLIAMSBURG" (hidden
+        in the city view, where they'd be too small to read). */}
+    {scenes.map((s) => {
+      const p = toMap(s.at[0] + 0.5, s.at[1] - 4.2);
+      return (
+        <text
+          key={s.name}
+          x={p.x}
+          y={p.y}
+          textAnchor="middle"
+          className={cn(
+            "fill-muted-foreground text-[9px] font-semibold tracking-[0.25em] transition-opacity duration-500",
+            city ? "opacity-0" : "opacity-100"
+          )}
+        >
+          {s.name}
+        </text>
+      );
+    })}
+
+    {/* Businesses visited so far stay as small dots in their color. */}
+    {!city &&
+      scenes.map((_, n) => {
+        if (n === active || !seen.has(n)) return null;
+        const p = pinAt(n);
+        return <circle key={n} cx={p.x} cy={p.y} r="4" strokeWidth="2" className={cn(toneOf(n).fill, "stroke-card")} />;
+      })}
+
+    {/* Pins: the active business's, or every one in the city view (scaled up so they
+        stay about the same size on screen). */}
+    <AnimatePresence initial={!still}>
+      {shown.map((n, k) => (
+        <Pin
+          key={`${city ? "city" : "one"}-${n}`}
+          at={pinAt(n)}
+          tone={toneOf(n)}
+          size={city ? ZOOM * 0.8 : 1}
+          delay={city ? 0.9 + k * 0.12 : 0.6}
+        />
+      ))}
+    </AnimatePresence>
+  </motion.svg>
   );
 }
 
@@ -245,6 +291,164 @@ function ReachLabel({ industry, reach }: { industry: Industry; reach: string }) 
         <span className="block text-xs font-semibold sm:text-sm">{reach}</span>
       </span>
     </motion.div>
+  );
+}
+
+// The fold, in ms after the city view appears: a beat to take in the city, two folds,
+// then the flip into the postcard.
+const FOLD = 0.5; // s per fold
+const STAGES = [2300, 2850, 3400, 3680];
+// Warm paper, a touch darker toward one corner, for the back of the folded map.
+const paper = "border bg-[linear-gradient(155deg,var(--card)_35%,color-mix(in_oklab,var(--card)_92%,var(--foreground)))]";
+const face = "absolute inset-0 [backface-visibility:hidden]";
+
+/**
+ * The finale: over the city view, the map folds in half (left over right), in half again
+ * (top down), and the folded square flips over into the "Your business" postcard. Leaving
+ * it fades the postcard away and the map comes back.
+ */
+function FoldFinale({ map, reduce, onStage }: { map: React.ReactNode; reduce: boolean; onStage: (n: number) => void }) {
+  const [stage, setStage] = useState(0);
+  useEffect(() => {
+    const go = (n: number) => {
+      setStage(n);
+      onStage(n);
+    };
+    const timers = reduce ? [window.setTimeout(() => go(4), 0)] : STAGES.map((t, k) => window.setTimeout(() => go(k + 1), t));
+    return () => {
+      timers.forEach(clearTimeout);
+      onStage(0);
+    };
+  }, [reduce, onStage]);
+
+  // A flap's two faces: shade deepens toward the fold, then lifts as it lands.
+  const shade = (back: boolean) => (
+    <motion.span
+      className="absolute inset-0 rounded-[inherit] bg-foreground"
+      initial={{ opacity: back ? 0.14 : 0 }}
+      animate={{ opacity: back ? 0 : 0.14 }}
+      transition={{ duration: FOLD / 2, delay: back ? FOLD / 2 : 0, ease: back ? "easeOut" : "easeIn" }}
+    />
+  );
+
+  return (
+    <motion.div className="absolute inset-0" exit={{ opacity: 0, transition: { duration: 0.3 } }}>
+      {/* 1. Left half folds over the right, showing the map's plain back. */}
+      {stage === 1 && (
+        <div aria-hidden className="absolute inset-0 [perspective:1400px]">
+          <div className="absolute inset-y-0 right-0 w-1/2 overflow-hidden rounded-r-xl border bg-card shadow-lg">
+            <div className="absolute inset-y-0 right-0 w-[200%]">{map}</div>
+          </div>
+          <motion.div
+            className="absolute inset-y-0 left-0 w-1/2 [transform-style:preserve-3d]"
+            style={{ originX: 1 }}
+            initial={{ rotateY: 0 }}
+            animate={{ rotateY: 180 }}
+            transition={{ duration: FOLD, ease: "easeInOut" }}
+          >
+            <div className={cn(face, "overflow-hidden rounded-l-xl border bg-card")}>
+              <div className="absolute inset-y-0 left-0 w-[200%]">{map}</div>
+              {shade(false)}
+            </div>
+            <div className={cn(face, "rounded-l-xl [transform:rotateY(180deg)]", paper)}>{shade(true)}</div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* 2. The folded half folds again, top down. */}
+      {stage === 2 && (
+        <div aria-hidden className="absolute inset-y-0 right-0 w-1/2 [perspective:1400px]">
+          <div className={cn("absolute inset-x-0 bottom-0 h-1/2 rounded-br-xl shadow-lg", paper)} />
+          <motion.div
+            className="absolute inset-x-0 top-0 h-1/2 [transform-style:preserve-3d]"
+            style={{ originY: 1 }}
+            initial={{ rotateX: 0 }}
+            animate={{ rotateX: -180 }}
+            transition={{ duration: FOLD, ease: "easeInOut" }}
+          >
+            <div className={cn(face, "rounded-tr-xl", paper)}>{shade(false)}</div>
+            <div className={cn(face, "rounded-br-xl [transform:rotateX(180deg)]", paper)}>{shade(true)}</div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* 3. The folded square turns edge-on… */}
+      {stage === 3 && (
+        <div aria-hidden className="absolute right-0 bottom-0 h-1/2 w-1/2 [perspective:1400px]">
+          <motion.div
+            className={cn("absolute inset-0 rounded-xl shadow-lg", paper)}
+            initial={{ rotateY: 0 }}
+            animate={{ rotateY: 90 }}
+            transition={{ duration: 0.28, ease: "easeIn" }}
+          />
+        </div>
+      )}
+
+      {/* 4. …and comes round as the postcard, growing to the middle as it turns. The
+          start lines it up with the folded square (quarter size, bottom-right corner). */}
+      {stage === 4 && (
+        <div className="absolute inset-0 grid place-items-center [perspective:1400px]">
+          <motion.div
+            className="w-[88%]"
+            initial={{ x: "28.4%", y: "33.5%", scaleX: 0.568, scaleY: 0.669, rotateY: -90 }}
+            animate={{ x: 0, y: 0, scaleX: 1, scaleY: 1, rotateY: 0 }}
+            transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+          >
+            <CityPostcard />
+          </motion.div>
+        </div>
+      )}
+    </motion.div>
+  );
+}
+
+/** The back of "Your business"'s postcard: the message and the call to action on the left;
+ *  the EDDM postage (stamped on as it lands) and the address on the right. */
+function CityPostcard() {
+  const { cta } = audiences.overview;
+  return (
+    <div className="@container grid aspect-[9/6.25] grid-cols-[1.35fr_1fr] overflow-hidden rounded-xl border bg-card shadow-xl">
+      <div className="flex flex-col justify-between p-[5.5cqw]">
+        <p className="flex items-center gap-[1.6cqw] text-[2.6cqw] font-semibold tracking-[0.18em] text-brand uppercase">
+          <span aria-hidden className="size-[2.2cqw] rounded-full bg-brand ring-[0.7cqw] ring-brand/20" />
+          {audiences.overview.name}
+        </p>
+        <div>
+          <p className="font-heading text-[4.9cqw] leading-[1.1] font-bold tracking-tight text-balance">{cta.title}</p>
+          <p className="mt-[1.5cqw] text-[3.6cqw] text-muted-foreground">{cta.body}</p>
+        </div>
+        <Button
+          nativeButton={false}
+          render={<Link href={site.primaryCta.href} />}
+          className="w-fit max-sm:h-8 max-sm:px-3 max-sm:text-xs"
+        >
+          {site.primaryCta.label} <IconArrowRight className="size-4" aria-hidden />
+        </Button>
+      </div>
+
+      <div aria-hidden className="flex flex-col justify-between border-l border-dashed p-[4.5cqw]">
+        <motion.div
+          className="ml-auto w-[78%] border border-foreground/70 px-[1.5cqw] py-[1.2cqw] text-center text-[1.9cqw] leading-tight font-semibold tracking-wide text-foreground/80 uppercase"
+          initial={{ opacity: 0, scale: 1.6, rotate: -9 }}
+          animate={{ opacity: 1, scale: 1, rotate: -3 }}
+          transition={{ type: "spring", stiffness: 420, damping: 18, delay: 0.55 }}
+          onAnimationStart={() => window.setTimeout(() => playKey("press", { gain: 0.5, pitch: 0.8 }), 650)}
+        >
+          PRSRT STD
+          <br />
+          ECRWSS
+          <br />
+          U.S. Postage Paid
+          <br />
+          EDDM Retail
+        </motion.div>
+        <div className="space-y-[1.5cqw]">
+          <p className="text-[2.6cqw] font-semibold tracking-wide text-foreground/80 uppercase">Local Postal Customer</p>
+          <div className="h-[1.2cqw] w-[85%] rounded-full bg-muted" />
+          <div className="h-[1.2cqw] w-[60%] rounded-full bg-muted" />
+        </div>
+      </div>
+    </div>
   );
 }
 
