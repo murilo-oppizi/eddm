@@ -4,7 +4,6 @@ import { useEffect } from "react";
 import {
   IconBarbell,
   IconHomeDollar,
-  IconMapPins,
   IconScissors,
   IconShoppingBag,
   IconTool,
@@ -24,7 +23,7 @@ import { cn } from "@/lib/utils";
 // on purpose, like mapcn's markers and routes: a dot with a white ring and a halo, a fine
 // outline over a pale fill. Businesses already visited stay behind as small dots. The last
 // step (`active` = the number of businesses) zooms out to the whole city, every business
-// and route at once.
+// and route at once, centred above a call to action (passed in as children).
 
 type Industry = (typeof audiences.industries)[number];
 type Tone = Industry["tone"];
@@ -82,14 +81,13 @@ const CITY = (() => {
   const pts = scenes.flatMap((s) => s.route.map(([i, j]) => toMap(i + s.at[0], j + s.at[1])));
   const xs = pts.map((p) => p.x);
   const ys = pts.map((p) => p.y);
-  const pad = 36;
-  const top = 110; // extra room on top for the label in the corner (it takes more of a phone card)
+  const pad = 40;
+  const bottom = 50; // a little extra room below, where the call to action overlaps (desktop)
   const bw = Math.max(...xs) - Math.min(...xs) + pad * 2;
-  const bh = Math.max(...ys) - Math.min(...ys) + pad + top;
+  const bh = Math.max(...ys) - Math.min(...ys) + pad + bottom;
   const w = Math.max(bw, (bh * VIEW.w) / VIEW.h);
-  // A touch left of centre, so the top routes clear the label's right edge too.
-  const cx = (Math.max(...xs) + Math.min(...xs)) / 2 - w * 0.05;
-  const cy = (Math.min(...ys) - top + Math.max(...ys) + pad) / 2;
+  const cx = (Math.max(...xs) + Math.min(...xs)) / 2;
+  const cy = (Math.min(...ys) - pad + Math.max(...ys) + bottom) / 2;
   return { x: cx - w / 2, y: cy - (w * VIEW.h) / VIEW.w / 2, w };
 })();
 /** How far out the city view is, relative to street level. */
@@ -111,7 +109,7 @@ export function NeighborhoodMap({
   active: number;
   /** Businesses already visited: their pins stay on as small dots. */
   seen: Set<number>;
-  /** Floats over the map's corner (the postcard). */
+  /** Floats over the map: the postcard, or the city view's call to action. */
   children?: React.ReactNode;
 }) {
   const reduce = useReducedMotion();
@@ -137,12 +135,15 @@ export function NeighborhoodMap({
   }, [active, reduce, vx, vy, vw]);
 
   const industry = city ? null : audiences.industries[active];
-  const Icon = industry ? icons[industry.icon] : IconMapPins;
   const shown = city ? scenes.map((_, n) => n) : [active];
 
   return (
-    <div className="relative" aria-hidden>
-      <div className="relative overflow-hidden rounded-xl border bg-card shadow-lg" style={{ aspectRatio: `${VIEW.w} / ${VIEW.h}` }}>
+    <div className="relative">
+      <div
+        aria-hidden
+        className="relative overflow-hidden rounded-xl border bg-card shadow-lg"
+        style={{ aspectRatio: `${VIEW.w} / ${VIEW.h}` }}
+      >
         <motion.svg viewBox={viewBox} className="absolute inset-0 size-full">
           <rect x={-3000} y={-3000} width={6000} height={6000} className="fill-card" />
           <StreetGrid>
@@ -213,36 +214,37 @@ export function NeighborhoodMap({
           </AnimatePresence>
         </motion.svg>
 
-        {/* The reach, as a label in the hero's style */}
+        {/* A business's reach, as a label in the hero's style (the city view has its call
+            to action instead). */}
         <AnimatePresence mode="wait">
-          <motion.div
-            key={active}
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0, transition: { delay: 1.1, duration: 0.4 } }}
-            exit={{ opacity: 0, transition: { duration: 0.2 } }}
-            className="absolute top-3 left-3 flex items-center gap-2 rounded-lg border bg-card py-1.5 pr-3 pl-2 shadow-md sm:top-4 sm:left-4 sm:gap-2.5 sm:py-2 sm:pr-3.5 sm:pl-2.5"
-          >
-            <span
-              className={cn(
-                "grid size-6 place-items-center rounded-md bg-muted sm:size-7",
-                industry ? paint[industry.tone].text : "text-foreground"
-              )}
-            >
-              <Icon className="size-3.5 sm:size-4" />
-            </span>
-            <span>
-              <span className="block text-[11px] text-muted-foreground sm:text-xs">
-                {industry ? industry.postcard.business : "Brooklyn, NY"}
-              </span>
-              <span className="block text-xs font-semibold sm:text-sm">
-                {industry ? scenes[active].reach : audiences.overview.reach}
-              </span>
-            </span>
-          </motion.div>
+          {industry && (
+            <ReachLabel key={active} industry={industry} reach={scenes[active].reach} />
+          )}
         </AnimatePresence>
       </div>
       {children}
     </div>
+  );
+}
+
+/** The business and how many homes its route reaches, in the corner. */
+function ReachLabel({ industry, reach }: { industry: Industry; reach: string }) {
+  const Icon = icons[industry.icon];
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 6 }}
+      animate={{ opacity: 1, y: 0, transition: { delay: 1.1, duration: 0.4 } }}
+      exit={{ opacity: 0, transition: { duration: 0.2 } }}
+      className="absolute top-3 left-3 flex items-center gap-2 rounded-lg border bg-card py-1.5 pr-3 pl-2 shadow-md sm:top-4 sm:left-4 sm:gap-2.5 sm:py-2 sm:pr-3.5 sm:pl-2.5"
+    >
+      <span className={cn("grid size-6 place-items-center rounded-md bg-muted sm:size-7", paint[industry.tone].text)}>
+        <Icon className="size-3.5 sm:size-4" />
+      </span>
+      <span>
+        <span className="block text-[11px] text-muted-foreground sm:text-xs">{industry.postcard.business}</span>
+        <span className="block text-xs font-semibold sm:text-sm">{reach}</span>
+      </span>
+    </motion.div>
   );
 }
 

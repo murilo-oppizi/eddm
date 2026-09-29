@@ -1,8 +1,10 @@
 "use client";
 
 import { useRef, useState } from "react";
+import Link from "next/link";
 import {
   IconBarbell,
+  IconArrowRight,
   IconHomeDollar,
   IconMapPins,
   IconQrcode,
@@ -16,15 +18,16 @@ import { AnimatePresence, MotionConfig, motion } from "motion/react";
 
 import { NeighborhoodMap } from "@/components/sections/neighborhood-map";
 import { SectionHeading } from "@/components/sections/section-heading";
-import { audiences } from "@/content/site";
+import { Button } from "@/components/ui/button";
+import { audiences, site } from "@/content/site";
 import { cn } from "@/lib/utils";
 
 // "Who it's for": a sticky map of one city (left) glides to each industry's neighborhood
 // as its row scrolls through the middle of the screen (right): its pin pops in and its
 // route traces, with its postcard floating over the corner. The last row, "Your business",
-// zooms out to the whole city. On phones the map sits above a swipeable row of industries
-// and follows the one in view. Rows are clickable everywhere: they scroll into place and
-// move the map.
+// zooms out to the whole city, with a call to action where the postcard was. On phones the
+// map sits above a swipeable row of industries and follows the one in view. Rows are
+// clickable everywhere: they scroll into place and move the map.
 
 type Industry = (typeof audiences.industries)[number];
 
@@ -37,41 +40,15 @@ const icons: Record<Industry["icon"], TablerIcon> = {
   retail: IconShoppingBag,
 };
 
-// Each industry's mailer gets its own tint from the Oppizi tokens.
-const tones: Record<
-  Industry["tone"],
-  { panel: string; text: string; icon: string }
-> = {
-  brand: {
-    panel: "bg-brand-subtle",
-    text: "text-brand-subtle-foreground",
-    icon: "text-brand",
-  },
-  info: {
-    panel: "bg-info-subtle",
-    text: "text-info-subtle-foreground",
-    icon: "text-info",
-  },
-  success: {
-    panel: "bg-success-subtle",
-    text: "text-success-subtle-foreground",
-    icon: "text-success",
-  },
-  warning: {
-    panel: "bg-warning-subtle",
-    text: "text-warning-subtle-foreground",
-    icon: "text-warning",
-  },
-  ai: {
-    panel: "bg-ai-subtle",
-    text: "text-ai-subtle-foreground",
-    icon: "text-ai",
-  },
-  neutral: {
-    panel: "bg-muted",
-    text: "text-foreground",
-    icon: "text-foreground",
-  },
+// Each industry's mailer gets its own tint from the Oppizi tokens. `dot` is its map pin's
+// color, for the call to action's row of businesses.
+const tones: Record<Industry["tone"], { panel: string; text: string; icon: string; dot: string }> = {
+  brand: { panel: "bg-brand-subtle", text: "text-brand-subtle-foreground", icon: "text-brand", dot: "bg-brand" },
+  info: { panel: "bg-info-subtle", text: "text-info-subtle-foreground", icon: "text-info", dot: "bg-info" },
+  success: { panel: "bg-success-subtle", text: "text-success-subtle-foreground", icon: "text-success", dot: "bg-success" },
+  warning: { panel: "bg-warning-subtle", text: "text-warning-subtle-foreground", icon: "text-warning", dot: "bg-warning" },
+  ai: { panel: "bg-ai-subtle", text: "text-ai-subtle-foreground", icon: "text-ai", dot: "bg-ai" },
+  neutral: { panel: "bg-muted", text: "text-foreground", icon: "text-foreground", dot: "bg-foreground" },
 };
 
 /** The list: every industry, then "Your business" (the city view). */
@@ -82,12 +59,7 @@ const rows = [
     Icon: icons[industry.icon],
     tone: tones[industry.tone],
   })),
-  {
-    name: audiences.overview.name,
-    body: audiences.overview.body,
-    Icon: IconMapPins,
-    tone: tones.neutral,
-  },
+  { name: audiences.overview.name, body: audiences.overview.body, Icon: IconMapPins, tone: tones.neutral, cta: true },
 ];
 
 export function Audiences() {
@@ -108,12 +80,8 @@ export function Audiences() {
     const el = rail.current;
     const first = el?.firstElementChild as HTMLElement | null;
     if (!el || !first || desktop() || locked()) return;
-    const stride =
-      first.offsetWidth + parseFloat(getComputedStyle(el).columnGap || "0");
-    const i = Math.min(
-      rows.length - 1,
-      Math.max(0, Math.round(el.scrollLeft / stride)),
-    );
+    const stride = first.offsetWidth + parseFloat(getComputedStyle(el).columnGap || "0");
+    const i = Math.min(rows.length - 1, Math.max(0, Math.round(el.scrollLeft / stride)));
     if (i !== active) show(i);
   };
 
@@ -125,18 +93,14 @@ export function Audiences() {
     lock.current.on = true;
     lock.current.timer = window.setTimeout(() => (lock.current.on = false), 1200);
     row.scrollIntoView(
-      desktop()
-        ? { block: "center", behavior: "smooth" }
-        : { inline: "start", block: "nearest", behavior: "smooth" },
+      desktop() ? { block: "center", behavior: "smooth" } : { inline: "start", block: "nearest", behavior: "smooth" }
     );
   };
 
   const map = (
     <NeighborhoodMap active={active} seen={seen}>
-      <FloatingPostcard
-        industry={audiences.industries[active] ?? null}
-        index={active}
-      />
+      <FloatingPostcard industry={audiences.industries[active] ?? null} index={active} />
+      <CityCta show={active === audiences.industries.length} />
     </NeighborhoodMap>
   );
 
@@ -144,11 +108,7 @@ export function Audiences() {
     <MotionConfig reducedMotion="user">
       <section id="who-its-for" className="scroll-mt-20 py-20">
         <div className="container-page space-y-12">
-          <SectionHeading
-            eyebrow={audiences.eyebrow}
-            title={audiences.title}
-            body={audiences.body}
-          />
+          <SectionHeading eyebrow={audiences.eyebrow} title={audiences.title} body={audiences.body} />
 
           <div className="grid gap-12 lg:grid-cols-[1.05fr_1fr] lg:gap-16">
             {/* The map: sticky beside the list on desktop, above the carousel on phones
@@ -162,8 +122,7 @@ export function Audiences() {
             <ol
               ref={rail}
               onScroll={onRailScroll}
-              className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-px-4 px-4 pb-4 [scrollbar-width:none] sm:-mx-6 sm:scroll-px-6 sm:px-6 lg:mx-0 lg:block lg:snap-none lg:overflow-visible lg:px-0 lg:py-[18vh] [&::-webkit-scrollbar]:hidden"
-            >
+              className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-px-4 px-4 pb-4 [scrollbar-width:none] sm:-mx-6 sm:scroll-px-6 sm:px-6 lg:mx-0 lg:block lg:snap-none lg:overflow-visible lg:px-0 lg:py-[18vh] [&::-webkit-scrollbar]:hidden">
               {rows.map((row, i) => (
                 <motion.li
                   key={row.name}
@@ -172,11 +131,7 @@ export function Audiences() {
                   viewport={{ margin: "-45% 0px -45% 0px" }}
                   className="flex w-[85%] shrink-0 snap-start flex-col sm:w-[60%] lg:block lg:w-auto lg:py-10"
                 >
-                  <Row
-                    {...row}
-                    active={i === active}
-                    onChoose={(el) => choose(i, el)}
-                  />
+                  <Row {...row} active={i === active} onChoose={(el) => choose(i, el)} />
                 </motion.li>
               ))}
             </ol>
@@ -194,9 +149,10 @@ function Row({
   body,
   Icon,
   tone,
+  cta,
   active,
   onChoose,
-}: (typeof rows)[number] & {
+}: { name: string; body: string; Icon: TablerIcon; tone: (typeof tones)[keyof typeof tones]; cta?: boolean } & {
   active: boolean;
   onChoose: (row: HTMLElement) => void;
 }) {
@@ -204,7 +160,7 @@ function Row({
     <div
       className={cn(
         "relative flex flex-1 gap-4 rounded-xl border bg-card p-5 transition-all duration-500 has-[button:focus-visible]:ring-3 has-[button:focus-visible]:ring-ring/50 lg:-m-4 lg:border-transparent lg:bg-transparent lg:p-4",
-        active ? "lg:bg-card/0" : "opacity-50 hover:opacity-80 lg:opacity-40",
+        !active && "opacity-50 hover:opacity-80 lg:opacity-40"
       )}
     >
       <span
@@ -212,7 +168,7 @@ function Row({
           "grid size-11 shrink-0 place-items-center rounded-lg transition-colors duration-500",
           tone.panel,
           tone.icon,
-          !active && "lg:bg-muted lg:text-muted-foreground",
+          !active && "lg:bg-muted lg:text-muted-foreground"
         )}
       >
         <Icon className="size-5" aria-hidden />
@@ -222,15 +178,26 @@ function Row({
           <button
             type="button"
             aria-pressed={active}
-            onClick={(e) =>
-              onChoose(e.currentTarget.closest("li") ?? e.currentTarget)
-            }
+            onClick={(e) => onChoose(e.currentTarget.closest("li") ?? e.currentTarget)}
             className="cursor-pointer text-left outline-none after:absolute after:inset-0 after:rounded-xl"
           >
             {name}
           </button>
         </h3>
-        <p className="mt-1 text-muted-foreground">{body}</p>
+        <p className={cn("mt-1 text-muted-foreground", cta && "hidden lg:block")}>{body}</p>
+        {/* Phones: the city view's call to action lives here, under the map, instead of
+            over it (a phone's map is too small to cover). Above the card-wide button. */}
+        {cta && (
+          <p className="mt-1 lg:hidden">
+            <span className="font-medium">{audiences.overview.cta.title}</span>{" "}
+            <span className="text-muted-foreground">{audiences.overview.cta.body}</span>
+          </p>
+        )}
+        {cta && (
+          <Button nativeButton={false} render={<Link href={site.primaryCta.href} />} className="relative z-10 mt-4 lg:hidden">
+            {site.primaryCta.label} <IconArrowRight className="size-4" aria-hidden />
+          </Button>
+        )}
       </div>
     </div>
   );
@@ -238,13 +205,7 @@ function Row({
 
 /** The active industry's postcard, floating over the map's corner like the cards over
  *  the hero's map: dealt in when the industry changes, then drifting gently. */
-function FloatingPostcard({
-  industry,
-  index,
-}: {
-  industry: Industry | null;
-  index: number;
-}) {
+function FloatingPostcard({ industry, index }: { industry: Industry | null; index: number }) {
   return (
     <div className="pointer-events-none absolute -right-3 -bottom-10 w-[46%] sm:-right-6">
       <AnimatePresence initial={false}>
@@ -253,23 +214,8 @@ function FloatingPostcard({
             key={index}
             className="absolute inset-x-0 bottom-0"
             initial={{ opacity: 0, y: 30, rotate: -8 }}
-            animate={{
-              opacity: 1,
-              y: 0,
-              rotate: -3,
-              transition: {
-                type: "spring",
-                stiffness: 180,
-                damping: 22,
-                delay: 0.9,
-              },
-            }}
-            exit={{
-              opacity: 0,
-              y: -16,
-              rotate: 2,
-              transition: { duration: 0.25 },
-            }}
+            animate={{ opacity: 1, y: 0, rotate: -3, transition: { type: "spring", stiffness: 180, damping: 22, delay: 0.9 } }}
+            exit={{ opacity: 0, y: -16, rotate: 2, transition: { duration: 0.25 } }}
           >
             <div className="animate-[float-y_6s_ease-in-out_infinite] [--float-distance:6px] motion-reduce:animate-none">
               <Postcard industry={industry} elevated />
@@ -281,14 +227,41 @@ function FloatingPostcard({
   );
 }
 
+/** The city view's call to action (desktop), floating over the map's bottom edge where the
+ *  postcard was, a little wider than the map like the cards over the hero's: the
+ *  businesses on the map as a row of their pin colors, a nudge, and the button. */
+function CityCta({ show }: { show: boolean }) {
+  return (
+    <AnimatePresence>
+      {show && (
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0, transition: { type: "spring", stiffness: 180, damping: 22, delay: 1.6 } }}
+          exit={{ opacity: 0, y: 12, transition: { duration: 0.25 } }}
+          className="absolute -inset-x-6 -bottom-12 hidden items-center gap-5 rounded-xl border bg-card py-4 pr-4 pl-5 shadow-xl lg:flex"
+        >
+          <div className="flex flex-1 items-center gap-4">
+            <span aria-hidden className="flex shrink-0 -space-x-1.5">
+              {audiences.industries.map((industry) => (
+                <span key={industry.name} className={cn("size-4 rounded-full ring-2 ring-card", tones[industry.tone].dot)} />
+              ))}
+            </span>
+            <p className="text-sm leading-snug">
+              <span className="font-semibold">{audiences.overview.cta.title}</span>{" "}
+              <span className="text-muted-foreground">{audiences.overview.cta.body}</span>
+            </p>
+          </div>
+          <Button nativeButton={false} render={<Link href={site.primaryCta.href} />} className="shrink-0">
+            {site.primaryCta.label} <IconArrowRight className="size-4" aria-hidden />
+          </Button>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
 /** A 9″ × 6.25″ EDDM postcard: the offer on the left, postage and addressing on the right. */
-function Postcard({
-  industry,
-  elevated,
-}: {
-  industry: Industry;
-  elevated?: boolean;
-}) {
+function Postcard({ industry, elevated }: { industry: Industry; elevated?: boolean }) {
   const Icon = icons[industry.icon];
   const tone = tones[industry.tone];
   const card = industry.postcard;
@@ -297,38 +270,24 @@ function Postcard({
       aria-hidden
       className={cn(
         "@container grid aspect-[9/6.25] grid-cols-[1.4fr_1fr] overflow-hidden rounded-xl border bg-card",
-        elevated ? "shadow-xl" : "shadow-sm",
+        elevated ? "shadow-xl" : "shadow-sm"
       )}
     >
       {/* Front: the offer */}
       <div className={cn("flex flex-col justify-between p-[6cqw]", tone.panel)}>
         <div className="flex items-center gap-[2cqw]">
-          <span
-            className={cn(
-              "grid size-[8cqw] place-items-center rounded-lg bg-card",
-              tone.icon,
-            )}
-          >
+          <span className={cn("grid size-[8cqw] place-items-center rounded-lg bg-card", tone.icon)}>
             <Icon className="size-[5cqw]" />
           </span>
-          <span className={cn("text-[3.4cqw] font-semibold", tone.text)}>
-            {card.business}
-          </span>
+          <span className={cn("text-[3.4cqw] font-semibold", tone.text)}>{card.business}</span>
         </div>
         <div>
           <p className="font-heading text-[6.4cqw] leading-[1.05] font-bold tracking-tight text-balance text-foreground">
             {card.headline}
           </p>
-          <p className="mt-[2cqw] text-[3.2cqw] text-muted-foreground">
-            {card.offer}
-          </p>
+          <p className="mt-[2cqw] text-[3.2cqw] text-muted-foreground">{card.offer}</p>
         </div>
-        <p
-          className={cn(
-            "flex items-center gap-[1.5cqw] text-[2.8cqw] font-medium",
-            tone.text,
-          )}
-        >
+        <p className={cn("flex items-center gap-[1.5cqw] text-[2.8cqw] font-medium", tone.text)}>
           <IconQrcode className="size-[4.5cqw]" /> {card.cta}
         </p>
       </div>
