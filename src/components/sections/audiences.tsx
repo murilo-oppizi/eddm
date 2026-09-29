@@ -39,13 +39,19 @@ const icons: Record<Industry["icon"], TablerIcon> = {
 };
 
 // Each industry's mailer gets its own tint from the Oppizi tokens.
-const tones: Record<Industry["tone"], { panel: string; text: string; icon: string }> = {
+const tones: Record<Industry["tone"] | "brand", { panel: string; text: string; icon: string }> = {
   brand: { panel: "bg-brand-subtle", text: "text-brand-subtle-foreground", icon: "text-brand" },
   info: { panel: "bg-info-subtle", text: "text-info-subtle-foreground", icon: "text-info" },
   success: { panel: "bg-success-subtle", text: "text-success-subtle-foreground", icon: "text-success" },
   warning: { panel: "bg-warning-subtle", text: "text-warning-subtle-foreground", icon: "text-warning" },
   ai: { panel: "bg-ai-subtle", text: "text-ai-subtle-foreground", icon: "text-ai" },
   neutral: { panel: "bg-muted", text: "text-foreground", icon: "text-foreground" },
+  // From the design system's cyan scale (no semantic token for it).
+  cyan: {
+    panel: "bg-(--ds-tw-cyan-50) dark:bg-(--ds-tw-cyan-950)",
+    text: "text-(--ds-tw-cyan-800) dark:text-(--ds-tw-cyan-200)",
+    icon: "text-(--ds-tw-cyan-600)",
+  },
 };
 
 /** The list: every industry, then "Your business" (the city view). */

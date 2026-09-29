@@ -175,7 +175,8 @@ export const audiences = {
     {
       name: "Salons and spas",
       icon: "salon",
-      tone: "brand",
+      // Cyan, not the brand pink: on the map, pink is "Your business".
+      tone: "cyan",
       body: "Fill quiet weekdays with a first-visit offer for everyone nearby.",
       postcard: { business: "Studio Nine", headline: "Your first visit, 30% off", offer: "Cuts, color and facials", cta: "Scan to book" },
     },

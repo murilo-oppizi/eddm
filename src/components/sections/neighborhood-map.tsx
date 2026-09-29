@@ -40,7 +40,7 @@ import { cn } from "@/lib/utils";
 // and carries the call to action.
 
 type Industry = (typeof audiences.industries)[number];
-type Tone = Industry["tone"];
+type Tone = Industry["tone"] | "brand"; // brand pink: "Your business"
 type Step = [number, number];
 
 /** The camera's window at street level, in map units. The card keeps this aspect. */
@@ -81,6 +81,12 @@ const paint: Record<Tone, { fill: string; soft: string; stroke: string; text: st
   warning: { fill: "fill-warning", soft: "fill-warning/10", stroke: "stroke-warning", text: "text-warning" },
   ai: { fill: "fill-ai", soft: "fill-ai/10", stroke: "stroke-ai", text: "text-ai" },
   neutral: { fill: "fill-foreground", soft: "fill-foreground/8", stroke: "stroke-foreground", text: "text-foreground" },
+  cyan: {
+    fill: "fill-(--ds-tw-cyan-600)",
+    soft: "fill-(--ds-tw-cyan-600)/10",
+    stroke: "stroke-(--ds-tw-cyan-600)",
+    text: "text-(--ds-tw-cyan-600)",
+  },
 };
 const toneOf = (n: number) => paint[audiences.industries[n].tone];
 
