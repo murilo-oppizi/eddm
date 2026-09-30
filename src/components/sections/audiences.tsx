@@ -164,8 +164,10 @@ export function Audiences() {
               style={{ "--stage-h": `${rows.length * STEP_SVH}svh` } as React.CSSProperties}
             >
               <div className="sticky top-16 flex h-[calc(100svh-4rem)] flex-col justify-center gap-14 lg:top-[calc(50vh-15rem)] lg:block lg:h-auto">
-                {/* Short phones get a slightly smaller map, so the card still fits below. */}
-                <div className="[@media(max-height:720px)]:mx-auto [@media(max-height:720px)]:w-4/5 lg:w-auto">{map}</div>
+                {/* The map is capped by the screen's height (leaving 16rem for the gap and the
+                    card, plus the header), so on short or wide screens, like a tablet, the
+                    cards still fit below it. 1.222 is the map's aspect (440 / 360). */}
+                <div className="mx-auto w-full max-w-[calc((100svh-20rem)*1.222)] lg:max-w-none">{map}</div>
 
                 {/* Phones: the cards, slid along by the scroll (clipped at the screen edges,
                     the next one peeking in). */}
