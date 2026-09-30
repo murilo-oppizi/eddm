@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import {
   IconArrowsMaximize,
   IconBarbell,
-  IconSend2,
   IconBuildingBank,
   IconCarGarage,
   IconDental,
@@ -380,8 +379,8 @@ function Wheel({ position, onOpen }: { position: MotionValue<number>; onOpen: ()
  * The chosen business, in a dialog over the blurred page: a white card with its name,
  * what EDDM does for it and its three moments to mail on one side, and its flyer, large
  * and tilted, on a soft panel in its color on the other. Stacked on phones. Picking a
- * moment swaps the flyer for that moment's: the old one is sent off (up and away), the
- * new one arrives from below and lands.
+ * moment swaps the flyer for that moment's: the old one pulls back, then shoots off to the
+ * right with a motion blur; the new one flies in from the left and lands with a bounce.
  */
 function BusinessDialog({
   industry,
@@ -423,12 +422,15 @@ function BusinessDialog({
               {industry.moments.map((m, i) => {
                 const on = i === current;
                 return (
-                  <li key={m.title}>
+                  <li key={m.title} className="py-1">
                     <button
                       type="button"
                       aria-pressed={on}
                       onClick={() => setChosen({ key: k, i })}
-                      className="group flex w-full cursor-pointer items-baseline gap-4 py-3.5 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                      className={cn(
+                        "group -mx-3 flex w-[calc(100%+1.5rem)] cursor-pointer items-baseline gap-4 rounded-xl px-3 py-2.5 text-left outline-none transition-colors duration-300 focus-visible:ring-3 focus-visible:ring-ring/50",
+                        on && tone.panel
+                      )}
                     >
                       <span
                         className={cn(
@@ -446,13 +448,6 @@ function BusinessDialog({
                       >
                         {m.title}
                       </span>
-                      <IconSend2
-                        aria-hidden
-                        className={cn(
-                          "size-4 self-center transition-all duration-300",
-                          on ? cn("translate-x-0 opacity-100", tone.icon) : "-translate-x-1 opacity-0 group-hover:opacity-40"
-                        )}
-                      />
                     </button>
                   </li>
                 );
@@ -467,22 +462,28 @@ function BusinessDialog({
                 <motion.div
                   key={current}
                   className="drop-shadow-sm [grid-area:1/1]"
-                  initial={{ x: "-18%", y: "70%", rotate: -12, scale: 0.92, opacity: 0 }}
+                  initial={{ x: "-135%", rotate: -7, opacity: 0, filter: "blur(6px)" }}
                   animate={{
                     x: 0,
-                    y: 0,
                     rotate: 2,
-                    scale: 1,
                     opacity: 1,
-                    transition: { type: "spring", stiffness: 190, damping: 20, delay: 0.18 },
+                    filter: "blur(0px)",
+                    transition: {
+                      x: { type: "spring", stiffness: 150, damping: 13, mass: 0.9, delay: 0.32 },
+                      rotate: { type: "spring", stiffness: 140, damping: 9, delay: 0.32 },
+                      opacity: { duration: 0.2, delay: 0.32 },
+                      filter: { duration: 0.35, delay: 0.38 },
+                    },
                   }}
                   exit={{
-                    x: "70%",
-                    y: "-85%",
-                    rotate: 16,
-                    scale: 0.7,
-                    opacity: 0,
-                    transition: { duration: 0.45, ease: [0.5, 0, 0.75, 0] },
+                    // A wind-up (a small pull back and lift), then off to the right, blurring.
+                    x: ["0%", "-7%", "140%"],
+                    y: ["0%", "-2%", "-4%"],
+                    rotate: [2, -3, 9],
+                    scale: [1, 1.03, 0.94],
+                    opacity: [1, 1, 0],
+                    filter: ["blur(0px)", "blur(0px)", "blur(6px)"],
+                    transition: { duration: 0.62, times: [0, 0.32, 1], ease: ["easeOut", [0.6, 0, 0.9, 0.4]] },
                   }}
                 >
                   <Postcard industry={industry} copy={moment} />
