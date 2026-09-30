@@ -218,8 +218,20 @@ function Wheel({ position, onOpen }: { position: MotionValue<number>; onOpen: ()
   }, [position]);
 
   // The flyer pointer (mouse only): follows the pointer and shows the business under it,
-  // at a fresh random tilt each time it changes to another business.
-  const [hover, setHover] = useState<{ row: number; angle: number } | null>(null);
+  // at a fresh random tilt each time that business changes, whether the pointer moved or
+  // the wheel spun under it.
+  const [hover, setHover] = useState<{ row: number; business: number; angle: number } | null>(null);
+  const tilted = (row: number, business: number) =>
+    setHover((h) => {
+      if (h && h.row === row && h.business === business) return h;
+      if (h && h.business === business) return { ...h, row };
+      // -11° to -3° or 3° to 9°: never quite straight
+      const tilt = 3 + Math.random() * 7;
+      return { row, business, angle: Math.random() < 0.6 ? -tilt - 1 : tilt - 1 };
+    });
+  useMotionValueEvent(position, "change", (v) => {
+    if (hover) tilted(hover.row, mod(Math.round(v) + hover.row));
+  });
   const fx = useSpring(0, { stiffness: 500, damping: 40, mass: 0.4 });
   const fy = useSpring(0, { stiffness: 500, damping: 40, mass: 0.4 });
   const wrap = useRef<HTMLDivElement>(null);
@@ -230,12 +242,7 @@ function Wheel({ position, onOpen }: { position: MotionValue<number>; onOpen: ()
     fx.set(e.clientX - r.left);
     fy.set(e.clientY - r.top);
     const row = Math.round(rowsFromMiddle(e.clientY));
-    setHover((h) => {
-      if (h && h.row === row) return h;
-      // -11° to -3° or 3° to 9°: never quite straight
-      const tilt = 3 + Math.random() * 7;
-      return { row, angle: Math.random() < 0.6 ? -tilt - 1 : tilt - 1 };
-    });
+    tilted(row, mod(Math.round(position.get()) + row));
   };
 
   // Dragging: follows the finger or mouse; on release it coasts with the flick's speed and
@@ -274,7 +281,7 @@ function Wheel({ position, onOpen }: { position: MotionValue<number>; onOpen: ()
 
   const base = Math.round(p);
   const slots = Array.from({ length: REACH * 2 + 1 }, (_, k) => base - REACH + k);
-  const hovered = hover ? industries[mod(Math.round(p) + hover.row)] : null;
+  const hovered = hover ? industries[hover.business] : null;
 
   return (
     <div ref={wrap} className="relative">
