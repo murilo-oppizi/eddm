@@ -217,8 +217,9 @@ function Wheel({ position, onOpen }: { position: MotionValue<number>; onOpen: ()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [position]);
 
-  // The flyer pointer (mouse only): follows the pointer and shows the business under it.
-  const [hover, setHover] = useState<{ row: number } | null>(null);
+  // The flyer pointer (mouse only): follows the pointer and shows the business under it,
+  // at a fresh random tilt each time it changes to another business.
+  const [hover, setHover] = useState<{ row: number; angle: number } | null>(null);
   const fx = useSpring(0, { stiffness: 500, damping: 40, mass: 0.4 });
   const fy = useSpring(0, { stiffness: 500, damping: 40, mass: 0.4 });
   const wrap = useRef<HTMLDivElement>(null);
@@ -228,7 +229,13 @@ function Wheel({ position, onOpen }: { position: MotionValue<number>; onOpen: ()
     if (!r) return;
     fx.set(e.clientX - r.left);
     fy.set(e.clientY - r.top);
-    setHover({ row: Math.round(rowsFromMiddle(e.clientY)) });
+    const row = Math.round(rowsFromMiddle(e.clientY));
+    setHover((h) => {
+      if (h && h.row === row) return h;
+      // -11° to -3° or 3° to 9°: never quite straight
+      const tilt = 3 + Math.random() * 7;
+      return { row, angle: Math.random() < 0.6 ? -tilt - 1 : tilt - 1 };
+    });
   };
 
   // Dragging: follows the finger or mouse; on release it coasts with the flick's speed and
@@ -343,8 +350,8 @@ function Wheel({ position, onOpen }: { position: MotionValue<number>; onOpen: ()
             aria-hidden
             className="pointer-events-none absolute top-0 left-0 z-20 w-44"
             style={{ x: fx, y: fy, translateX: "-50%", translateY: "-50%" }}
-            initial={{ opacity: 0, scale: 0.6, rotate: -12 }}
-            animate={{ opacity: 1, scale: 1, rotate: -6 }}
+            initial={{ opacity: 0, scale: 0.6, rotate: (hover?.angle ?? -6) * 1.8 }}
+            animate={{ opacity: 1, scale: 1, rotate: hover?.angle ?? -6 }}
             exit={{ opacity: 0, scale: 0.6, transition: { duration: 0.15 } }}
             transition={{ type: "spring", stiffness: 400, damping: 26 }}
           >
@@ -362,9 +369,9 @@ function Wheel({ position, onOpen }: { position: MotionValue<number>; onOpen: ()
 /* ---------------------------- The business card ---------------------------- */
 
 /**
- * The chosen business, in a dialog over the blurred page: tinted in its color, with its
- * name, what EDDM does for it and its three moments to mail on one side, and its flyer,
- * large and tilted, on the other. Stacked on phones.
+ * The chosen business, in a dialog over the blurred page: a white card with its name,
+ * what EDDM does for it and its three moments to mail on one side, and its flyer, large
+ * and tilted, on a soft panel in its color on the other. Stacked on phones.
  */
 function BusinessDialog({
   industry,
@@ -382,19 +389,18 @@ function BusinessDialog({
       <DialogContent className="max-w-4xl">
         <div
           className={cn(
-            "grid max-h-[calc(100svh-3rem)] gap-8 overflow-y-auto rounded-3xl p-6 shadow-2xl sm:p-10 md:grid-cols-[1fr_1.15fr] md:items-center md:gap-10",
-            tone.panel
+            "grid max-h-[calc(100svh-3rem)] gap-8 overflow-y-auto rounded-3xl border bg-card p-6 shadow-2xl sm:p-8 md:grid-cols-[1fr_1.2fr] md:items-stretch md:gap-8"
           )}
         >
-          <div>
-            <span className={cn("grid size-12 place-items-center rounded-xl bg-card shadow-sm", tone.icon)}>
+          <div className="md:py-2 md:pl-2">
+            <span className={cn("grid size-12 place-items-center rounded-2xl", tone.panel, tone.icon)}>
               <Icon className="size-6" aria-hidden />
             </span>
             <DialogTitle className="mt-5 text-3xl leading-tight font-bold tracking-tight">{industry.name}</DialogTitle>
             <p className="mt-3 text-muted-foreground">{industry.body}</p>
 
             <p className={cn("mt-8 text-xs font-semibold tracking-wider uppercase", tone.text)}>3 moments to mail</p>
-            <ol className="mt-3 divide-y divide-dashed divide-foreground/12 border-y border-dashed border-foreground/12">
+            <ol className="mt-3 divide-y divide-dashed divide-border border-y border-dashed border-border">
               {industry.moments.map((moment, i) => (
                 <li key={moment.title} className="flex items-baseline gap-4 py-3.5">
                   <span className={cn("font-heading text-sm font-bold tabular-nums", tone.icon)}>0{i + 1}</span>
@@ -404,9 +410,11 @@ function BusinessDialog({
             </ol>
           </div>
 
-          <figure className="md:rotate-2">
-            <Postcard industry={industry} />
-            <figcaption className="mt-3 text-center text-xs text-muted-foreground">
+          <figure className={cn("flex flex-col justify-center rounded-2xl px-6 py-8 sm:px-10", tone.panel)}>
+            <div className="rotate-2 drop-shadow-sm">
+              <Postcard industry={industry} />
+            </div>
+            <figcaption className={cn("mt-5 text-center text-xs font-medium", tone.text)}>
               An example {industry.name.toLowerCase()} postcard, 9″ × 6.25″
             </figcaption>
           </figure>
