@@ -72,10 +72,9 @@ const rows = [
     body: industry.body,
     Icon: icons[industry.icon],
     tone: tones[industry.tone],
-    yours: false,
   })),
-  // In the brand's pink, like its pin on the map and its postcard.
-  { name: audiences.overview.name, body: audiences.overview.body, Icon: IconMapPins, tone: tones.brand, yours: true },
+  // Its icon in the brand's pink, like its postcard.
+  { name: audiences.overview.name, body: audiences.overview.body, Icon: IconMapPins, tone: tones.brand },
 ];
 
 /** Page scroll speed (px/s) above which a business appears already finished: someone
@@ -233,14 +232,11 @@ function Row({
   tone,
   active,
   onChoose,
-  yours,
 }: (typeof rows)[number] & { active: boolean; onChoose: (row: HTMLElement) => void }) {
   return (
     <div
       className={cn(
         "relative flex flex-1 gap-4 rounded-xl border bg-card p-5 transition-all duration-500 has-[button:focus-visible]:ring-3 has-[button:focus-visible]:ring-ring/50 lg:-m-4 lg:border-transparent lg:bg-transparent lg:p-4",
-        // Phones: "Your business" is a pale pink card (on desktop the rows have no card).
-        yours && "border-brand/20 bg-brand-subtle/60",
         !active && "opacity-50 hover:opacity-80 lg:opacity-40"
       )}
     >
