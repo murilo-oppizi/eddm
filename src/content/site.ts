@@ -243,6 +243,90 @@ export const audiences = {
       body: "Bring foot traffic to a grand opening, a seasonal sale or a new collection.",
       postcard: { business: "Maple & Co.", headline: "Grand opening Saturday", offer: "20% off everything, all weekend", cta: "Scan for directions" },
     },
+    {
+      name: "Dentists and clinics",
+      // Draft copy, from typical EDDM advice (what to mail, to whom, when): review before launch.
+      // The moments to mail: who gets it, when, and the offer.
+      moments: [
+        { title: "New patients", who: "Families within a short drive", when: "Whenever you have openings", offer: "A free first exam" },
+        { title: "Back to school", who: "The homes around the practice", when: "Late summer", offer: "A checkup and cleaning deal" },
+        { title: "Year-end benefits", who: "Your nearby neighborhoods", when: "October and November", offer: "A reminder to use them" },
+      ],
+      icon: "dental",
+      tone: "sky",
+      body: "Welcome new patients and fill the calendar with checkups and cleanings.",
+      postcard: { business: "Bright Smile Dental", headline: "New patients welcome", offer: "Free exam with your first cleaning", cta: "Scan to book" },
+    },
+    {
+      name: "Auto repair",
+      // Draft copy, from typical EDDM advice (what to mail, to whom, when): review before launch.
+      // The moments to mail: who gets it, when, and the offer.
+      moments: [
+        { title: "Before winter", who: "Drivers nearby", when: "October", offer: "A winter check" },
+        { title: "Road-trip season", who: "Homes within a few miles", when: "Late spring", offer: "A trip-ready inspection" },
+        { title: "A new shop", who: "Every home around the garage", when: "Your opening month", offer: "A first-service discount" },
+      ],
+      icon: "autoRepair",
+      tone: "orange",
+      body: "Get cars into the bay before winter, road trips and inspection season.",
+      postcard: { business: "Main St Auto", headline: "Oil change, $29.99", offer: "Free tire check included", cta: "Scan to book a slot" },
+    },
+    {
+      name: "Pet care",
+      // Draft copy, from typical EDDM advice (what to mail, to whom, when): review before launch.
+      // The moments to mail: who gets it, when, and the offer.
+      moments: [
+        { title: "Grand opening", who: "Every home nearby", when: "Two weeks before you open", offer: "A first-visit discount" },
+        { title: "Spring checkups", who: "Nearby homes", when: "Early spring", offer: "A wellness-visit deal" },
+        { title: "Holiday boarding", who: "The homes close by", when: "Before the holidays", offer: "An early-booking rate" },
+      ],
+      icon: "pets",
+      tone: "rose",
+      body: "Groomers, vets and sitters: meet the pet owners on every nearby street.",
+      postcard: { business: "Happy Tails", headline: "First groom, 20% off", offer: "Baths, trims and nail care", cta: "Scan to book" },
+    },
+    {
+      name: "Landscaping and lawn care",
+      // Draft copy, from typical EDDM advice (what to mail, to whom, when): review before launch.
+      // The moments to mail: who gets it, when, and the offer.
+      moments: [
+        { title: "Spring cleanup", who: "Homeowners nearby", when: "Late winter", offer: "A cleanup price" },
+        { title: "Fall leaves", who: "The same streets", when: "September", offer: "A leaf-removal deal" },
+        { title: "Neighbor deal", who: "Streets you already serve", when: "Mid-season", offer: "A same-street discount" },
+      ],
+      icon: "landscaping",
+      tone: "lime",
+      body: "Line up the season's clients before the first mow.",
+      postcard: { business: "Greenline Lawns", headline: "Spring cleanup, $99", offer: "Free quote, same-week start", cta: "Scan for a quote" },
+    },
+    {
+      name: "Tutoring and schools",
+      // Draft copy, from typical EDDM advice (what to mail, to whom, when): review before launch.
+      // The moments to mail: who gets it, when, and the offer.
+      moments: [
+        { title: "Back to school", who: "Homes near the center", when: "August", offer: "A free first session" },
+        { title: "Exam season", who: "Nearby neighborhoods", when: "Before finals", offer: "A study-pack price" },
+        { title: "Summer camp", who: "Homes within a short drive", when: "Early spring", offer: "Early-bird enrollment" },
+      ],
+      icon: "school",
+      tone: "indigo",
+      body: "Fill classes and tutoring slots with families in your area.",
+      postcard: { business: "Bright Minds Tutoring", headline: "Ace the new school year", offer: "First session free", cta: "Scan to enroll" },
+    },
+    {
+      name: "Events and nonprofits",
+      // Draft copy, from typical EDDM advice (what to mail, to whom, when): review before launch.
+      // The moments to mail: who gets it, when, and the offer.
+      moments: [
+        { title: "An event", who: "Every home nearby", when: "Three weeks before", offer: "Free entry or a raffle" },
+        { title: "A fundraiser", who: "The streets you serve", when: "Giving season", offer: "A way to donate" },
+        { title: "Volunteers", who: "Homes around the site", when: "A month ahead", offer: "A sign-up link" },
+      ],
+      icon: "community",
+      tone: "teal",
+      body: "Bring the neighborhood to a fundraiser, a fair or a food drive.",
+      postcard: { business: "Riverside Community Fund", headline: "Join us at the fall fair", offer: "Food, music and games, free entry", cta: "Scan for details" },
+    },
   ],
 } as const
 
