@@ -12,7 +12,16 @@ import {
   IconToolsKitchen2,
   type TablerIcon,
 } from "@tabler/icons-react";
-import { AnimatePresence, MotionConfig, motion, useScroll, useVelocity } from "motion/react";
+import {
+  AnimatePresence,
+  MotionConfig,
+  easeInOut,
+  motion,
+  useMotionValueEvent,
+  useScroll,
+  useTransform,
+  useVelocity,
+} from "motion/react";
 
 import { NeighborhoodMap } from "@/components/sections/neighborhood-map";
 import { SectionHeading } from "@/components/sections/section-heading";
@@ -24,8 +33,10 @@ import { cn } from "@/lib/utils";
 // route traces, with its postcard floating over the corner. The last row, "Your business",
 // zooms out to the whole city, which then folds up into its own postcard with the call to
 // action (see neighborhood-map.tsx). On phones the
-// map sits above a swipeable row of industries and follows the one in view. Rows are
-// clickable everywhere: they scroll into place and move the map.
+// map and a row of industry cards pin to the screen, like How it works on desktop: scrolling
+// slides the cards along one at a time (each holds a moment, then moves on) and the map
+// follows the one in front. Rows are clickable everywhere: they scroll into place and move
+// the map.
 
 type Industry = (typeof audiences.industries)[number];
 
@@ -70,6 +81,10 @@ const rows = [
 /** Page scroll speed (px/s) above which a business appears already finished: someone
  *  flinging past shouldn't see half-drawn routes. */
 const FLING = 2500;
+/** Phones: scroll per card while the stage is pinned (svh, so the phone's toolbar
+ *  showing and hiding doesn't shift it). */
+const STEP_SVH = 48;
+const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 
 export function Audiences() {
   const [active, setActive] = useState(0);
@@ -86,27 +101,44 @@ export function Audiences() {
   const lock = useRef({ on: false, timer: 0 });
   const locked = () => lock.current.on;
 
-  // Phones: the slide that's snapped into view picks the neighborhood.
-  const rail = useRef<HTMLOListElement>(null);
-  const onRailScroll = () => {
-    const el = rail.current;
-    const first = el?.firstElementChild as HTMLElement | null;
-    if (!el || !first || desktop() || locked()) return;
-    const stride = first.offsetWidth + parseFloat(getComputedStyle(el).columnGap || "0");
-    const i = Math.min(rows.length - 1, Math.max(0, Math.round(el.scrollLeft / stride)));
-    if (i !== active) show(i);
+  // Phones: the pinned stage. Its scroll (0 → 1) becomes a position along the cards: each
+  // card holds for the first half of its stretch, then eases over to the next.
+  const stage = useRef<HTMLDivElement>(null);
+  const firstCard = useRef<HTMLLIElement>(null);
+  const stageScroll = useScroll({ target: stage, offset: ["start start", "end end"] }).scrollYProgress;
+  const last = rows.length - 1;
+  const cardAt = (p: number) => {
+    const raw = clamp01((p - 0.02) / 0.84) * last;
+    const i = Math.floor(raw);
+    return Math.min(last, i + easeInOut(clamp01((raw - i - 0.55) / 0.45)));
+  };
+  const position = useTransform(stageScroll, cardAt);
+  const trackX = useTransform(position, (v) => {
+    const card = firstCard.current;
+    return card ? -v * (card.offsetWidth + 16) : 0;
+  });
+  useMotionValueEvent(position, "change", (v) => {
+    if (desktop() || locked()) return;
+    const i = Math.round(v);
+    if (i !== active) show(i, Math.abs(speed.get()) > FLING);
+  });
+  /** Where to scroll the page so card `i` sits in front, holding still. */
+  const stageTop = (i: number) => {
+    const el = stage.current;
+    if (!el) return 0;
+    const p = 0.02 + ((i === last ? last : i + 0.2) / last) * 0.84;
+    return el.getBoundingClientRect().top + window.scrollY + p * (el.offsetHeight - window.innerHeight);
   };
 
-  // A click shows that row's neighborhood right away and brings the row into place:
-  // to the middle of the screen on desktop, snapped to the start of the carousel on phones.
+  // A click shows that row's neighborhood right away and brings the row into place: to the
+  // middle of the screen on desktop, to the front of the pinned cards on phones.
   const choose = (i: number, row: HTMLElement) => {
     show(i);
     window.clearTimeout(lock.current.timer);
     lock.current.on = true;
     lock.current.timer = window.setTimeout(() => (lock.current.on = false), 1200);
-    row.scrollIntoView(
-      desktop() ? { block: "center", behavior: "smooth" } : { inline: "start", block: "nearest", behavior: "smooth" }
-    );
+    if (desktop()) row.scrollIntoView({ block: "center", behavior: "smooth" });
+    else window.scrollTo({ top: stageTop(i), behavior: "smooth" });
   };
 
   const map = (
@@ -122,25 +154,42 @@ export function Audiences() {
           <SectionHeading eyebrow={audiences.eyebrow} title={audiences.title} body={audiences.body} />
 
           <div className="grid gap-12 lg:grid-cols-[1.05fr_1fr] lg:gap-16">
-            {/* The map: sticky beside the list on desktop, above the carousel on phones
-                (with room below for the postcard's overhang). */}
-            <div className="pb-10 lg:pb-0">
-              <div className="lg:sticky lg:top-[calc(50vh-15rem)]">{map}</div>
+            {/* Desktop: the map, sticky beside the list. Phones: a tall stage whose inner
+                part pins under the header (map on top, cards below) while its height
+                scrolls by. */}
+            <div
+              ref={stage}
+              // min-w-0: the grid column mustn't grow to fit the long row of cards.
+              className="h-(--stage-h) min-w-0 lg:h-auto"
+              style={{ "--stage-h": `${rows.length * STEP_SVH}svh` } as React.CSSProperties}
+            >
+              <div className="sticky top-16 flex h-[calc(100svh-4rem)] flex-col justify-center gap-14 lg:top-[calc(50vh-15rem)] lg:block lg:h-auto">
+                {/* Short phones get a slightly smaller map, so the card still fits below. */}
+                <div className="[@media(max-height:720px)]:mx-auto [@media(max-height:720px)]:w-4/5 lg:w-auto">{map}</div>
+
+                {/* Phones: the cards, slid along by the scroll (clipped at the screen edges,
+                    the next one peeking in). */}
+                <div className="-mx-4 overflow-hidden px-4 sm:-mx-6 sm:px-6 lg:hidden">
+                  <motion.ol className="flex gap-4" style={{ x: trackX }}>
+                    {rows.map((row, i) => (
+                      <li key={row.name} ref={i === 0 ? firstCard : undefined} className="flex w-[85%] shrink-0 flex-col sm:w-[60%]">
+                        <Row {...row} active={i === active} onChoose={(el) => choose(i, el)} />
+                      </li>
+                    ))}
+                  </motion.ol>
+                </div>
+              </div>
             </div>
 
-            {/* Phones: a swipeable carousel, one industry per slide.
-                Desktop: a tall list that scrolls past the sticky map. */}
-            <ol
-              ref={rail}
-              onScroll={onRailScroll}
-              className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-px-4 px-4 pb-4 [scrollbar-width:none] sm:-mx-6 sm:scroll-px-6 sm:px-6 lg:mx-0 lg:block lg:snap-none lg:overflow-visible lg:px-0 lg:py-[18vh] [&::-webkit-scrollbar]:hidden">
+            {/* Desktop: a tall list that scrolls past the sticky map. */}
+            <ol className="hidden lg:block lg:py-[18vh]">
               {rows.map((row, i) => (
                 <motion.li
                   key={row.name}
-                  // Desktop: becomes active while it crosses the middle band of the screen.
+                  // Becomes active while it crosses the middle band of the screen.
                   onViewportEnter={() => desktop() && !locked() && show(i, Math.abs(speed.get()) > FLING)}
                   viewport={{ margin: "-45% 0px -45% 0px" }}
-                  className="flex w-[85%] shrink-0 snap-start flex-col sm:w-[60%] lg:block lg:w-auto lg:py-10"
+                  className="lg:py-10"
                 >
                   <Row {...row} active={i === active} onChoose={(el) => choose(i, el)} />
                 </motion.li>
