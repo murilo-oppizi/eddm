@@ -249,9 +249,6 @@ function Mural({ onOpen }: { onOpen: (i: number) => void }) {
             transition={{ type: "spring", stiffness: 400, damping: 26 }}
           >
             <Postcard industry={hovered} copy={hovered.moments[0]} />
-            <span className="mt-1.5 block text-center text-[10px] font-semibold tracking-wide text-foreground/70 uppercase">
-              Click to open
-            </span>
           </motion.div>
         )}
       </AnimatePresence>
@@ -264,7 +261,7 @@ function Mural({ onOpen }: { onOpen: (i: number) => void }) {
 /**
  * The chosen business, in a dialog over the blurred page: a white card with its name,
  * what EDDM does for it and its three moments to mail on one side, and its flyer, large
- * and level, on a soft panel in its color on the other. Stacked on phones. Picking a
+ * and level, on a soft grey panel on the other. Stacked on phones. Picking a
  * moment swaps the flyer for that moment's: the old one pulls back, then shoots off to the
  * right with a motion blur; the new one flies in from the left and lands with a bounce.
  */
@@ -315,7 +312,7 @@ function BusinessDialog({
                       onClick={() => setChosen({ key: k, i })}
                       className={cn(
                         "group -mx-3 flex w-[calc(100%+1.5rem)] cursor-pointer items-baseline gap-4 rounded-xl px-3 py-2.5 text-left outline-none transition-colors duration-300 focus-visible:ring-3 focus-visible:ring-ring/50",
-                        on && tone.panel
+                        on && "bg-muted"
                       )}
                     >
                       <span
@@ -341,7 +338,7 @@ function BusinessDialog({
             </ol>
           </div>
 
-          <figure className={cn("flex flex-col justify-center overflow-hidden rounded-2xl px-6 py-8 sm:px-10", tone.panel)}>
+          <figure className="flex flex-col justify-center overflow-hidden rounded-2xl bg-muted px-6 py-8 sm:px-10">
             {/* The flyer: sent off and replaced whenever the moment changes */}
             <div className="grid">
               <AnimatePresence initial={false}>
@@ -376,7 +373,7 @@ function BusinessDialog({
                 </motion.div>
               </AnimatePresence>
             </div>
-            <figcaption className={cn("mt-5 text-center text-xs font-medium", tone.text)}>
+            <figcaption className="mt-5 text-center text-xs font-medium text-muted-foreground">
               Example postcard
             </figcaption>
           </figure>
