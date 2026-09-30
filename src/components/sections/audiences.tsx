@@ -1,14 +1,14 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import {
-  IconArrowRight,
   IconArrowsMaximize,
   IconBarbell,
+  IconBuildingBank,
   IconCalendarEvent,
   IconCarGarage,
   IconDental,
+  IconHammer,
   IconHeartHandshake,
   IconHomeDollar,
   IconMapPin,
@@ -19,8 +19,10 @@ import {
   IconSchool,
   IconShoppingBag,
   IconTag,
+  IconTicket,
   IconTool,
   IconToolsKitchen2,
+  IconTruckDelivery,
   type TablerIcon,
 } from "@tabler/icons-react";
 import {
@@ -36,16 +38,16 @@ import {
 
 import { SectionHeading } from "@/components/sections/section-heading";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { audiences, site } from "@/content/site";
+import { audiences } from "@/content/site";
 import { playKey } from "@/lib/key-sounds";
 import { cn } from "@/lib/utils";
 
 // "Who it's for" as a picker wheel, like the iPhone's date picker: an endless drum of
 // business types (horizontal cards: icon + name) that you spin with the mouse wheel, a
 // drag or a swipe; the one in the middle is chosen. Beside it (below on phones), the
-// chosen business, tinted in its color: three moments to mail (a rail with a gliding
-// highlight, and a scene with who gets it, when and the offer) and a way in. Hovering
-// that card turns the pointer into its flyer; a click opens the flyer large.
+// chosen business, tinted in its color, with its mailing plan: three moments to mail laid
+// out like a timetable (who gets it, when, the offer), all visible at once. Hovering that
+// card turns the pointer into its flyer; a click opens the flyer large.
 
 type Industry = (typeof audiences.industries)[number];
 const industries = audiences.industries;
@@ -64,6 +66,10 @@ const icons: Record<Industry["icon"], TablerIcon> = {
   landscaping: IconPlant2,
   school: IconSchool,
   community: IconHeartHandshake,
+  events: IconTicket,
+  delivery: IconTruckDelivery,
+  builders: IconHammer,
+  finance: IconBuildingBank,
 };
 
 // Each industry's tint: Oppizi's status tokens, and colors from the design system's
@@ -109,6 +115,26 @@ const tones: Record<Industry["tone"], { panel: string; text: string; icon: strin
     text: "text-(--ds-tw-teal-800) dark:text-(--ds-tw-teal-200)",
     icon: "text-(--ds-tw-teal-600)",
   },
+  fuchsia: {
+    panel: "bg-(--ds-tw-fuchsia-50) dark:bg-(--ds-tw-fuchsia-950)",
+    text: "text-(--ds-tw-fuchsia-800) dark:text-(--ds-tw-fuchsia-200)",
+    icon: "text-(--ds-tw-fuchsia-600)",
+  },
+  violet: {
+    panel: "bg-(--ds-tw-violet-50) dark:bg-(--ds-tw-violet-950)",
+    text: "text-(--ds-tw-violet-800) dark:text-(--ds-tw-violet-200)",
+    icon: "text-(--ds-tw-violet-600)",
+  },
+  amber: {
+    panel: "bg-(--ds-tw-amber-50) dark:bg-(--ds-tw-amber-950)",
+    text: "text-(--ds-tw-amber-800) dark:text-(--ds-tw-amber-200)",
+    icon: "text-(--ds-tw-amber-600)",
+  },
+  emerald: {
+    panel: "bg-(--ds-tw-emerald-50) dark:bg-(--ds-tw-emerald-950)",
+    text: "text-(--ds-tw-emerald-800) dark:text-(--ds-tw-emerald-200)",
+    icon: "text-(--ds-tw-emerald-600)",
+  },
 };
 
 const mod = (n: number) => ((n % N) + N) % N;
@@ -134,7 +160,7 @@ export function Audiences() {
         <div className="container-page space-y-12">
           <SectionHeading eyebrow={audiences.eyebrow} title={audiences.title} body={audiences.body} />
 
-          <div className="grid gap-4 lg:h-[27rem] lg:grid-cols-[21rem_1fr] lg:gap-6">
+          <div className="grid gap-4 lg:min-h-[27rem] lg:grid-cols-[21rem_1fr] lg:gap-6">
             <Wheel position={position} />
             <Showcase key={industry.name} industry={industry} />
           </div>
@@ -238,7 +264,7 @@ function Wheel({ position }: { position: MotionValue<number> }) {
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       onPointerCancel={onPointerUp}
-      className="relative h-64 cursor-grab touch-none overflow-hidden rounded-3xl bg-muted/60 outline-none select-none focus-visible:ring-3 focus-visible:ring-ring/50 active:cursor-grabbing lg:h-full [mask-image:linear-gradient(transparent,black_22%,black_78%,transparent)] [perspective:900px]"
+      className="relative h-64 cursor-grab touch-none overflow-hidden rounded-3xl bg-muted/60 outline-none select-none focus-visible:ring-3 focus-visible:ring-ring/50 active:cursor-grabbing lg:h-auto [mask-image:linear-gradient(transparent,black_22%,black_78%,transparent)] [perspective:900px]"
     >
       {/* The window the chosen card sits in */}
       <span aria-hidden className="absolute inset-x-3 top-1/2 h-15 -translate-y-1/2 rounded-2xl bg-foreground/[0.04]" />
@@ -280,7 +306,7 @@ function Wheel({ position }: { position: MotionValue<number> }) {
 /* ---------------------------- The chosen one ---------------------------- */
 
 /**
- * The chosen business, tinted in its color: its name, three moments to mail and a way in.
+ * The chosen business, tinted in its color: its name and its mailing plan.
  * With a mouse, hovering the card turns the pointer into its flyer (except over the
  * moments and links, which keep the normal pointer), and a click opens the flyer large.
  * Phones get a small "See example mailer" button instead.
@@ -294,7 +320,7 @@ function Showcase({ industry }: { industry: Industry }) {
   const y = useSpring(0, { stiffness: 500, damping: 40, mass: 0.4 });
   const card = useRef<HTMLDivElement>(null);
 
-  const overControl = (t: EventTarget | null) => (t as HTMLElement | null)?.closest("button, a, [role=tab], [role=tabpanel]");
+  const overControl = (t: EventTarget | null) => (t as HTMLElement | null)?.closest("button, a");
   const track = (e: React.PointerEvent) => {
     if (e.pointerType !== "mouse") return;
     const r = card.current?.getBoundingClientRect();
@@ -321,32 +347,37 @@ function Showcase({ industry }: { industry: Industry }) {
         hovering && "cursor-none"
       )}
     >
-      <div className="flex items-center gap-4">
+      <div className="flex items-start gap-4 sm:items-center">
         <span className={cn("grid size-11 shrink-0 place-items-center rounded-xl bg-card shadow-sm", tone.icon)}>
           <Icon className="size-5" aria-hidden />
         </span>
-        <h3 className="font-heading text-2xl leading-tight font-bold tracking-tight">{industry.name}</h3>
-      </div>
-
-      <Moments industry={industry} open wide className="mt-7 hidden lg:block" />
-      <Moments industry={industry} open className="mt-6 lg:hidden" />
-
-      <div className="mt-auto flex flex-wrap items-center justify-between gap-4 pt-6">
-        <Link
-          href={site.primaryCta.href}
-          className={cn("inline-flex items-center gap-1.5 text-sm font-semibold underline-offset-4 hover:underline", tone.text)}
-        >
-          {site.primaryCta.label} <IconArrowRight className="size-4" aria-hidden />
-        </Link>
-        {/* Touch screens (and keyboards): the flyer behind a button */}
+        <div className="min-w-0 flex-1">
+          <h3 className="font-heading text-2xl leading-tight font-bold tracking-tight">{industry.name}</h3>
+          <p className="mt-0.5 text-sm text-muted-foreground">{industry.body}</p>
+        </div>
+        {/* Mouse: a hint that the card holds a flyer. Touch screens and keyboards: the
+            flyer behind a button. */}
+        <span aria-hidden className="hidden shrink-0 items-center gap-1.5 text-xs font-medium text-muted-foreground pointer-fine:flex">
+          <IconArrowsMaximize className="size-3.5" /> Hover for an example mailer
+        </span>
         <button
           type="button"
           onClick={() => setFlyer(true)}
-          className="inline-flex cursor-pointer items-center gap-1.5 rounded-full bg-card/80 px-3 py-1.5 text-xs font-medium shadow-xs outline-none focus-visible:ring-3 focus-visible:ring-ring/50 pointer-fine:sr-only pointer-fine:focus-visible:not-sr-only"
+          className="hidden shrink-0 cursor-pointer items-center gap-1.5 rounded-full bg-card/80 px-3 py-1.5 text-xs font-medium shadow-xs outline-none focus-visible:ring-3 focus-visible:ring-ring/50 sm:inline-flex pointer-fine:sr-only pointer-fine:focus-visible:not-sr-only"
         >
-          See example mailer <IconArrowsMaximize className="size-3.5" aria-hidden />
+          Example mailer <IconArrowsMaximize className="size-3.5" aria-hidden />
         </button>
       </div>
+
+      <MailingPlan industry={industry} className="mt-7" />
+
+      <button
+        type="button"
+        onClick={() => setFlyer(true)}
+        className="mt-5 inline-flex w-fit cursor-pointer items-center gap-1.5 rounded-full bg-card/80 px-3 py-1.5 text-xs font-medium shadow-xs outline-none focus-visible:ring-3 focus-visible:ring-ring/50 sm:hidden"
+      >
+        See example mailer <IconArrowsMaximize className="size-3.5" aria-hidden />
+      </button>
 
       {/* The flyer as the pointer */}
       <AnimatePresence>
@@ -388,132 +419,50 @@ const FACTS = [
 ] as const;
 
 /**
- * Three moments to mail. A rail of the three (number + name) with a white pill that
- * glides behind the chosen one (hover on desktop, tap anywhere); beside it on desktop and
- * below it on phones, the scene: the moment and its three facts, which slide and un-blur
- * in from the side you moved toward, one after another. `wide`: rail beside the scene.
+ * The mailing plan: three moments to mail, laid out like a timetable, all at once. On a
+ * wide card: a header row (who gets it, when, the offer, each with its icon) over three
+ * rows, each a numbered moment and its three answers, with dashed rules between them.
+ * On a narrow one: each moment on its own, its answers stacked with small labels.
+ * Static on purpose: easy to scan, nothing to click.
  */
-function Moments({ industry, open, wide, className }: { industry: Industry; open: boolean; wide?: boolean; className?: string }) {
+function MailingPlan({ industry, className }: { industry: Industry; className?: string }) {
   const tone = tones[industry.tone];
-  // The chosen moment, and which way we moved to it (for the slide).
-  const [[current, direction], setCurrent] = useState<[number, number]>([0, 0]);
-  const choose = (n: number) => n !== current && setCurrent([n, n > current ? 1 : -1]);
-  const pointerFine = () => window.matchMedia("(pointer: fine)").matches;
-  const moment = industry.moments[current];
-  const id = `${industry.icon}-${wide ? "w" : "m"}`;
-
+  const cols = "@lg:grid @lg:grid-cols-[1.15fr_1fr_1fr_1fr] @lg:gap-5";
   return (
-    <div className={className}>
-      <p className={cn("text-xs font-semibold tracking-wider uppercase", tone.text)}>3 moments to mail</p>
-      <div className={cn("mt-3 gap-3", wide ? "grid grid-cols-[11rem_1fr]" : "space-y-3")}>
-        {/* The rail */}
-        <div
-          role="tablist"
-          aria-label="Moments to mail"
-          className={cn(wide ? "flex flex-col gap-1 py-1" : "grid grid-cols-3 gap-1 rounded-2xl bg-card/50 p-1")}
-        >
-          {industry.moments.map((m, n) => {
-            const on = n === current;
-            return (
-              <button
-                key={m.title}
-                type="button"
-                role="tab"
-                id={`moment-${id}-${n}`}
-                aria-selected={on}
-                aria-controls={`moment-${id}-panel`}
-                tabIndex={open ? (on ? 0 : -1) : -1}
-                onPointerEnter={() => wide && pointerFine() && choose(n)}
-                onClick={() => choose(n)}
-                onKeyDown={(e) => {
-                  const step = e.key === (wide ? "ArrowDown" : "ArrowRight") ? 1 : e.key === (wide ? "ArrowUp" : "ArrowLeft") ? -1 : 0;
-                  if (!step) return;
-                  e.preventDefault();
-                  const next = (n + step + industry.moments.length) % industry.moments.length;
-                  choose(next);
-                  document.getElementById(`moment-${id}-${next}`)?.focus();
-                }}
-                className={cn(
-                  "relative flex cursor-pointer items-center gap-2.5 rounded-xl text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
-                  wide ? "px-3.5 py-3" : "flex-col gap-1 px-2 py-2.5 text-center"
-                )}
-              >
-                {on && (
-                  <motion.span
-                    layoutId={`moment-pill-${id}`}
-                    className="absolute inset-0 rounded-xl bg-card shadow-sm"
-                    transition={{ type: "spring", stiffness: 420, damping: 34 }}
-                  />
-                )}
-                <span
-                  className={cn(
-                    "relative font-heading text-xs font-bold tabular-nums transition-colors",
-                    on ? tone.icon : "text-muted-foreground/70"
-                  )}
-                >
-                  0{n + 1}
-                </span>
-                <span
-                  className={cn(
-                    "relative text-sm leading-tight font-semibold transition-colors",
-                    on ? "text-foreground" : "text-muted-foreground"
-                  )}
-                >
-                  {m.title}
-                </span>
-              </button>
-            );
-          })}
+    <div className={cn("@container", className)}>
+      <div className="rounded-2xl bg-card/85 px-5 shadow-xs">
+        {/* Header (wide only) */}
+        <div aria-hidden className={cn("hidden border-b py-3.5", cols)}>
+          <p className={cn("text-xs font-semibold tracking-wider uppercase", tone.text)}>3 moments to mail</p>
+          {FACTS.map(({ key, label, Icon }) => (
+            <p key={key} className="flex items-center gap-1.5 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
+              <Icon className={cn("size-3.5", tone.icon)} /> {label}
+            </p>
+          ))}
         </div>
+        <p className={cn("pt-4 text-xs font-semibold tracking-wider uppercase @lg:hidden", tone.text)}>3 moments to mail</p>
 
-        {/* The scene */}
-        <div
-          role="tabpanel"
-          id={`moment-${id}-panel`}
-          aria-labelledby={`moment-${id}-${current}`}
-          className="relative overflow-hidden rounded-2xl bg-card/85 p-5 shadow-xs"
-        >
-          <AnimatePresence mode="popLayout" initial={false} custom={direction}>
-            <motion.div
-              key={current}
-              custom={direction}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              variants={{
-                enter: (d: number) => ({ opacity: 0, x: d * 28, filter: "blur(6px)" }),
-                center: { opacity: 1, x: 0, filter: "blur(0px)", transition: { staggerChildren: 0.05 } },
-                exit: (d: number) => ({ opacity: 0, x: d * -28, filter: "blur(6px)", transition: { duration: 0.2 } }),
-              }}
-              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-            >
-              <h4 className="font-heading text-xl leading-tight font-bold tracking-tight">{moment.title}</h4>
-              <dl className="mt-4 space-y-3">
+        <ol className="divide-y divide-dashed divide-foreground/12">
+          {industry.moments.map((moment, i) => (
+            <li key={moment.title} className={cn("py-4", cols)}>
+              <div className="flex items-baseline gap-2.5">
+                <span className={cn("font-heading text-sm font-bold tabular-nums", tone.icon)}>0{i + 1}</span>
+                <h4 className="font-heading text-base leading-snug font-semibold tracking-tight">{moment.title}</h4>
+              </div>
+              <dl className="mt-2.5 grid gap-1.5 pl-7 @lg:contents">
                 {FACTS.map(({ key, label, Icon }) => (
-                  <motion.div
-                    key={key}
-                    className="flex items-center gap-3"
-                    variants={{
-                      enter: { opacity: 0, y: 6 },
-                      center: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.22, 1, 0.36, 1] } },
-                    }}
-                  >
-                    <dt className={cn("grid size-8 shrink-0 place-items-center rounded-lg", tone.panel, tone.icon)}>
-                      <Icon className="size-4" aria-hidden />
+                  <div key={key} className="flex items-start gap-2 @lg:block">
+                    <dt className="shrink-0 @lg:sr-only">
+                      <Icon className={cn("mt-0.5 size-3.5", tone.icon)} aria-hidden />
                       <span className="sr-only">{label}</span>
                     </dt>
-                    <dd>
-                      <span aria-hidden className="block text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
-                        {label}
-                      </span>
-                      <span className="block text-sm font-medium">{moment[key]}</span>
-                    </dd>
-                  </motion.div>
+                    <dd className="text-sm leading-snug text-muted-foreground @lg:text-foreground/80">{moment[key]}</dd>
+                  </div>
                 ))}
               </dl>
-            </motion.div>
-          </AnimatePresence>
-        </div>
+            </li>
+          ))}
+        </ol>
       </div>
     </div>
   );
