@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import {
   IconArrowRight,
+  IconArrowsMaximize,
   IconBarbell,
   IconChevronDown,
   IconHomeDollar,
@@ -16,13 +17,14 @@ import {
 } from "@tabler/icons-react";
 
 import { SectionHeading } from "@/components/sections/section-heading";
+import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { audiences, site } from "@/content/site";
 import { cn } from "@/lib/utils";
 
 // "Who it's for" as expanding panels (after Square's industry panels): one tall panel per
 // kind of business. The open one takes most of the width, tinted in its color, and is
-// about use cases: three moments to mail (what, to whom, with what offer), a small
-// example mailer and a way in. The rest fold down to slim spines
+// about use cases: three moments to mail (what, to whom, with what offer), with a small
+// example mailer that opens large in a dialog, and a way in. The rest fold down to slim spines
 // (icon + sideways name). Desktop: hover or click a spine to open it. Phones: the same
 // panels stacked, one open at a time.
 
@@ -72,7 +74,7 @@ export function Audiences() {
 
         {/* Desktop: side by side. A size container, so an open panel's contents can be laid
             out at its final width from the start (and never reflow while it widens). */}
-        <div className="@container/panels hidden h-[32rem] gap-3 lg:flex" onPointerLeave={unhover}>
+        <div className="@container/panels hidden h-[28rem] gap-3 lg:flex" onPointerLeave={unhover}>
           {audiences.industries.map((industry, i) => (
             <WidePanel
               key={industry.name}
@@ -152,18 +154,15 @@ function WidePanel({
           open ? "opacity-100 delay-200 duration-500" : "pointer-events-none opacity-0 duration-150"
         )}
       >
-        <div className="flex items-start gap-4 pr-40">
+        <div className="flex items-center gap-4 pr-40">
           <span className={cn("grid size-11 shrink-0 place-items-center rounded-xl bg-card shadow-sm", tone.icon)}>
             <Icon className="size-5" aria-hidden />
           </span>
-          <div>
-            <h3 className="font-heading text-2xl leading-tight font-bold tracking-tight">{industry.name}</h3>
-            <p className="mt-1.5 text-sm text-muted-foreground">{industry.body}</p>
-          </div>
+          <h3 className="font-heading text-2xl leading-tight font-bold tracking-tight">{industry.name}</h3>
         </div>
-        <ExampleMailer industry={industry} className="absolute top-7 right-7 w-36 rotate-[4deg]" />
+        <ExampleMailer industry={industry} tabIndex={open ? undefined : -1} className="absolute top-6 right-7 w-32" />
 
-        <Moments industry={industry} className="mt-7" />
+        <Moments industry={industry} large className="mt-9" />
 
         <div className="mt-auto pt-5">
           <Link
@@ -221,8 +220,7 @@ function StackedPanel({ industry, open, onOpen }: { industry: Industry; open: bo
       >
         <div className="min-h-0 overflow-hidden" inert={!open}>
           <div className="px-4 pb-6">
-            <p className="text-muted-foreground">{industry.body}</p>
-            <Moments industry={industry} className="mt-5" />
+            <Moments industry={industry} />
             <div className="mt-6 flex items-end justify-between gap-4">
               <Link
                 href={site.primaryCta.href}
@@ -230,7 +228,7 @@ function StackedPanel({ industry, open, onOpen }: { industry: Industry; open: bo
               >
                 {site.primaryCta.label} <IconArrowRight className="size-4" aria-hidden />
               </Link>
-              <ExampleMailer industry={industry} className="w-32 rotate-[4deg]" />
+              <ExampleMailer industry={industry} className="w-32" />
             </div>
           </div>
         </div>
@@ -240,16 +238,16 @@ function StackedPanel({ industry, open, onOpen }: { industry: Industry; open: bo
 }
 
 /** Three moments to mail: what, to whom, with what offer. Numbered in the panel's color. */
-function Moments({ industry, className }: { industry: Industry; className?: string }) {
+function Moments({ industry, large, className }: { industry: Industry; large?: boolean; className?: string }) {
   const tone = tones[industry.tone];
   return (
     <div className={className}>
       <p className={cn("text-xs font-semibold tracking-wider uppercase", tone.text)}>3 moments to mail</p>
       <ol className="mt-3 divide-y divide-foreground/8 rounded-2xl bg-card/70 px-4 shadow-xs">
         {industry.moments.map((moment, i) => (
-          <li key={moment.title} className="flex gap-3.5 py-3">
-            <span className={cn("font-heading text-sm font-bold tabular-nums", tone.icon)}>0{i + 1}</span>
-            <p className="text-sm leading-snug">
+          <li key={moment.title} className={cn("flex gap-3.5", large ? "py-4" : "py-3")}>
+            <span className={cn("font-heading font-bold tabular-nums", large ? "text-base" : "text-sm", tone.icon)}>0{i + 1}</span>
+            <p className={cn("leading-snug", large ? "text-base" : "text-sm")}>
               <span className="font-semibold">{moment.title}.</span>{" "}
               <span className="text-muted-foreground">{moment.body}</span>
             </p>
@@ -260,15 +258,47 @@ function Moments({ industry, className }: { industry: Industry; className?: stri
   );
 }
 
-/** The postcard, small, as an example of what they mail. */
-function ExampleMailer({ industry, className }: { industry: Industry; className?: string }) {
+/**
+ * The postcard, small and tilted, as an example of what they mail. Clicking it (it
+ * straightens on hover) opens it large in a dialog over a dark, blurred page.
+ */
+function ExampleMailer({
+  industry,
+  tabIndex,
+  className,
+}: {
+  industry: Industry;
+  tabIndex?: number;
+  className?: string;
+}) {
   return (
-    <figure aria-hidden className={cn("pointer-events-none", className)}>
-      <Postcard industry={industry} />
-      <figcaption className="mt-2 text-center text-[10px] font-medium tracking-wide text-muted-foreground uppercase">
-        Example mailer
-      </figcaption>
-    </figure>
+    <Dialog>
+      <DialogTrigger
+        tabIndex={tabIndex}
+        aria-label={`See the example mailer for ${industry.name.toLowerCase()}`}
+        className={cn(
+          "group block cursor-pointer rounded-lg text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+          className
+        )}
+      >
+        <span
+          aria-hidden
+          className="block rotate-[4deg] transition-transform duration-300 ease-out group-hover:rotate-0 group-hover:scale-105"
+        >
+          <Postcard industry={industry} />
+        </span>
+        <span className="mt-2 flex items-center justify-center gap-1 text-[10px] font-medium tracking-wide text-muted-foreground uppercase group-hover:text-foreground">
+          Example mailer <IconArrowsMaximize className="size-3" aria-hidden />
+        </span>
+      </DialogTrigger>
+      <DialogContent className="max-w-3xl">
+        <DialogTitle className="sr-only">Example mailer: {industry.postcard.business}</DialogTitle>
+        <Postcard industry={industry} />
+        <p className="mt-4 text-center text-sm text-white/80">
+          An example {industry.name.toLowerCase()} postcard, 9″ × 6.25″
+        </p>
+      </DialogContent>
+    </Dialog>
   );
 }
 
