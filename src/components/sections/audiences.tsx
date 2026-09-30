@@ -21,8 +21,8 @@ import { cn } from "@/lib/utils";
 
 // "Who it's for" as expanding panels (after Square's industry panels): one tall panel per
 // kind of business. The open one takes most of the width, tinted in its color, and is
-// about use cases: three moments to mail (what, to whom, with what offer), the best
-// months for it, a small example mailer and a way in. The rest fold down to slim spines
+// about use cases: three moments to mail (what, to whom, with what offer), a small
+// example mailer and a way in. The rest fold down to slim spines
 // (icon + sideways name). Desktop: hover or click a spine to open it. Phones: the same
 // panels stacked, one open at a time.
 
@@ -37,23 +37,19 @@ const icons: Record<Industry["icon"], TablerIcon> = {
   retail: IconShoppingBag,
 };
 
-// Each industry's tint from the Oppizi tokens (cyan from the design system's scale), plus
-// its solid color, for the best months.
-const tones: Record<Industry["tone"], { panel: string; text: string; icon: string; solid: string }> = {
-  info: { panel: "bg-info-subtle", text: "text-info-subtle-foreground", icon: "text-info", solid: "bg-info" },
-  success: { panel: "bg-success-subtle", text: "text-success-subtle-foreground", icon: "text-success", solid: "bg-success" },
-  warning: { panel: "bg-warning-subtle", text: "text-warning-subtle-foreground", icon: "text-warning", solid: "bg-warning" },
-  ai: { panel: "bg-ai-subtle", text: "text-ai-subtle-foreground", icon: "text-ai", solid: "bg-ai" },
-  neutral: { panel: "bg-muted", text: "text-foreground", icon: "text-foreground", solid: "bg-foreground" },
+// Each industry's tint from the Oppizi tokens (cyan from the design system's scale).
+const tones: Record<Industry["tone"], { panel: string; text: string; icon: string }> = {
+  info: { panel: "bg-info-subtle", text: "text-info-subtle-foreground", icon: "text-info" },
+  success: { panel: "bg-success-subtle", text: "text-success-subtle-foreground", icon: "text-success" },
+  warning: { panel: "bg-warning-subtle", text: "text-warning-subtle-foreground", icon: "text-warning" },
+  ai: { panel: "bg-ai-subtle", text: "text-ai-subtle-foreground", icon: "text-ai" },
+  neutral: { panel: "bg-muted", text: "text-foreground", icon: "text-foreground" },
   cyan: {
     panel: "bg-(--ds-tw-cyan-50) dark:bg-(--ds-tw-cyan-950)",
     text: "text-(--ds-tw-cyan-800) dark:text-(--ds-tw-cyan-200)",
     icon: "text-(--ds-tw-cyan-600)",
-    solid: "bg-(--ds-tw-cyan-600)",
   },
 };
-
-const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
 /** How long the pointer rests on a spine before it opens (so sweeping across doesn't
  *  flick through every panel). */
@@ -169,8 +165,7 @@ function WidePanel({
 
         <Moments industry={industry} className="mt-7" />
 
-        <div className="mt-auto flex items-end justify-between gap-6 pt-5">
-          <BestMonths industry={industry} className="max-w-[22rem] flex-1" />
+        <div className="mt-auto pt-5">
           <Link
             href={site.primaryCta.href}
             tabIndex={open ? undefined : -1}
@@ -228,7 +223,6 @@ function StackedPanel({ industry, open, onOpen }: { industry: Industry; open: bo
           <div className="px-4 pb-6">
             <p className="text-muted-foreground">{industry.body}</p>
             <Moments industry={industry} className="mt-5" />
-            <BestMonths industry={industry} className="mt-6" />
             <div className="mt-6 flex items-end justify-between gap-4">
               <Link
                 href={site.primaryCta.href}
@@ -261,31 +255,6 @@ function Moments({ industry, className }: { industry: Industry; className?: stri
             </p>
           </li>
         ))}
-      </ol>
-    </div>
-  );
-}
-
-/** The year as twelve small cells, the best months to mail filled in the panel's color. */
-function BestMonths({ industry, className }: { industry: Industry; className?: string }) {
-  const tone = tones[industry.tone];
-  const best = new Set<number>(industry.months);
-  return (
-    <div className={className}>
-      <p className={cn("text-xs font-semibold tracking-wider uppercase", tone.text)}>Best months to mail</p>
-      <p className="sr-only">{[...best].map((m) => MONTHS[m - 1]).join(", ")}</p>
-      <ol aria-hidden className="mt-2.5 grid grid-cols-12 gap-1">
-        {MONTHS.map((month, i) => {
-          const on = best.has(i + 1);
-          return (
-            <li key={month} className="flex flex-col items-center gap-1">
-              <span className={cn("h-6 w-full rounded-md", on ? tone.solid : "bg-card/70")} />
-              <span className={cn("text-[10px] font-medium", on ? "text-foreground" : "text-muted-foreground")}>
-                {month[0]}
-              </span>
-            </li>
-          );
-        })}
       </ol>
     </div>
   );
