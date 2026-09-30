@@ -368,13 +368,14 @@ function FoldFinale({ map, reduce, onStage }: { map: React.ReactNode; reduce: bo
         </div>
       )}
 
-      {/* 4. …and comes round as the postcard, growing to the middle as it turns. The
-          start lines it up with the folded square (quarter size, bottom-right corner). */}
+      {/* 4. …and comes round as the postcard, growing to the map's full size as it turns.
+          The start lines it up with the folded square (half the width and height, in the
+          bottom-right corner). */}
       {stage === 4 && (
         <div className="absolute inset-0 grid place-items-center [perspective:1400px]">
           <motion.div
-            className="w-[88%]"
-            initial={{ x: "28.4%", y: "33.5%", scaleX: 0.568, scaleY: 0.669, rotateY: -90 }}
+            className="w-full"
+            initial={{ x: "25%", y: "25%", scaleX: 0.5, scaleY: 0.5, rotateY: -90 }}
             animate={{ x: 0, y: 0, scaleX: 1, scaleY: 1, rotateY: 0 }}
             transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
           >
@@ -387,11 +388,12 @@ function FoldFinale({ map, reduce, onStage }: { map: React.ReactNode; reduce: bo
 }
 
 /** The back of "Your business"'s postcard: the message and the call to action on the left;
- *  the EDDM postage (stamped on as it lands) and the address on the right. */
+ *  the EDDM postage (stamped on as it lands) and the address on the right. The same size
+ *  as the map it's folded from (its 440 × 360 shape). */
 function CityPostcard() {
   const { cta } = audiences.overview;
   return (
-    <div className="@container grid aspect-[9/6.25] grid-cols-[1.35fr_1fr] overflow-hidden rounded-xl border bg-card shadow-xl">
+    <div className="@container grid aspect-[440/360] grid-cols-[1.35fr_1fr] overflow-hidden rounded-xl border bg-card shadow-xl">
       <div className="flex flex-col justify-between p-[5.5cqw]">
         <p className="flex items-center gap-[1.6cqw] text-[2.6cqw] font-semibold tracking-[0.18em] text-brand uppercase">
           <span aria-hidden className="size-[2.2cqw] rounded-full bg-brand ring-[0.7cqw] ring-brand/20" />
