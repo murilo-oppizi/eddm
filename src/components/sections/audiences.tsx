@@ -378,7 +378,7 @@ function Wheel({ position, onOpen }: { position: MotionValue<number>; onOpen: ()
 /**
  * The chosen business, in a dialog over the blurred page: a white card with its name,
  * what EDDM does for it and its three moments to mail on one side, and its flyer, large
- * and tilted, on a soft panel in its color on the other. Stacked on phones. Picking a
+ * and level, on a soft panel in its color on the other. Stacked on phones. Picking a
  * moment swaps the flyer for that moment's: the old one pulls back, then shoots off to the
  * right with a motion blur; the new one flies in from the left and lands with a bounce.
  */
@@ -465,7 +465,7 @@ function BusinessDialog({
                   initial={{ x: "-135%", rotate: -7, opacity: 0, filter: "blur(6px)" }}
                   animate={{
                     x: 0,
-                    rotate: 2,
+                    rotate: 0,
                     opacity: 1,
                     filter: "blur(0px)",
                     transition: {
@@ -479,7 +479,7 @@ function BusinessDialog({
                     // A wind-up (a small pull back and lift), then off to the right, blurring.
                     x: ["0%", "-7%", "140%"],
                     y: ["0%", "-2%", "-4%"],
-                    rotate: [2, -3, 9],
+                    rotate: [0, -3, 9],
                     scale: [1, 1.03, 0.94],
                     opacity: [1, 1, 0],
                     filter: ["blur(0px)", "blur(0px)", "blur(6px)"],
@@ -490,8 +490,8 @@ function BusinessDialog({
                 </motion.div>
               </AnimatePresence>
             </div>
-            <figcaption className={cn("mt-5 text-center text-xs font-medium", tone.text)} aria-live="polite">
-              Example postcard · {moment.title} · 9″ × 6.25″
+            <figcaption className={cn("mt-5 text-center text-xs font-medium", tone.text)}>
+              Example postcard
             </figcaption>
           </figure>
         </div>
