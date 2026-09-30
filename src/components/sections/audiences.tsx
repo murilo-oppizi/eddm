@@ -6,15 +6,19 @@ import {
   IconArrowRight,
   IconArrowsMaximize,
   IconBarbell,
+  IconCalendarEvent,
   IconChevronDown,
   IconHomeDollar,
+  IconMapPin,
   IconQrcode,
   IconScissors,
   IconShoppingBag,
+  IconTag,
   IconTool,
   IconToolsKitchen2,
   type TablerIcon,
 } from "@tabler/icons-react";
+import { AnimatePresence, MotionConfig, motion } from "motion/react";
 
 import { SectionHeading } from "@/components/sections/section-heading";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -23,8 +27,10 @@ import { cn } from "@/lib/utils";
 
 // "Who it's for" as expanding panels (after Square's industry panels): one tall panel per
 // kind of business. The open one takes most of the width, tinted in its color, and is
-// about use cases: three moments to mail (what, to whom, with what offer), with a small
-// example mailer that opens large in a dialog, and a way in. The rest fold down to slim spines
+// about use cases: three moments to mail, as a slim rail with a highlight that glides to
+// the one you point at, and a scene beside it (who gets it, when, the offer) that slides
+// in from the side you moved toward; a small example mailer that opens large in a
+// dialog; and a way in. The rest fold down to slim spines
 // (icon + sideways name). Desktop: hover or click a spine to open it. Phones: the same
 // panels stacked, one open at a time.
 
@@ -68,13 +74,14 @@ export function Audiences() {
   const unhover = () => window.clearTimeout(intent.current);
 
   return (
+    <MotionConfig reducedMotion="user">
     <section id="who-its-for" className="scroll-mt-20 py-20">
       <div className="container-page space-y-12">
         <SectionHeading eyebrow={audiences.eyebrow} title={audiences.title} body={audiences.body} />
 
         {/* Desktop: side by side. A size container, so an open panel's contents can be laid
             out at its final width from the start (and never reflow while it widens). */}
-        <div className="@container/panels hidden h-[28rem] gap-3 lg:flex" onPointerLeave={unhover}>
+        <div className="@container/panels hidden h-[27rem] gap-3 lg:flex" onPointerLeave={unhover}>
           {audiences.industries.map((industry, i) => (
             <WidePanel
               key={industry.name}
@@ -94,6 +101,7 @@ export function Audiences() {
         </div>
       </div>
     </section>
+    </MotionConfig>
   );
 }
 
@@ -162,7 +170,7 @@ function WidePanel({
         </div>
         <ExampleMailer industry={industry} tabIndex={open ? undefined : -1} className="absolute top-6 right-7 w-32" />
 
-        <Moments industry={industry} large className="mt-9" />
+        <Moments industry={industry} open={open} wide className="mt-8" />
 
         <div className="mt-auto pt-5">
           <Link
@@ -220,7 +228,7 @@ function StackedPanel({ industry, open, onOpen }: { industry: Industry; open: bo
       >
         <div className="min-h-0 overflow-hidden" inert={!open}>
           <div className="px-4 pb-6">
-            <Moments industry={industry} />
+            <Moments industry={industry} open={open} />
             <div className="mt-6 flex items-end justify-between gap-4">
               <Link
                 href={site.primaryCta.href}
@@ -237,23 +245,140 @@ function StackedPanel({ industry, open, onOpen }: { industry: Industry; open: bo
   );
 }
 
-/** Three moments to mail: what, to whom, with what offer. Numbered in the panel's color. */
-function Moments({ industry, large, className }: { industry: Industry; large?: boolean; className?: string }) {
+const FACTS = [
+  { key: "who", label: "Who gets it", Icon: IconMapPin },
+  { key: "when", label: "When", Icon: IconCalendarEvent },
+  { key: "offer", label: "The offer", Icon: IconTag },
+] as const;
+
+/**
+ * Three moments to mail. A rail of the three (number + name) with a white pill that
+ * glides behind the chosen one (hover on desktop, tap anywhere); beside it on desktop and
+ * below it on phones, the scene: the moment and its three facts, which slide and un-blur
+ * in from the side you moved toward, one after another. `wide`: rail beside the scene.
+ */
+function Moments({ industry, open, wide, className }: { industry: Industry; open: boolean; wide?: boolean; className?: string }) {
   const tone = tones[industry.tone];
+  // The chosen moment, and which way we moved to it (for the slide).
+  const [[current, direction], setCurrent] = useState<[number, number]>([0, 0]);
+  const choose = (n: number) => n !== current && setCurrent([n, n > current ? 1 : -1]);
+  const pointerFine = () => window.matchMedia("(pointer: fine)").matches;
+  const moment = industry.moments[current];
+  const id = `${industry.icon}-${wide ? "w" : "m"}`;
+
   return (
     <div className={className}>
       <p className={cn("text-xs font-semibold tracking-wider uppercase", tone.text)}>3 moments to mail</p>
-      <ol className="mt-3 divide-y divide-foreground/8 rounded-2xl bg-card/70 px-4 shadow-xs">
-        {industry.moments.map((moment, i) => (
-          <li key={moment.title} className={cn("flex gap-3.5", large ? "py-4" : "py-3")}>
-            <span className={cn("font-heading font-bold tabular-nums", large ? "text-base" : "text-sm", tone.icon)}>0{i + 1}</span>
-            <p className={cn("leading-snug", large ? "text-base" : "text-sm")}>
-              <span className="font-semibold">{moment.title}.</span>{" "}
-              <span className="text-muted-foreground">{moment.body}</span>
-            </p>
-          </li>
-        ))}
-      </ol>
+      <div className={cn("mt-3 gap-3", wide ? "grid grid-cols-[11rem_1fr]" : "space-y-3")}>
+        {/* The rail */}
+        <div
+          role="tablist"
+          aria-label="Moments to mail"
+          className={cn(wide ? "flex flex-col gap-1 py-1" : "grid grid-cols-3 gap-1 rounded-2xl bg-card/50 p-1")}
+        >
+          {industry.moments.map((m, n) => {
+            const on = n === current;
+            return (
+              <button
+                key={m.title}
+                type="button"
+                role="tab"
+                id={`moment-${id}-${n}`}
+                aria-selected={on}
+                aria-controls={`moment-${id}-panel`}
+                tabIndex={open ? (on ? 0 : -1) : -1}
+                onPointerEnter={() => wide && pointerFine() && choose(n)}
+                onClick={() => choose(n)}
+                onKeyDown={(e) => {
+                  const step = e.key === (wide ? "ArrowDown" : "ArrowRight") ? 1 : e.key === (wide ? "ArrowUp" : "ArrowLeft") ? -1 : 0;
+                  if (!step) return;
+                  e.preventDefault();
+                  const next = (n + step + industry.moments.length) % industry.moments.length;
+                  choose(next);
+                  document.getElementById(`moment-${id}-${next}`)?.focus();
+                }}
+                className={cn(
+                  "relative flex cursor-pointer items-center gap-2.5 rounded-xl text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50",
+                  wide ? "px-3.5 py-3" : "flex-col gap-1 px-2 py-2.5 text-center"
+                )}
+              >
+                {on && (
+                  <motion.span
+                    layoutId={`moment-pill-${id}`}
+                    className="absolute inset-0 rounded-xl bg-card shadow-sm"
+                    transition={{ type: "spring", stiffness: 420, damping: 34 }}
+                  />
+                )}
+                <span
+                  className={cn(
+                    "relative font-heading text-xs font-bold tabular-nums transition-colors",
+                    on ? tone.icon : "text-muted-foreground/70"
+                  )}
+                >
+                  0{n + 1}
+                </span>
+                <span
+                  className={cn(
+                    "relative text-sm leading-tight font-semibold transition-colors",
+                    on ? "text-foreground" : "text-muted-foreground"
+                  )}
+                >
+                  {m.title}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* The scene */}
+        <div
+          role="tabpanel"
+          id={`moment-${id}-panel`}
+          aria-labelledby={`moment-${id}-${current}`}
+          className="relative overflow-hidden rounded-2xl bg-card/85 p-5 shadow-xs"
+        >
+          <AnimatePresence mode="popLayout" initial={false} custom={direction}>
+            <motion.div
+              key={current}
+              custom={direction}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              variants={{
+                enter: (d: number) => ({ opacity: 0, x: d * 28, filter: "blur(6px)" }),
+                center: { opacity: 1, x: 0, filter: "blur(0px)", transition: { staggerChildren: 0.05 } },
+                exit: (d: number) => ({ opacity: 0, x: d * -28, filter: "blur(6px)", transition: { duration: 0.2 } }),
+              }}
+              transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <h4 className="font-heading text-xl leading-tight font-bold tracking-tight">{moment.title}</h4>
+              <dl className="mt-4 space-y-3">
+                {FACTS.map(({ key, label, Icon }) => (
+                  <motion.div
+                    key={key}
+                    className="flex items-center gap-3"
+                    variants={{
+                      enter: { opacity: 0, y: 6 },
+                      center: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.22, 1, 0.36, 1] } },
+                    }}
+                  >
+                    <dt className={cn("grid size-8 shrink-0 place-items-center rounded-lg", tone.panel, tone.icon)}>
+                      <Icon className="size-4" aria-hidden />
+                      <span className="sr-only">{label}</span>
+                    </dt>
+                    <dd>
+                      <span aria-hidden className="block text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
+                        {label}
+                      </span>
+                      <span className="block text-sm font-medium">{moment[key]}</span>
+                    </dd>
+                  </motion.div>
+                ))}
+              </dl>
+            </motion.div>
+          </AnimatePresence>
+        </div>
+      </div>
     </div>
   );
 }
