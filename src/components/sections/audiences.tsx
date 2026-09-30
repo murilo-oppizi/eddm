@@ -32,8 +32,7 @@ import { cn } from "@/lib/utils";
 // "Who it's for": a sticky map of one city (left) glides to each industry's neighborhood
 // as its row scrolls through the middle of the screen (right): its pin pops in and its
 // route traces, with its postcard floating over the corner. The last row, "Your business",
-// zooms out to the whole city, which then folds up into its own postcard with the call to
-// action (see neighborhood-map.tsx). On phones the
+// folds the map up into its own postcard with the call to action (see neighborhood-map.tsx). On phones the
 // map and a row of industry cards pin to the screen, like How it works on desktop: scrolling
 // slides the cards along one at a time (each holds a moment, then moves on) and the map
 // follows the one in front. Rows are clickable everywhere: they scroll into place and move
@@ -90,11 +89,14 @@ const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
 export function Audiences() {
   const [active, setActive] = useState(0);
   const [instant, setInstant] = useState(false);
+  // The last business shown: the map the finale folds up.
+  const [business, setBusiness] = useState(0);
   const [seen, setSeen] = useState(() => new Set([0]));
   const speed = useVelocity(useScroll().scrollY);
   const show = (i: number, fast = false) => {
     setActive(i);
     setInstant(fast);
+    if (i < audiences.industries.length) setBusiness(i);
     setSeen((prev) => (prev.has(i) ? prev : new Set(prev).add(i)));
   };
   const desktop = () => window.matchMedia("(min-width: 64rem)").matches;
@@ -158,7 +160,7 @@ export function Audiences() {
   };
 
   const map = (
-    <NeighborhoodMap active={active} seen={seen} instant={instant}>
+    <NeighborhoodMap active={active} backdrop={business} seen={seen} instant={instant}>
       <FloatingPostcard industry={audiences.industries[active] ?? null} index={active} instant={instant} />
     </NeighborhoodMap>
   );

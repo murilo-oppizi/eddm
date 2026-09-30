@@ -34,11 +34,10 @@ import { cn } from "@/lib/utils";
 // one soft ripple, and the EDDM route it would mail traces along the streets. Kept light
 // on purpose, like mapcn's markers and routes: a dot with a white ring and a halo, a fine
 // outline over a pale fill. Businesses already visited stay behind as small dots. The last
-// step (`active` = the number of businesses) zooms out to the whole city, every business
-// as pins (no routes), around an empty spot in the middle: a dashed pink "?" pin, "Your
-// business?". After a beat it's claimed (solid pink), and then the map folds up like paper
-// (in half, then in half again) and flips over into that business's postcard, which gets
-// its EDDM postage stamped on and carries the call to action.
+// step (`active` = the number of businesses, "Your business") goes straight to the finale:
+// the map, as it is, folds up like paper (in half, then in half again) and flips over into
+// the "Your business" postcard, which gets its EDDM postage stamped on and carries the call
+// to action.
 
 type Industry = (typeof audiences.industries)[number];
 type Tone = Industry["tone"] | "brand"; // brand pink: "Your business"
@@ -65,12 +64,6 @@ const scenes: { at: Step; route: Step[]; name: string; reach: string; nameBelow?
   { at: [0, 13], name: "BED-STUY", route: [[0, -3], [1, -3], [1, -1], [2, -1], [2, 2], [1, 2], [1, 3], [-1, 3], [-1, 0], [0, 0]], reach: "1 route · 657 homes" },
 ];
 const OVERVIEW = scenes.length;
-
-/** "Your business": the empty spot at the heart of the city view, in the middle of the
- *  six businesses (the camera frames the city around it). */
-const YOU = { at: [0, 0] as Step };
-/** When the spot is claimed, and so when the fold can start (ms into the city view). */
-const CLAIM_AT = 1800;
 
 const icons: Record<Industry["icon"], TablerIcon> = {
   restaurant: IconToolsKitchen2,
@@ -104,54 +97,44 @@ const shift = ([i, j]: Step, [di, dj]: Step): Step => [i + di, j + dj];
 const routePath = (n: number) =>
   `M${toPoints(scenes[n].route.map((p) => shift(p, scenes[n].at))).replaceAll(" ", " L")} Z`;
 
-/** The whole city: centred on "Your business", wide enough for every pin (with room for
- *  their halos and tags), at the card's aspect. */
-const CITY = (() => {
-  const c = toMap(YOU.at[0] + 0.5, YOU.at[1] + 0.5);
-  const pins = scenes.map((_, n) => pinAt(n));
-  const pad = 60;
-  const halfW = Math.max(...pins.map((p) => Math.abs(p.x - c.x))) + pad;
-  const halfH = Math.max(...pins.map((p) => Math.abs(p.y - c.y))) + pad;
-  const w = Math.max(halfW * 2, (halfH * 2 * VIEW.w) / VIEW.h);
-  return { x: c.x - w / 2, y: c.y - (w * VIEW.h) / VIEW.w / 2, w };
-})();
-/** How far out the city view is, relative to street level. */
-const ZOOM = CITY.w / VIEW.w;
-
-/** Where the camera looks: at a business (its pin at FOCUS), or the whole city. */
+/** Where the camera looks: at a business, its pin at FOCUS. */
 function viewFor(n: number) {
-  if (n === OVERVIEW) return CITY;
   const p = pinAt(n);
   return { x: p.x - VIEW.w * FOCUS.x, y: p.y - VIEW.h * FOCUS.y, w: VIEW.w };
 }
 
 export function NeighborhoodMap({
   active,
+  backdrop,
   seen,
   instant = false,
   children,
 }: {
-  /** A business's index, or the number of businesses for the whole city. */
+  /** A business's index, or the number of businesses for "Your business" (the finale). */
   active: number;
+  /** The business the map shows under the finale's fold: the last one seen. */
+  backdrop: number;
   /** Show it finished, without the entrance (the page is being scrolled fast). */
   instant?: boolean;
   /** Businesses already visited: their pins stay on as small dots. */
   seen: Set<number>;
-  /** Floats over the map: the postcard, or the city view's call to action. */
+  /** Floats over the map's corner (the business's postcard). */
   children?: React.ReactNode;
 }) {
   const reduce = useReducedMotion();
-  const city = active === OVERVIEW;
-  const start = viewFor(active);
+  const finale = active === OVERVIEW;
+  // The business on the map; during the finale, the last one, which the fold wraps up.
+  const scene = finale ? backdrop : active;
+  const start = viewFor(scene);
   const vx = useMotionValue(start.x);
   const vy = useMotionValue(start.y);
   const vw = useMotionValue(start.w);
   const viewBox = useTransform(() => `${vx.get()} ${vy.get()} ${vw.get()} ${(vw.get() * VIEW.h) / VIEW.w}`);
 
-  // Glide to the chosen neighborhood or out to the city (jump with reduced motion, or
-  // when the page is flying past).
+  // Glide to the chosen neighborhood (jump with reduced motion, or when the page is
+  // flying past). The finale keeps the camera where it is.
   useEffect(() => {
-    const to = viewFor(active);
+    const to = viewFor(scene);
     if (reduce || instant) {
       vx.set(to.x);
       vy.set(to.y);
@@ -160,15 +143,15 @@ export function NeighborhoodMap({
     }
     // Quick, so a business is readable almost as soon as its row arrives: the motion is a
     // flourish, not something to wait for.
-    const opts = { duration: active === OVERVIEW ? 1 : 0.6, ease: glide };
+    const opts = { duration: 0.6, ease: glide };
     const anims = [animate(vx, to.x, opts), animate(vy, to.y, opts), animate(vw, to.w, opts)];
     return () => anims.forEach((a) => a.stop());
-  }, [active, reduce, instant, vx, vy, vw]);
+  }, [scene, reduce, instant, vx, vy, vw]);
 
-  const industry = city ? null : audiences.industries[active];
+  const industry = finale ? null : audiences.industries[active];
   // The finale's fold: once it starts, the paper pieces stand in for the map card.
   const [fold, setFold] = useState(0);
-  const folded = city && fold > 0;
+  const folded = finale && fold > 0;
 
   return (
     <div className="relative">
@@ -177,10 +160,9 @@ export function NeighborhoodMap({
         className={cn("relative overflow-hidden rounded-xl border bg-card shadow-lg", folded && "invisible")}
         style={{ aspectRatio: `${VIEW.w} / ${VIEW.h}` }}
       >
-        <MapArt active={active} seen={seen} viewBox={viewBox} instant={instant} />
+        <MapArt active={scene} seen={seen} viewBox={viewBox} instant={instant} />
 
-        {/* A business's reach, as a label in the hero's style (the city view has its call
-            to action instead). */}
+        {/* A business's reach, as a label in the hero's style (gone for the finale). */}
         {/* Labels cross-fade (they overlap), so a new one never waits for the last to leave. */}
         <AnimatePresence>
           {industry && (
@@ -189,11 +171,11 @@ export function NeighborhoodMap({
         </AnimatePresence>
       </div>
       <AnimatePresence>
-        {city && (
+        {finale && (
           <FoldFinale
             key="fold"
-            map={<MapArt active={active} seen={seen} viewBox={viewBox} still />}
-            reduce={!!reduce}
+            map={<MapArt active={scene} seen={seen} viewBox={viewBox} still />}
+            reduce={!!reduce || instant}
             onStage={setFold}
           />
         )}
@@ -203,8 +185,9 @@ export function NeighborhoodMap({
   );
 }
 
-/** The map itself, framed by the camera's `viewBox`. `still` skips the entrance
- *  animations: the folding paper shows copies of the map as it already is. */
+/** The map itself, framed by the camera's `viewBox`: business `active`'s route and pin,
+ *  every neighborhood's name, and small dots for businesses already visited. `still` skips
+ *  the entrance animations: the folding paper shows copies of the map as it already is. */
 function MapArt({
   active,
   seen,
@@ -218,141 +201,59 @@ function MapArt({
   still?: boolean;
   instant?: boolean;
 }) {
-  const city = active === OVERVIEW;
-  const shown = city ? scenes.map((_, n) => n) : [active];
   return (
-  <motion.svg viewBox={viewBox} className="absolute inset-0 size-full">
-    <rect x={-3000} y={-3000} width={6000} height={6000} className="fill-card" />
-    <StreetGrid>
-      {/* The active business's route: a fine outline that traces along the streets, then
-          takes a pale fill. (The city view shows pins only.) */}
-      <AnimatePresence initial={!still}>
-        {(city ? [] : shown).map((n, k) => (
+    <motion.svg viewBox={viewBox} className="absolute inset-0 size-full">
+      <rect x={-3000} y={-3000} width={6000} height={6000} className="fill-card" />
+      <StreetGrid>
+        {/* The business's route: a fine outline that traces along the streets, then takes
+            a pale fill. */}
+        <AnimatePresence initial={!still}>
           <motion.path
-            key={`${city ? "city" : "one"}-${n}`}
-            d={routePath(n)}
-            className={cn(toneOf(n).soft, toneOf(n).stroke)}
-            // Thicker in the city view, so it reads about the same on screen.
-            strokeWidth={city ? 2 * ZOOM * 0.75 : 2}
+            key={active}
+            d={routePath(active)}
+            className={cn(toneOf(active).soft, toneOf(active).stroke)}
+            strokeWidth="2"
             strokeOpacity="0.85"
             strokeLinejoin="round"
             initial={instant ? false : { pathLength: 0, fillOpacity: 0, opacity: 1 }}
             animate={{ pathLength: 1, fillOpacity: 1 }}
             exit={{ opacity: 0, transition: { duration: 0.3 } }}
             transition={{
-              pathLength: { delay: (city ? 0.4 : 0.3) + k * 0.08, duration: 0.5, ease: "easeInOut" },
-              fillOpacity: { delay: (city ? 0.7 : 0.55) + k * 0.08, duration: 0.35 },
+              pathLength: { delay: 0.3, duration: 0.5, ease: "easeInOut" },
+              fillOpacity: { delay: 0.55, duration: 0.35 },
             }}
           />
-        ))}
-      </AnimatePresence>
-    </StreetGrid>
+        </AnimatePresence>
+      </StreetGrid>
 
-    {/* Neighborhood names above each route, like the hero's "WILLIAMSBURG" (hidden
-        in the city view, where they'd be too small to read). */}
-    {scenes.map((s) => {
-      const p = toMap(s.at[0] + 0.5, s.at[1] + (s.nameBelow ? 4.6 : -4.2));
-      return (
-        <text
-          key={s.name}
-          x={p.x}
-          y={p.y}
-          textAnchor="middle"
-          className={cn(
-            "fill-muted-foreground text-[9px] font-semibold tracking-[0.25em] transition-opacity duration-500",
-            city ? "opacity-0" : "opacity-100"
-          )}
-        >
-          {s.name}
-        </text>
-      );
-    })}
+      {/* Neighborhood names above each route (Fort Greene's below), like the hero's
+          "WILLIAMSBURG". */}
+      {scenes.map((s) => {
+        const p = toMap(s.at[0] + 0.5, s.at[1] + (s.nameBelow ? 4.6 : -4.2));
+        return (
+          <text
+            key={s.name}
+            x={p.x}
+            y={p.y}
+            textAnchor="middle"
+            className="fill-muted-foreground text-[9px] font-semibold tracking-[0.25em]"
+          >
+            {s.name}
+          </text>
+        );
+      })}
 
-    {/* Businesses visited so far stay as small dots in their color. */}
-    {!city &&
-      scenes.map((_, n) => {
+      {/* Businesses visited so far stay as small dots in their color. */}
+      {scenes.map((_, n) => {
         if (n === active || !seen.has(n)) return null;
         const p = pinAt(n);
         return <circle key={n} cx={p.x} cy={p.y} r="4" strokeWidth="2" className={cn(toneOf(n).fill, "stroke-card")} />;
       })}
 
-    {/* Pins: the active business's, or every one in the city view (scaled up so they
-        stay about the same size on screen). */}
-    <AnimatePresence initial={!still}>
-      {shown.map((n, k) => (
-        <Pin
-          key={`${city ? "city" : "one"}-${n}`}
-          at={pinAt(n)}
-          tone={toneOf(n)}
-          size={city ? ZOOM * 0.8 : 1}
-          delay={city ? 0.35 + k * 0.08 : 0.2}
-          instant={instant}
-        />
-      ))}
-    </AnimatePresence>
-
-    {/* "Your business?": the empty spot, claimed after a beat (already claimed in the
-        folding copies, or when flung past). Remounts, so it starts empty each visit. */}
-    {city && <YourSpot claimed={still || instant} />}
-  </motion.svg>
-  );
-}
-
-/**
- * "Your business" on the city map: first a dashed pink "?" pin, pulsing gently, tagged
- * "Your business?"; then, at CLAIM_AT, a solid pink pin in the others' style (with their
- * ripple), tagged "Your business".
- */
-function YourSpot({ claimed: start }: { claimed: boolean }) {
-  const [claimed, setClaimed] = useState(start);
-  useEffect(() => {
-    if (start) return;
-    const t = window.setTimeout(() => setClaimed(true), CLAIM_AT);
-    return () => clearTimeout(t);
-  }, [start]);
-  const at = toMap(YOU.at[0] + 0.5, YOU.at[1] + 0.5);
-  // A size up from the other pins, with a tag big enough to read in the zoomed-out view.
-  const size = ZOOM * 1.05;
-  return (
-    <>
-      {claimed ? (
-        <Pin at={at} tone={paint.brand} size={size} delay={0} instant={start} />
-      ) : (
-        <motion.g
-          transform={`translate(${at.x} ${at.y}) scale(${size})`}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.8, duration: 0.3 }}
-        >
-          <motion.circle
-            r="15"
-            className="fill-brand"
-            animate={{ opacity: [0.06, 0.2, 0.06], scale: [0.85, 1.1, 0.85] }}
-            transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
-          />
-          <circle r="7.5" className="fill-card stroke-brand" strokeWidth="1.6" strokeDasharray="3 2.4" />
-          <text y="3.2" textAnchor="middle" className="fill-brand text-[9px] font-bold">
-            ?
-          </text>
-        </motion.g>
-      )}
-      {/* The tag under the pin, arriving with it */}
-      <motion.g
-        transform={`translate(${at.x} ${at.y + 17 * size}) scale(${size})`}
-        initial={start ? false : { opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.8, duration: 0.3 }}
-      >
-        <rect x="-33" y="-7.5" width="66" height="15" rx="7.5" className={claimed ? "fill-brand" : "fill-card stroke-brand/40"} strokeWidth="1" />
-        <text
-          y="2.6"
-          textAnchor="middle"
-          className={cn("text-[7.5px] font-semibold", claimed ? "fill-primary-foreground" : "fill-brand")}
-        >
-          {claimed ? "Your business" : "Your business?"}
-        </text>
-      </motion.g>
-    </>
+      <AnimatePresence initial={!still}>
+        <Pin key={active} at={pinAt(active)} tone={toneOf(active)} size={1} delay={0.2} instant={instant} />
+      </AnimatePresence>
+    </motion.svg>
   );
 }
 
@@ -377,16 +278,16 @@ function ReachLabel({ industry, reach, instant }: { industry: Industry; reach: s
   );
 }
 
-// The fold, in ms after the city view appears: a beat after the spot is claimed, two
-// folds, then the flip into the postcard.
+// The fold, in ms after "Your business" arrives: a short beat (the business's label and
+// postcard slip away), two folds, then the flip into the postcard.
 const FOLD = 0.5; // s per fold
-const STAGES = [CLAIM_AT + 900, CLAIM_AT + 1450, CLAIM_AT + 2000, CLAIM_AT + 2280];
+const STAGES = [300, 850, 1400, 1680];
 // Warm paper, a touch darker toward one corner, for the back of the folded map.
 const paper = "border bg-[linear-gradient(155deg,var(--card)_35%,color-mix(in_oklab,var(--card)_92%,var(--foreground)))]";
 const face = "absolute inset-0 [backface-visibility:hidden]";
 
 /**
- * The finale: over the city view, the map folds in half (left over right), in half again
+ * The finale: the map folds in half (left over right), in half again
  * (top down), and the folded square flips over into the "Your business" postcard. Leaving
  * it fades the postcard away and the map comes back.
  */
