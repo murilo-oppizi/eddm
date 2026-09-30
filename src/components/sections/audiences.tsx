@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   IconBarbell,
   IconHomeDollar,
@@ -17,6 +17,7 @@ import {
   MotionConfig,
   easeInOut,
   motion,
+  useMotionValue,
   useMotionValueEvent,
   useScroll,
   useTransform,
@@ -105,6 +106,7 @@ export function Audiences() {
   // card holds for the first half of its stretch, then eases over to the next.
   const stage = useRef<HTMLDivElement>(null);
   const firstCard = useRef<HTMLLIElement>(null);
+  const track = useRef<HTMLOListElement>(null);
   const stageScroll = useScroll({ target: stage, offset: ["start start", "end end"] }).scrollYProgress;
   const last = rows.length - 1;
   const cardAt = (p: number) => {
@@ -113,10 +115,24 @@ export function Audiences() {
     return Math.min(last, i + easeInOut(clamp01((raw - i - 0.55) / 0.45)));
   };
   const position = useTransform(stageScroll, cardAt);
-  const trackX = useTransform(position, (v) => {
-    const card = firstCard.current;
-    return card ? -v * (card.offsetWidth + 16) : 0;
-  });
+  // The card in front sits in the middle, its neighbours peeking in equally either side.
+  // Placed as the scroll moves the cards, and also on load and on resize (the centring
+  // depends on the card's width), since the position may not change then.
+  const trackX = useMotionValue(0);
+  useEffect(() => {
+    const place = () => {
+      const card = firstCard.current;
+      const row = track.current;
+      if (card && row) trackX.set((row.offsetWidth - card.offsetWidth) / 2 - position.get() * (card.offsetWidth + 16));
+    };
+    place();
+    const off = position.on("change", place);
+    window.addEventListener("resize", place);
+    return () => {
+      off();
+      window.removeEventListener("resize", place);
+    };
+  }, [position, trackX]);
   useMotionValueEvent(position, "change", (v) => {
     if (desktop() || locked()) return;
     const i = Math.round(v);
@@ -172,9 +188,9 @@ export function Audiences() {
                 <div className="mx-auto w-full max-w-[calc((100svh-21rem)*1.222)] pb-10 lg:max-w-none lg:pb-0">{map}</div>
 
                 {/* Phones: the cards, slid along by the scroll (clipped at the screen edges,
-                    the next one peeking in). */}
+                    the one in front centred, its neighbours peeking in). */}
                 <div className="-mx-4 overflow-hidden px-4 sm:-mx-6 sm:px-6 lg:hidden">
-                  <motion.ol className="flex gap-4" style={{ x: trackX }}>
+                  <motion.ol ref={track} className="flex gap-4" style={{ x: trackX }}>
                     {rows.map((row, i) => (
                       <li key={row.name} ref={i === 0 ? firstCard : undefined} className="flex w-[85%] shrink-0 flex-col sm:w-[60%]">
                         <Row {...row} active={i === active} onChoose={(el) => choose(i, el)} />
