@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   IconArrowRight,
   IconBarbell,
+  IconChevronDown,
   IconHomeDollar,
   IconQrcode,
   IconScissors,
@@ -13,18 +14,16 @@ import {
   IconToolsKitchen2,
   type TablerIcon,
 } from "@tabler/icons-react";
-import { AnimatePresence, MotionConfig, motion } from "motion/react";
 
 import { SectionHeading } from "@/components/sections/section-heading";
 import { audiences, site } from "@/content/site";
 import { cn } from "@/lib/utils";
 
-// "Who it's for" as a neighborhood street: one storefront per kind of business, drawn
-// flat like the rest of the site, each with an awning striped in its color, a sign with
-// its name and a blue mail collection box at the curb. Picking a shop (click or tap)
-// brings it forward and pops a postcard out of its mailbox; below the street, that
-// business's details and postcard. Phones: the street scrolls sideways, like walking
-// down the block.
+// "Who it's for" as expanding panels (after Square's industry panels): one tall panel per
+// kind of business. The open one takes most of the width, tinted in its color, with its
+// name, what EDDM does for it, the campaigns it typically mails and its postcard; the rest
+// fold down to slim spines (icon + sideways name). Desktop: hover or click a spine to
+// open it. Phones: the same panels stacked, one open at a time.
 
 type Industry = (typeof audiences.industries)[number];
 
@@ -37,222 +36,218 @@ const icons: Record<Industry["icon"], TablerIcon> = {
   retail: IconShoppingBag,
 };
 
-// Each industry's tint from the Oppizi tokens (cyan from the design system's scale), plus
-// its solid color as a CSS value, for the awning stripes and the sign.
-const tones: Record<Industry["tone"], { panel: string; text: string; icon: string; solid: string }> = {
-  info: { panel: "bg-info-subtle", text: "text-info-subtle-foreground", icon: "text-info", solid: "var(--ds-status-info-solid)" },
-  success: { panel: "bg-success-subtle", text: "text-success-subtle-foreground", icon: "text-success", solid: "var(--ds-status-success-solid)" },
-  warning: { panel: "bg-warning-subtle", text: "text-warning-subtle-foreground", icon: "text-warning", solid: "var(--ds-status-warning-solid)" },
-  ai: { panel: "bg-ai-subtle", text: "text-ai-subtle-foreground", icon: "text-ai", solid: "var(--ds-status-ai-solid)" },
-  neutral: { panel: "bg-muted", text: "text-foreground", icon: "text-foreground", solid: "var(--foreground)" },
+// Each industry's tint from the Oppizi tokens (cyan from the design system's scale).
+const tones: Record<Industry["tone"], { panel: string; text: string; icon: string }> = {
+  info: { panel: "bg-info-subtle", text: "text-info-subtle-foreground", icon: "text-info" },
+  success: { panel: "bg-success-subtle", text: "text-success-subtle-foreground", icon: "text-success" },
+  warning: { panel: "bg-warning-subtle", text: "text-warning-subtle-foreground", icon: "text-warning" },
+  ai: { panel: "bg-ai-subtle", text: "text-ai-subtle-foreground", icon: "text-ai" },
+  neutral: { panel: "bg-muted", text: "text-foreground", icon: "text-foreground" },
   cyan: {
     panel: "bg-(--ds-tw-cyan-50) dark:bg-(--ds-tw-cyan-950)",
     text: "text-(--ds-tw-cyan-800) dark:text-(--ds-tw-cyan-200)",
     icon: "text-(--ds-tw-cyan-600)",
-    solid: "var(--ds-tw-cyan-600)",
   },
 };
 
-/** Each shop's building height (px), so the street has an uneven, real skyline. */
-const HEIGHTS = [212, 244, 204, 232, 252, 218];
+/** How long the pointer rests on a spine before it opens (so sweeping across doesn't
+ *  flick through every panel). */
+const HOVER_INTENT = 120;
 
 export function Audiences() {
-  const [active, setActive] = useState(0);
-  const street = useRef<HTMLDivElement>(null);
-  const industry = audiences.industries[active];
-
-  const choose = (i: number, shop: HTMLElement) => {
-    setActive(i);
-    // Phones: bring the chosen shop to the middle of the scrolling street.
-    const el = street.current;
-    if (el && el.scrollWidth > el.clientWidth) {
-      el.scrollTo({ left: shop.offsetLeft + shop.offsetWidth / 2 - el.clientWidth / 2, behavior: "smooth" });
-    }
+  const [open, setOpen] = useState(0);
+  const intent = useRef(0);
+  const hover = (i: number) => {
+    if (!window.matchMedia("(pointer: fine)").matches) return;
+    window.clearTimeout(intent.current);
+    intent.current = window.setTimeout(() => setOpen(i), HOVER_INTENT);
   };
+  const unhover = () => window.clearTimeout(intent.current);
 
   return (
-    <MotionConfig reducedMotion="user">
-      <section id="who-its-for" className="scroll-mt-20 py-20">
-        <div className="container-page space-y-12">
-          <SectionHeading eyebrow={audiences.eyebrow} title={audiences.title} body={audiences.body} />
+    <section id="who-its-for" className="scroll-mt-20 py-20">
+      <div className="container-page space-y-12">
+        <SectionHeading eyebrow={audiences.eyebrow} title={audiences.title} body={audiences.body} />
 
-          {/* The street: shops standing on a sidewalk, a road in front. Scrolls sideways
-              when it doesn't fit (phones), edge to edge. */}
-          <div
-            ref={street}
-            className="-mx-4 overflow-x-auto px-4 [scrollbar-width:none] sm:-mx-6 sm:px-6 lg:mx-0 lg:overflow-visible lg:px-0 [&::-webkit-scrollbar]:hidden"
-          >
-            <div className="relative min-w-[52rem] lg:min-w-0">
-              <ul className="relative z-10 grid grid-cols-6 items-end px-2" aria-label="Kinds of business">
-                {audiences.industries.map((shop, i) => (
-                  <li key={shop.name} className="flex justify-center">
-                    <Shop industry={shop} index={i} active={i === active} onChoose={(el) => choose(i, el)} />
-                  </li>
-                ))}
-              </ul>
-              {/* Sidewalk, curb and road */}
-              <div aria-hidden className="h-5 rounded-t-sm bg-muted" />
-              <div aria-hidden className="h-1.5 bg-border" />
-              <div aria-hidden className="relative h-12 rounded-b-2xl bg-subtle">
-                <div className="absolute inset-x-6 top-1/2 h-0.5 -translate-y-1/2 bg-[repeating-linear-gradient(90deg,var(--card)_0_28px,transparent_28px_52px)]" />
-              </div>
-            </div>
-          </div>
-
-          {/* The chosen business */}
-          <div className="grid items-center gap-10 lg:grid-cols-[1fr_1.1fr] lg:gap-16" aria-live="polite">
-            <AnimatePresence mode="wait" initial={false}>
-              <motion.div
-                key={industry.name}
-                initial={{ opacity: 0, y: 12 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-              >
-                <Details industry={industry} />
-              </motion.div>
-            </AnimatePresence>
-            <div className="relative mx-auto w-full max-w-md">
-              <AnimatePresence mode="wait" initial={false}>
-                <motion.div
-                  key={industry.name}
-                  initial={{ opacity: 0, y: 40, rotate: -8 }}
-                  animate={{ opacity: 1, y: 0, rotate: -2 }}
-                  exit={{ opacity: 0, y: -20, rotate: 3, transition: { duration: 0.2 } }}
-                  transition={{ type: "spring", stiffness: 220, damping: 24 }}
-                >
-                  <Postcard industry={industry} elevated />
-                </motion.div>
-              </AnimatePresence>
-            </div>
-          </div>
+        {/* Desktop: side by side */}
+        <div className="hidden h-[30rem] gap-3 lg:flex" onPointerLeave={unhover}>
+          {audiences.industries.map((industry, i) => (
+            <WidePanel
+              key={industry.name}
+              industry={industry}
+              open={i === open}
+              onOpen={() => setOpen(i)}
+              onHover={() => hover(i)}
+            />
+          ))}
         </div>
-      </section>
-    </MotionConfig>
+
+        {/* Phones and tablets: stacked */}
+        <div className="space-y-3 lg:hidden">
+          {audiences.industries.map((industry, i) => (
+            <StackedPanel key={industry.name} industry={industry} open={i === open} onOpen={() => setOpen(i)} />
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 
 /**
- * A storefront: a flat building with a cornice, its sign, a striped awning in its color,
- * a shop window with its icon and a door; a blue collection box at the curb. The chosen
- * one lights up (its window glows in its color, its sign fills) and a postcard pops out
- * of its mailbox; the others fade back.
+ * Desktop panel. Open: most of the row's width, in its tint, with the details on the left
+ * and the postcard leaning out of the bottom-right corner. Closed: a slim spine with the
+ * icon on top and the name running up it. The width eases between the two; the details
+ * fade in once there's room, and are laid out at a fixed width so they never reflow.
  */
-function Shop({
+function WidePanel({
   industry,
-  index,
-  active,
-  onChoose,
+  open,
+  onOpen,
+  onHover,
 }: {
   industry: Industry;
-  index: number;
-  active: boolean;
-  onChoose: (shop: HTMLElement) => void;
+  open: boolean;
+  onOpen: () => void;
+  onHover: () => void;
 }) {
   const Icon = icons[industry.icon];
   const tone = tones[industry.tone];
   return (
-    <button
-      type="button"
-      aria-pressed={active}
-      aria-label={industry.name}
-      onClick={(e) => onChoose(e.currentTarget.closest("li") ?? e.currentTarget)}
-      className="group relative flex w-full cursor-pointer items-end justify-center gap-1.5 rounded-t-xl outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-      style={{ "--tone": tone.solid } as React.CSSProperties}
+    <div
+      onPointerEnter={onHover}
+      className={cn(
+        "relative min-w-0 overflow-hidden rounded-3xl transition-[flex-grow,background-color] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none",
+        open ? tone.panel : "bg-muted/60 hover:bg-muted"
+      )}
+      style={{ flexGrow: open ? 8 : 1, flexBasis: 0 }}
     >
-      {/* The building */}
-      <span
+      {/* The spine: the whole closed panel is its button. */}
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls={`who-${industry.icon}`}
+        onClick={onOpen}
+        onFocus={onOpen}
         className={cn(
-          "relative flex w-[82%] flex-col items-center overflow-hidden rounded-t-xl border border-b-0 bg-card transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]",
-          active ? "shadow-lg" : "opacity-55 shadow-sm group-hover:opacity-90"
+          "absolute inset-0 flex cursor-pointer flex-col items-center justify-between py-6 outline-none transition-opacity duration-300 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset",
+          open ? "pointer-events-none opacity-0" : "opacity-100"
         )}
-        style={{ height: HEIGHTS[index] }}
       >
-        {/* Cornice */}
-        <span className="h-3 w-full bg-muted" />
-        {/* Sign */}
-        <span
+        <span className={cn("grid size-11 place-items-center rounded-xl bg-card shadow-sm", tone.icon)}>
+          <Icon className="size-5" aria-hidden />
+        </span>
+        <span className="rotate-180 font-heading text-lg font-semibold tracking-tight whitespace-nowrap text-foreground [writing-mode:vertical-rl]">
+          {industry.name}
+        </span>
+      </button>
+
+      {/* The details */}
+      <div
+        id={`who-${industry.icon}`}
+        aria-hidden={!open}
+        className={cn(
+          "absolute inset-y-0 left-0 flex w-[19rem] flex-col p-8 transition-opacity motion-reduce:transition-none",
+          open ? "opacity-100 delay-200 duration-500" : "pointer-events-none opacity-0 duration-150"
+        )}
+      >
+        <span className={cn("grid size-11 place-items-center rounded-xl bg-card shadow-sm", tone.icon)}>
+          <Icon className="size-5" aria-hidden />
+        </span>
+        <h3 className="mt-6 font-heading text-3xl leading-tight font-bold tracking-tight text-balance">{industry.name}</h3>
+        <p className="mt-3 text-muted-foreground">{industry.body}</p>
+        <Ideas industry={industry} className="mt-6" />
+        <Link
+          href={site.primaryCta.href}
+          tabIndex={open ? undefined : -1}
           className={cn(
-            "mt-4 max-w-[88%] truncate rounded-md border px-2 py-1 text-[10px] font-semibold transition-colors duration-300 sm:px-2.5 sm:text-[11px]",
-            active ? "border-transparent bg-(--tone) text-white" : "border-(--tone)/40 bg-card text-(--tone)"
+            "mt-auto inline-flex w-fit items-center gap-1.5 text-sm font-semibold underline-offset-4 hover:underline",
+            tone.text
           )}
         >
-          {industry.postcard.business}
-        </span>
-        {/* Upstairs windows */}
-        <span className="mt-4 flex gap-2">
-          <span className="h-5 w-6 rounded-sm bg-muted" />
-          <span className="h-5 w-6 rounded-sm bg-muted" />
-        </span>
-        {/* Ground floor: the awning over the shop window and the door */}
-        <span className="absolute inset-x-0 bottom-0 flex h-[46%] flex-col">
-          <span className="h-5 w-full rounded-b-md bg-[repeating-linear-gradient(90deg,var(--tone)_0_12px,var(--card)_12px_24px)] shadow-sm" />
-          <span className="flex flex-1 items-end gap-2 px-3">
-            <span
-              className={cn(
-                "mb-3 grid h-[70%] flex-1 place-items-center rounded-md transition-colors duration-500",
-                active ? tone.panel : "bg-muted"
-              )}
-            >
-              <Icon className={cn("size-6", tone.icon)} aria-hidden />
-            </span>
-            <span className="h-[82%] w-[28%] rounded-t-md border border-b-0 bg-muted" />
-          </span>
-        </span>
-      </span>
+          {site.primaryCta.label} <IconArrowRight className="size-4" aria-hidden />
+        </Link>
+      </div>
 
-      {/* The collection box at the curb (a domed blue box on two short legs, with its
-          slot), a postcard popping out of it when chosen */}
-      <span aria-hidden className="relative h-11 w-6 shrink-0">
-        <AnimatePresence>
-          {active && (
-            <motion.span
-              key="card"
-              className="absolute bottom-7 left-1/2 block h-5 w-8 -translate-x-1/2 overflow-hidden rounded-[3px] border bg-card shadow-md"
-              initial={{ y: 14, opacity: 0, rotate: 0 }}
-              animate={{ y: -14, opacity: 1, rotate: -14 }}
-              exit={{ y: 10, opacity: 0, transition: { duration: 0.15 } }}
-              transition={{ type: "spring", stiffness: 300, damping: 16, delay: 0.2 }}
-            >
-              <span className="absolute inset-y-0 left-0 w-3 bg-(--tone)/50" />
-              <span className="absolute top-1 right-1 size-1.5 rounded-[1px] border border-foreground/40" />
-            </motion.span>
-          )}
-        </AnimatePresence>
-        <span className="absolute inset-x-0 bottom-1.5 h-8 rounded-t-full bg-info" />
-        <span className="absolute inset-x-1 bottom-6 h-1 rounded-full bg-foreground/40" />
-        <span className="absolute bottom-0 left-1 h-2 w-1 rounded-b-sm bg-info" />
-        <span className="absolute right-1 bottom-0 h-2 w-1 rounded-b-sm bg-info" />
-      </span>
-    </button>
+      {/* The postcard, leaning out of the corner */}
+      <div
+        className={cn(
+          "pointer-events-none absolute -right-6 -bottom-8 w-[21rem] rotate-[-5deg] transition-[opacity,translate] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none",
+          open ? "translate-y-0 opacity-100 delay-300 duration-700" : "translate-y-8 opacity-0 duration-150"
+        )}
+      >
+        <Postcard industry={industry} elevated />
+      </div>
+    </div>
   );
 }
 
-/** The chosen business: name, what EDDM does for it, typical campaigns and a way in. */
-function Details({ industry }: { industry: Industry }) {
+/**
+ * Phone and tablet panel: a row with the icon and name that opens (height easing open)
+ * to the details and the postcard. One open at a time.
+ */
+function StackedPanel({ industry, open, onOpen }: { industry: Industry; open: boolean; onOpen: () => void }) {
   const Icon = icons[industry.icon];
   const tone = tones[industry.tone];
   return (
-    <div>
-      <span className={cn("grid size-11 place-items-center rounded-xl", tone.panel, tone.icon)}>
-        <Icon className="size-5" aria-hidden />
-      </span>
-      <h3 className="mt-5 font-heading text-3xl font-bold tracking-tight">{industry.name}</h3>
-      <p className="mt-3 max-w-md text-lg text-muted-foreground">{industry.body}</p>
-      <ul className="mt-6 flex flex-wrap gap-2" aria-label="Typical campaigns">
-        {industry.ideas.map((idea) => (
-          <li key={idea} className={cn("rounded-full px-3 py-1 text-sm font-medium", tone.panel, tone.text)}>
-            {idea}
-          </li>
-        ))}
-      </ul>
-      <Link
-        href={site.primaryCta.href}
-        className={cn("mt-8 inline-flex items-center gap-1.5 font-semibold underline-offset-4 hover:underline", tone.text)}
+    <div
+      className={cn(
+        "overflow-hidden rounded-2xl transition-colors duration-500 motion-reduce:transition-none",
+        open ? tone.panel : "bg-muted/60"
+      )}
+    >
+      <h3>
+        <button
+          type="button"
+          aria-expanded={open}
+          aria-controls={`who-m-${industry.icon}`}
+          onClick={onOpen}
+          className="flex w-full cursor-pointer items-center gap-4 p-4 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset"
+        >
+          <span className={cn("grid size-10 shrink-0 place-items-center rounded-xl bg-card shadow-sm", tone.icon)}>
+            <Icon className="size-5" aria-hidden />
+          </span>
+          <span className="flex-1 font-heading text-lg font-semibold tracking-tight">{industry.name}</span>
+          <IconChevronDown
+            aria-hidden
+            className={cn("size-5 text-muted-foreground transition-transform duration-300", open && "rotate-180")}
+          />
+        </button>
+      </h3>
+      <div
+        id={`who-m-${industry.icon}`}
+        className="grid transition-[grid-template-rows] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none"
+        style={{ gridTemplateRows: open ? "1fr" : "0fr" }}
       >
-        {site.primaryCta.label} <IconArrowRight className="size-4" aria-hidden />
-      </Link>
+        <div className="min-h-0 overflow-hidden" inert={!open}>
+          <div className="px-4 pb-6">
+            <p className="text-muted-foreground">{industry.body}</p>
+            <Ideas industry={industry} className="mt-4" />
+            <div className="mx-auto mt-6 max-w-sm rotate-[-2deg] px-2">
+              <Postcard industry={industry} elevated />
+            </div>
+            <Link
+              href={site.primaryCta.href}
+              className={cn("mt-6 inline-flex items-center gap-1.5 text-sm font-semibold", tone.text)}
+            >
+              {site.primaryCta.label} <IconArrowRight className="size-4" aria-hidden />
+            </Link>
+          </div>
+        </div>
+      </div>
     </div>
+  );
+}
+
+/** The campaigns this kind of business typically mails, as small tags. */
+function Ideas({ industry, className }: { industry: Industry; className?: string }) {
+  return (
+    <ul className={cn("flex flex-wrap gap-2", className)} aria-label="Typical campaigns">
+      {industry.ideas.map((idea) => (
+        <li key={idea} className="rounded-full bg-card/80 px-3 py-1 text-xs font-medium text-foreground shadow-xs">
+          {idea}
+        </li>
+      ))}
+    </ul>
   );
 }
 
