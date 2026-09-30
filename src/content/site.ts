@@ -314,18 +314,79 @@ export const audiences = {
       postcard: { business: "Bright Minds Tutoring", headline: "Ace the new school year", offer: "First session free", cta: "Scan to enroll" },
     },
     {
-      name: "Events and nonprofits",
+      name: "Community and nonprofits",
+      // From Oppizi's Public & Community clients.
       // Draft copy, from typical EDDM advice (what to mail, to whom, when): review before launch.
       // The moments to mail: who gets it, when, and the offer.
       moments: [
-        { title: "An event", who: "Every home nearby", when: "Three weeks before", offer: "Free entry or a raffle" },
         { title: "A fundraiser", who: "The streets you serve", when: "Giving season", offer: "A way to donate" },
         { title: "Volunteers", who: "Homes around the site", when: "A month ahead", offer: "A sign-up link" },
+        { title: "A public notice", who: "Every home it affects", when: "Weeks before it happens", offer: "The date and how to join" },
       ],
       icon: "community",
       tone: "teal",
-      body: "Bring the neighborhood to a fundraiser, a fair or a food drive.",
+      body: "Bring the neighborhood to a fundraiser, a food drive or a town hall.",
       postcard: { business: "Riverside Community Fund", headline: "Join us at the fall fair", offer: "Food, music and games, free entry", cta: "Scan for details" },
+    },
+    {
+      name: "Events and entertainment",
+      // From Oppizi's Entertainment, Media & Events clients.
+      // Draft copy, from typical EDDM advice (what to mail, to whom, when): review before launch.
+      // The moments to mail: who gets it, when, and the offer.
+      moments: [
+        { title: "Opening night", who: "Every home nearby", when: "Three weeks before", offer: "A two-for-one ticket" },
+        { title: "A local fair", who: "The whole neighborhood", when: "Two weeks ahead", offer: "Free entry" },
+        { title: "Season passes", who: "Your best streets", when: "Before the season", offer: "An early-bird price" },
+      ],
+      icon: "events",
+      tone: "fuchsia",
+      body: "Fill the seats for a concert, a fair or a season opener.",
+      postcard: { business: "The Grand Theater", headline: "Opening night, Friday", offer: "Two tickets for the price of one", cta: "Scan for tickets" },
+    },
+    {
+      name: "Delivery apps and marketplaces",
+      // From Oppizi's Internet Marketplace Platforms clients (food delivery, meal kits).
+      // Draft copy, from typical EDDM advice (what to mail, to whom, when): review before launch.
+      // The moments to mail: who gets it, when, and the offer.
+      moments: [
+        { title: "A new zone", who: "Every home in it", when: "Launch week", offer: "First-order credit" },
+        { title: "Win-back", who: "Streets with lapsed users", when: "After a quiet month", offer: "A comeback code" },
+        { title: "A new category", who: "Your busiest zones", when: "When it goes live", offer: "Free delivery" },
+      ],
+      icon: "delivery",
+      tone: "violet",
+      body: "Launch in a new zone and win the first orders on every street in it.",
+      postcard: { business: "QuickBite", headline: "We now deliver here", offer: "$10 off your first order", cta: "Scan to order" },
+    },
+    {
+      name: "Builders and remodelers",
+      // From Oppizi's Real Estate & Construction clients.
+      // Draft copy, from typical EDDM advice (what to mail, to whom, when): review before launch.
+      // The moments to mail: who gets it, when, and the offer.
+      moments: [
+        { title: "Job-site neighbors", who: "The blocks around a project", when: "While you're on site", offer: "A free estimate" },
+        { title: "Remodel season", who: "Older homes nearby", when: "Late winter", offer: "A spring booking deal" },
+        { title: "A new development", who: "Homes around the site", when: "Before sales open", offer: "A preview invite" },
+      ],
+      icon: "builders",
+      tone: "amber",
+      body: "Show your work to the neighbors of every job you finish.",
+      postcard: { business: "Oak & Stone Builders", headline: "Just finished on your street", offer: "Free design consultation", cta: "Scan to see the project" },
+    },
+    {
+      name: "Banks and tax preparers",
+      // From Oppizi's Finance clients: the local ones (branches, tax offices).
+      // Draft copy, from typical EDDM advice (what to mail, to whom, when): review before launch.
+      // The moments to mail: who gets it, when, and the offer.
+      moments: [
+        { title: "A new branch", who: "Every home around it", when: "The month it opens", offer: "An opening bonus" },
+        { title: "Tax season", who: "Nearby homes", when: "January", offer: "A free first consult" },
+        { title: "A better rate", who: "Your branch's neighborhoods", when: "When rates change", offer: "The new rate" },
+      ],
+      icon: "finance",
+      tone: "emerald",
+      body: "Bring neighbors into a new branch, or in the door before tax season.",
+      postcard: { business: "Hometown Credit Union", headline: "A new branch, around the corner", offer: "$100 when you open an account", cta: "Scan to open one" },
     },
   ],
 } as const
