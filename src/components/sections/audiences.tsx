@@ -187,7 +187,7 @@ function Mural({ onOpen }: { onOpen: (i: number) => void }) {
     <div ref={wrap} onPointerMove={(e) => e.pointerType === "mouse" && follow(e)} className="relative">
       <motion.ul
         aria-label="Kinds of business"
-        className="grid grid-cols-2 gap-px overflow-hidden rounded-3xl border bg-border lg:grid-cols-4"
+        className="grid grid-cols-2 overflow-hidden rounded-3xl border bg-card lg:grid-cols-4"
         initial="hidden"
         whileInView="shown"
         viewport={{ once: true, amount: 0.25 }}
@@ -199,8 +199,17 @@ function Mural({ onOpen }: { onOpen: (i: number) => void }) {
           return (
             <motion.li
               key={item.name}
-              className="bg-card"
-              variants={{ hidden: { opacity: 0 }, shown: { opacity: 1, transition: { duration: 0.4 } } }}
+              // Hairlines between cells: each cell's right and bottom border, except on the
+              // last column and the last row (2 columns on phones, 4 on desktop).
+              className={cn(
+                "border-r border-b",
+                "max-lg:[&:nth-child(2n)]:border-r-0 max-lg:[&:nth-last-child(-n+2)]:border-b-0",
+                "lg:[&:nth-child(4n)]:border-r-0 lg:[&:nth-last-child(-n+4)]:border-b-0"
+              )}
+              variants={{
+                hidden: { opacity: 0, y: 0, scale: 1 },
+                shown: { opacity: 1, y: 0, scale: 1, transition: { duration: 0.4 } },
+              }}
             >
               <button
                 type="button"
