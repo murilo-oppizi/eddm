@@ -152,15 +152,13 @@ export function Audiences() {
 
   return (
     <MotionConfig reducedMotion="user">
-      <section id="who-its-for" className="scroll-mt-20 py-20">
-        <div className="container-page space-y-10">
+      <section id="who-its-for" className="scroll-mt-20 pt-20 pb-14">
+        {/* Tighter than the other sections' gaps (and bottom padding): the wheel's top and
+            bottom rows fade out, which already reads as space. */}
+        <div className="container-page space-y-8">
           <SectionHeading eyebrow={audiences.eyebrow} title={audiences.title} body={audiences.body} />
           <div className="mx-auto max-w-xl">
             <Wheel position={position} onOpen={() => setOpen(true)} />
-            <p className="mt-4 text-center text-sm text-muted-foreground">
-              <span className="pointer-coarse:hidden">Spin to find your business, then click it to see its plan.</span>
-              <span className="hidden pointer-coarse:inline">Swipe to find your business, then tap it to see its plan.</span>
-            </p>
           </div>
         </div>
         <BusinessDialog industry={industries[active]} open={open} onOpenChange={setOpen} />
