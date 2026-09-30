@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import {
+  IconArrowUpRight,
   IconBarbell,
   IconBuildingBank,
   IconCarGarage,
@@ -148,12 +149,8 @@ export function Audiences() {
   );
 }
 
-/* ------------------------------ The mural ------------------------------ */
+/* ------------------------------ The grid ------------------------------ */
 
-// Each card's pinned-by-hand tilt and nudge: fixed per card (not random), so the wall is
-// the same on every visit and on the server.
-const tiltOf = (i: number) => (((i * 37) % 9) - 4) * 0.55; // -2.2° to 2.2°
-const nudgeOf = (i: number) => (((i * 53) % 7) - 3) * 2.5; // -7.5px to 7.5px
 /** The flyer pointer's tilt: -11° to -3° or 3° to 9°, never quite straight. */
 function randomTilt() {
   const tilt = 3 + Math.random() * 7;
@@ -161,11 +158,12 @@ function randomTilt() {
 }
 
 /**
- * Every business type on one wall: the same cards as before (tinted icon + name), in
- * centred rows, each pinned at a slight tilt and height. They come in one after another
- * when the wall scrolls into view. Hovering one straightens and lifts it, and with a
- * mouse the pointer becomes that business's flyer (a fresh random tilt each time); a
- * click or tap opens its card.
+ * Every business type in one tidy grid (a "blueprint" grid, after Vercel's and Linear's):
+ * equal cells split by hairlines, four across on desktop, two on phones. Each cell has
+ * its tinted icon, its name and its three moments to mail as a quiet line. Hovering a
+ * cell washes it in the business's tint and brings up an arrow; with a mouse the pointer
+ * becomes that business's flyer (a fresh random tilt each time). A click or tap opens its
+ * business card.
  */
 function Mural({ onOpen }: { onOpen: (i: number) => void }) {
   const wrap = useRef<HTMLDivElement>(null);
@@ -186,18 +184,14 @@ function Mural({ onOpen }: { onOpen: (i: number) => void }) {
   const hovered = hover ? industries[hover.i] : null;
 
   return (
-    <div
-      ref={wrap}
-      onPointerMove={(e) => e.pointerType === "mouse" && follow(e)}
-      className="relative rounded-3xl bg-muted/60 bg-[radial-gradient(circle,var(--border)_1px,transparent_1.5px)] bg-size-[22px_22px] px-3 py-8 sm:px-10 sm:py-14"
-    >
+    <div ref={wrap} onPointerMove={(e) => e.pointerType === "mouse" && follow(e)} className="relative">
       <motion.ul
         aria-label="Kinds of business"
-        className="mx-auto flex max-w-5xl flex-wrap justify-center gap-x-2 gap-y-3 sm:gap-x-4 sm:gap-y-5"
+        className="grid grid-cols-2 gap-px overflow-hidden rounded-3xl border bg-border lg:grid-cols-4"
         initial="hidden"
         whileInView="shown"
-        viewport={{ once: true, amount: 0.3 }}
-        variants={{ shown: { transition: { staggerChildren: 0.035 } } }}
+        viewport={{ once: true, amount: 0.25 }}
+        variants={{ shown: { transition: { staggerChildren: 0.03 } } }}
       >
         {industries.map((item, i) => {
           const Icon = icons[item.icon];
@@ -205,13 +199,8 @@ function Mural({ onOpen }: { onOpen: (i: number) => void }) {
           return (
             <motion.li
               key={item.name}
-              variants={{
-                hidden: { opacity: 0, y: 14, scale: 0.94 },
-                shown: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 300, damping: 24 } },
-              }}
-              // The nudge only from sm up: on a phone's tighter rows it would make cards overlap.
-              style={{ rotate: tiltOf(i), ["--nudge" as string]: `${nudgeOf(i)}px` }}
-              className="sm:translate-y-(--nudge)"
+              className="bg-card"
+              variants={{ hidden: { opacity: 0 }, shown: { opacity: 1, transition: { duration: 0.4 } } }}
             >
               <button
                 type="button"
@@ -219,15 +208,32 @@ function Mural({ onOpen }: { onOpen: (i: number) => void }) {
                 onPointerEnter={(e) => enter(i, e)}
                 onPointerLeave={() => setHover((h) => (h?.i === i ? null : h))}
                 className={cn(
-                  "group flex h-11 cursor-pointer items-center gap-2.5 rounded-xl bg-card py-0 pr-3.5 pl-2 shadow-sm sm:h-14 sm:gap-3 sm:rounded-2xl sm:pr-5 sm:pl-3 outline-none transition-[rotate,translate,box-shadow] duration-300 ease-out hover:-translate-y-1 hover:shadow-lg focus-visible:ring-3 focus-visible:ring-ring/50 pointer-fine:cursor-none",
-                  "hover:[rotate:calc(var(--tilt)*-1)]"
+                  "group relative flex h-full w-full cursor-pointer flex-col items-start gap-4 p-4 text-left outline-none transition-colors duration-300 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset sm:p-6 pointer-fine:cursor-none",
+                  hover?.i === i && tone.panel
                 )}
-                style={{ "--tilt": `${tiltOf(i)}deg` } as React.CSSProperties}
               >
-                <span className={cn("grid size-7 shrink-0 place-items-center rounded-lg sm:size-9 sm:rounded-xl", tone.panel, tone.icon)}>
-                  <Icon className="size-4 sm:size-5" aria-hidden />
+                <span
+                  className={cn(
+                    "grid size-10 place-items-center rounded-xl transition-colors duration-300",
+                    hover?.i === i ? "bg-card" : tone.panel,
+                    tone.icon
+                  )}
+                >
+                  <Icon className="size-5" aria-hidden />
                 </span>
-                <span className="font-heading text-sm font-semibold tracking-tight whitespace-nowrap sm:text-base">{item.name}</span>
+                <span className="min-w-0">
+                  <span className="block font-heading leading-snug font-semibold tracking-tight">{item.name}</span>
+                  <span className="mt-1 hidden text-sm leading-snug text-muted-foreground sm:block">
+                    {item.moments.map((m) => m.title).join(" · ")}
+                  </span>
+                </span>
+                <IconArrowUpRight
+                  aria-hidden
+                  className={cn(
+                    "absolute top-4 right-4 size-4 -translate-x-1 translate-y-1 opacity-0 transition-all duration-300 group-hover:translate-0 group-hover:opacity-100 sm:top-6 sm:right-6",
+                    tone.icon
+                  )}
+                />
               </button>
             </motion.li>
           );
@@ -241,7 +247,7 @@ function Mural({ onOpen }: { onOpen: (i: number) => void }) {
             key="flyer"
             aria-hidden
             className="pointer-events-none absolute top-0 left-0 z-20 w-44"
-            // Just above and right of the pointer, so the card being pointed at stays visible.
+            // Just above and right of the pointer, so the cell being pointed at stays visible.
             style={{ x: fx, y: fy, translateX: "-12%", translateY: "-108%" }}
             initial={{ opacity: 0, scale: 0.6, rotate: (hover?.angle ?? -6) * 1.8 }}
             animate={{ opacity: 1, scale: 1, rotate: hover?.angle ?? -6 }}
