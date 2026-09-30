@@ -163,11 +163,13 @@ export function Audiences() {
               className="h-(--stage-h) min-w-0 lg:h-auto"
               style={{ "--stage-h": `${rows.length * STEP_SVH}svh` } as React.CSSProperties}
             >
-              <div className="sticky top-16 flex h-[calc(100svh-4rem)] flex-col justify-center gap-14 lg:top-[calc(50vh-15rem)] lg:block lg:h-auto">
-                {/* The map is capped by the screen's height (leaving 16rem for the gap and the
-                    card, plus the header), so on short or wide screens, like a tablet, the
-                    cards still fit below it. 1.222 is the map's aspect (440 / 360). */}
-                <div className="mx-auto w-full max-w-[calc((100svh-20rem)*1.222)] lg:max-w-none">{map}</div>
+              <div className="sticky top-16 flex h-[calc(100svh-4rem)] flex-col justify-center gap-8 lg:top-[calc(50vh-15rem)] lg:block lg:h-auto">
+                {/* The map, with room below for the postcard that floats off its corner (pb-10
+                    matches the overhang), so the gap to the cards is measured from the
+                    postcard. Capped by the screen's height (header 4rem + overhang 2.5rem +
+                    gap 2rem + card ~12.5rem), so the cards always fit below it, even on short
+                    or wide screens like a tablet. 1.222 is the map's aspect (440 / 360). */}
+                <div className="mx-auto w-full max-w-[calc((100svh-21rem)*1.222)] pb-10 lg:max-w-none lg:pb-0">{map}</div>
 
                 {/* Phones: the cards, slid along by the scroll (clipped at the screen edges,
                     the next one peeking in). */}
@@ -255,7 +257,9 @@ function Row({
  *  the hero's map: dealt in when the industry changes, then drifting gently. */
 function FloatingPostcard({ industry, index, instant }: { industry: Industry | null; index: number; instant: boolean }) {
   return (
-    <div className="pointer-events-none absolute -right-3 -bottom-10 w-[46%] sm:-right-6">
+    // Overhangs the corner a little on phones and tablets (clear of the screen edge), more
+    // on desktop.
+    <div className="pointer-events-none absolute -right-1 -bottom-10 w-[46%] lg:-right-6">
       <AnimatePresence initial={false}>
         {industry && (
           <motion.div
