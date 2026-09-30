@@ -160,6 +160,8 @@ export const audiences = {
   industries: [
     {
       name: "Restaurants and cafés",
+      // What these businesses typically mail (draft copy).
+      ideas: ["New menu", "Grand opening", "Delivery-zone deal"],
       icon: "restaurant",
       tone: "warning",
       body: "Announce a new menu or an opening to every home within delivery distance.",
@@ -167,6 +169,8 @@ export const audiences = {
     },
     {
       name: "Real estate agents",
+      // What these businesses typically mail (draft copy).
+      ideas: ["Just listed", "Just sold", "Free home valuation"],
       icon: "realEstate",
       tone: "info",
       body: "Farm your neighborhood with just-listed and just-sold cards that keep you top of mind.",
@@ -174,6 +178,8 @@ export const audiences = {
     },
     {
       name: "Salons and spas",
+      // What these businesses typically mail (draft copy).
+      ideas: ["First-visit offer", "Quiet-day special", "New stylist"],
       icon: "salon",
       // Cyan, not the brand pink: on the map, pink is "Your business".
       tone: "cyan",
@@ -182,6 +188,8 @@ export const audiences = {
     },
     {
       name: "Home services",
+      // What these businesses typically mail (draft copy).
+      ideas: ["Seasonal tune-up", "Storm-season check", "Referral deal"],
       icon: "homeServices",
       tone: "success",
       body: "Reach homeowners right before the season hits: HVAC, roofing, cleaning, landscaping.",
@@ -189,6 +197,8 @@ export const audiences = {
     },
     {
       name: "Gyms and fitness",
+      // What these businesses typically mail (draft copy).
+      ideas: ["Free first week", "New class launch", "New location"],
       icon: "gym",
       tone: "ai",
       body: "Launch a new location or a new class with a free pass for the neighborhood.",
@@ -196,20 +206,14 @@ export const audiences = {
     },
     {
       name: "Retail stores",
+      // What these businesses typically mail (draft copy).
+      ideas: ["Grand opening", "Seasonal sale", "New collection"],
       icon: "retail",
       tone: "neutral",
       body: "Bring foot traffic to a grand opening, a seasonal sale or a new collection.",
       postcard: { business: "Maple & Co.", headline: "Grand opening Saturday", offer: "20% off everything, all weekend", cta: "Scan for directions" },
     },
   ],
-  // The last row: the map zooms out to show every business above at once.
-  overview: {
-    name: "Your business",
-    body: "Every business on this map started with the streets around it. Pick yours.",
-    reach: "6 businesses · 3,566 homes",
-    // The call to action over the city view.
-    cta: { title: "Your neighbors already mail with EDDM.", body: "Your turn." },
-  },
 } as const
 
 // Facts checked against oppizi.com and eddm.com (Sept 2026).
