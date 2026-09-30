@@ -22,7 +22,7 @@ import {
   type MotionValue,
 } from "motion/react";
 
-import { GRID_TRANSFORM, StreetGrid, toMap, toPoints } from "@/components/sections/illustrated-map";
+import { StreetGrid, toMap, toPoints } from "@/components/sections/illustrated-map";
 import { Button } from "@/components/ui/button";
 import { audiences, site } from "@/content/site";
 import { playKey } from "@/lib/key-sounds";
@@ -35,8 +35,8 @@ import { cn } from "@/lib/utils";
 // on purpose, like mapcn's markers and routes: a dot with a white ring and a halo, a fine
 // outline over a pale fill. Businesses already visited stay behind as small dots. The last
 // step (`active` = the number of businesses) zooms out to the whole city, every business
-// and route at once, plus an empty spot: a dashed pink "?" pin, "Your business?". After a
-// beat it's claimed (solid pink, its own route traces), and then the map folds up like paper
+// as pins (no routes), around an empty spot in the middle: a dashed pink "?" pin, "Your
+// business?". After a beat it's claimed (solid pink), and then the map folds up like paper
 // (in half, then in half again) and flips over into that business's postcard, which gets
 // its EDDM postage stamped on and carries the call to action.
 
@@ -55,19 +55,20 @@ const glide = [0.65, 0, 0.35, 1] as const;
  * units from that block, about the size of the hero's), its neighborhood and the reach on
  * its label. Placeholder numbers; Brooklyn names, like the hero's Williamsburg.
  */
-const scenes: { at: Step; route: Step[]; name: string; reach: string }[] = [
-  { at: [0, 0], name: "WILLIAMSBURG", route: [[-1, -2], [1, -2], [1, -1], [2, -1], [2, 2], [0, 2], [0, 3], [-1, 3]], reach: "1 route · 548 homes" },
+const scenes: { at: Step; route: Step[]; name: string; reach: string; nameBelow?: boolean }[] = [
+  { at: [-2, 1], name: "WILLIAMSBURG", route: [[-1, -2], [1, -2], [1, -1], [2, -1], [2, 2], [0, 2], [0, 3], [-1, 3]], reach: "1 route · 548 homes" },
   { at: [5, -7], name: "GREENPOINT", route: [[-1, -3], [1, -3], [1, 3], [0, 3], [0, 4], [-1, 4]], reach: "1 route · 612 homes" },
-  { at: [-4, 7], name: "FORT GREENE", route: [[0, -2], [2, -2], [2, 1], [1, 1], [1, 3], [-1, 3], [-1, -1], [0, -1]], reach: "1 route · 486 homes" },
+  // Its name goes below its route: above, it would sit on Williamsburg's.
+  { at: [-4, 7], name: "FORT GREENE", nameBelow: true, route: [[0, -2], [2, -2], [2, 1], [1, 1], [1, 3], [-1, 3], [-1, -1], [0, -1]], reach: "1 route · 486 homes" },
   { at: [5, 6], name: "BUSHWICK", route: [[-1, -3], [1, -3], [1, -2], [2, -2], [2, 3], [-1, 3]], reach: "1 route · 734 homes" },
   { at: [-5, -6], name: "DUMBO", route: [[-1, -2], [2, -2], [2, 1], [1, 1], [1, 2], [-1, 2]], reach: "1 route · 529 homes" },
   { at: [0, 13], name: "BED-STUY", route: [[0, -3], [1, -3], [1, -1], [2, -1], [2, 2], [1, 2], [1, 3], [-1, 3], [-1, 0], [0, 0]], reach: "1 route · 657 homes" },
 ];
 const OVERVIEW = scenes.length;
 
-/** "Your business": the empty spot in the city view (between Dumbo, Williamsburg and
- *  Greenpoint), and the route it gets once claimed. */
-const YOU = { at: [-1, -9] as Step, route: [[-1, -2], [1, -2], [1, -1], [2, -1], [2, 2], [-1, 2]] as Step[] };
+/** "Your business": the empty spot at the heart of the city view, in the middle of the
+ *  six businesses (the camera frames the city around it). */
+const YOU = { at: [0, 0] as Step };
 /** When the spot is claimed, and so when the fold can start (ms into the city view). */
 const CLAIM_AT = 1800;
 
@@ -103,19 +104,16 @@ const shift = ([i, j]: Step, [di, dj]: Step): Step => [i + di, j + dj];
 const routePath = (n: number) =>
   `M${toPoints(scenes[n].route.map((p) => shift(p, scenes[n].at))).replaceAll(" ", " L")} Z`;
 
-/** The whole city: every route in view, with a margin, at the card's aspect. */
+/** The whole city: centred on "Your business", wide enough for every pin (with room for
+ *  their halos and tags), at the card's aspect. */
 const CITY = (() => {
-  const pts = [...scenes, YOU].flatMap((s) => s.route.map(([i, j]) => toMap(i + s.at[0], j + s.at[1])));
-  const xs = pts.map((p) => p.x);
-  const ys = pts.map((p) => p.y);
-  const pad = 40;
-  const bottom = 50; // a little extra room below, where the call to action overlaps (desktop)
-  const bw = Math.max(...xs) - Math.min(...xs) + pad * 2;
-  const bh = Math.max(...ys) - Math.min(...ys) + pad + bottom;
-  const w = Math.max(bw, (bh * VIEW.w) / VIEW.h);
-  const cx = (Math.max(...xs) + Math.min(...xs)) / 2;
-  const cy = (Math.min(...ys) - pad + Math.max(...ys) + bottom) / 2;
-  return { x: cx - w / 2, y: cy - (w * VIEW.h) / VIEW.w / 2, w };
+  const c = toMap(YOU.at[0] + 0.5, YOU.at[1] + 0.5);
+  const pins = scenes.map((_, n) => pinAt(n));
+  const pad = 60;
+  const halfW = Math.max(...pins.map((p) => Math.abs(p.x - c.x))) + pad;
+  const halfH = Math.max(...pins.map((p) => Math.abs(p.y - c.y))) + pad;
+  const w = Math.max(halfW * 2, (halfH * 2 * VIEW.w) / VIEW.h);
+  return { x: c.x - w / 2, y: c.y - (w * VIEW.h) / VIEW.w / 2, w };
 })();
 /** How far out the city view is, relative to street level. */
 const ZOOM = CITY.w / VIEW.w;
@@ -226,10 +224,10 @@ function MapArt({
   <motion.svg viewBox={viewBox} className="absolute inset-0 size-full">
     <rect x={-3000} y={-3000} width={6000} height={6000} className="fill-card" />
     <StreetGrid>
-      {/* Routes: the active business's, or every one in the city view. Each traces
-          along the streets as a fine outline, then takes a pale fill. */}
+      {/* The active business's route: a fine outline that traces along the streets, then
+          takes a pale fill. (The city view shows pins only.) */}
       <AnimatePresence initial={!still}>
-        {shown.map((n, k) => (
+        {(city ? [] : shown).map((n, k) => (
           <motion.path
             key={`${city ? "city" : "one"}-${n}`}
             d={routePath(n)}
@@ -253,7 +251,7 @@ function MapArt({
     {/* Neighborhood names above each route, like the hero's "WILLIAMSBURG" (hidden
         in the city view, where they'd be too small to read). */}
     {scenes.map((s) => {
-      const p = toMap(s.at[0] + 0.5, s.at[1] - 4.2);
+      const p = toMap(s.at[0] + 0.5, s.at[1] + (s.nameBelow ? 4.6 : -4.2));
       return (
         <text
           key={s.name}
@@ -302,8 +300,8 @@ function MapArt({
 
 /**
  * "Your business" on the city map: first a dashed pink "?" pin, pulsing gently, tagged
- * "Your business?"; then, at CLAIM_AT, a solid pink pin (the others' style) with its own
- * route tracing around it, tagged "Your business".
+ * "Your business?"; then, at CLAIM_AT, a solid pink pin in the others' style (with their
+ * ripple), tagged "Your business".
  */
 function YourSpot({ claimed: start }: { claimed: boolean }) {
   const [claimed, setClaimed] = useState(start);
@@ -313,24 +311,10 @@ function YourSpot({ claimed: start }: { claimed: boolean }) {
     return () => clearTimeout(t);
   }, [start]);
   const at = toMap(YOU.at[0] + 0.5, YOU.at[1] + 0.5);
-  const size = ZOOM * 0.8;
-  const d = `M${toPoints(YOU.route.map((p) => shift(p, YOU.at))).replaceAll(" ", " L")} Z`;
+  // A size up from the other pins, with a tag big enough to read in the zoomed-out view.
+  const size = ZOOM * 1.05;
   return (
     <>
-      {claimed && (
-        <g transform={GRID_TRANSFORM}>
-          <motion.path
-            d={d}
-            className="fill-brand/10 stroke-brand"
-            strokeWidth={2 * ZOOM * 0.75}
-            strokeOpacity="0.85"
-            strokeLinejoin="round"
-            initial={start ? false : { pathLength: 0, fillOpacity: 0 }}
-            animate={{ pathLength: 1, fillOpacity: 1 }}
-            transition={{ pathLength: { delay: 0.15, duration: 0.6, ease: "easeInOut" }, fillOpacity: { delay: 0.5, duration: 0.4 } }}
-          />
-        </g>
-      )}
       {claimed ? (
         <Pin at={at} tone={paint.brand} size={size} delay={0} instant={start} />
       ) : (
@@ -393,10 +377,10 @@ function ReachLabel({ industry, reach, instant }: { industry: Industry; reach: s
   );
 }
 
-// The fold, in ms after the city view appears: after the spot is claimed and its route is
-// drawn, two folds, then the flip into the postcard.
+// The fold, in ms after the city view appears: a beat after the spot is claimed, two
+// folds, then the flip into the postcard.
 const FOLD = 0.5; // s per fold
-const STAGES = [CLAIM_AT + 1200, CLAIM_AT + 1750, CLAIM_AT + 2300, CLAIM_AT + 2580];
+const STAGES = [CLAIM_AT + 900, CLAIM_AT + 1450, CLAIM_AT + 2000, CLAIM_AT + 2280];
 // Warm paper, a touch darker toward one corner, for the back of the folded map.
 const paper = "border bg-[linear-gradient(155deg,var(--card)_35%,color-mix(in_oklab,var(--card)_92%,var(--foreground)))]";
 const face = "absolute inset-0 [backface-visibility:hidden]";
