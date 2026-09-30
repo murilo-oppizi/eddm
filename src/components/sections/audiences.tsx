@@ -1,8 +1,7 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import {
-  IconArrowsMaximize,
   IconBarbell,
   IconBuildingBank,
   IconCarGarage,
@@ -25,29 +24,22 @@ import {
 import {
   AnimatePresence,
   MotionConfig,
-  animate,
   motion,
-  useMotionValue,
-  useMotionValueEvent,
   useSpring,
-  type MotionValue,
 } from "motion/react";
 
 import { SectionHeading } from "@/components/sections/section-heading";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { audiences } from "@/content/site";
-import { playKey } from "@/lib/key-sounds";
 import { cn } from "@/lib/utils";
 
-// "Who it's for" as a picker wheel, like the iPhone's date picker: an endless drum of
-// business types (horizontal cards: icon + name) that you spin with the mouse wheel, a
-// drag or a swipe; the one in the middle is chosen. Over the wheel the pointer becomes the
-// flyer of the business under it. Clicking (or tapping) the chosen one opens its card in a
-// dialog: its name, what EDDM does for it, three moments to mail and its flyer.
+// "Who it's for" as a mural: every business type pinned on one wall, as small cards (a
+// tinted icon + the name), each at a slight tilt. Hovering one turns the pointer into its
+// flyer; a click or tap opens its card in a dialog: its name, what EDDM does for it,
+// three moments to mail (each swaps in its own flyer) and the flyer itself.
 
 type Industry = (typeof audiences.industries)[number];
 const industries = audiences.industries;
-const N = industries.length;
 
 const icons: Record<Industry["icon"], TablerIcon> = {
   restaurant: IconToolsKitchen2,
@@ -133,33 +125,22 @@ const tones: Record<Industry["tone"], { panel: string; text: string; icon: strin
   },
 };
 
-const mod = (n: number) => ((n % N) + N) % N;
-const snap = { type: "spring", stiffness: 260, damping: 30 } as const;
-
 export function Audiences() {
-  // The wheel's position, in rows (fractional while it moves); the chosen business is
-  // the row nearest the middle.
-  const position = useMotionValue(0);
+  // The business whose card is open (or was last open, while it closes).
   const [active, setActive] = useState(0);
   const [open, setOpen] = useState(false);
-  useMotionValueEvent(position, "change", (p) => {
-    const i = mod(Math.round(p));
-    if (i !== active) {
-      setActive(i);
-      playKey("tick", { gain: 0.16, pitch: 1.25 }); // a detent, if the meter's sounds are on
-    }
-  });
 
   return (
     <MotionConfig reducedMotion="user">
-      <section id="who-its-for" className="scroll-mt-20 pt-20 pb-14">
-        {/* Tighter than the other sections' gaps (and bottom padding): the wheel's top and
-            bottom rows fade out, which already reads as space. */}
-        <div className="container-page space-y-8">
+      <section id="who-its-for" className="scroll-mt-20 py-20">
+        <div className="container-page space-y-12">
           <SectionHeading eyebrow={audiences.eyebrow} title={audiences.title} body={audiences.body} />
-          <div className="mx-auto max-w-xl">
-            <Wheel position={position} onOpen={() => setOpen(true)} />
-          </div>
+          <Mural
+            onOpen={(i) => {
+              setActive(i);
+              setOpen(true);
+            }}
+          />
         </div>
         <BusinessDialog industry={industries[active]} open={open} onOpenChange={setOpen} />
       </section>
@@ -167,202 +148,109 @@ export function Audiences() {
   );
 }
 
-/* ------------------------------ The wheel ------------------------------ */
+/* ------------------------------ The mural ------------------------------ */
 
-const ROW = 64; // px between rows
-const STEP = 20; // degrees each row turns away from the middle
-const RADIUS = ROW / ((STEP * Math.PI) / 180); // the drum's radius, so rows sit ROW apart
-const REACH = 4; // rows drawn on each side of the middle
+// Each card's pinned-by-hand tilt and nudge: fixed per card (not random), so the wall is
+// the same on every visit and on the server.
+const tiltOf = (i: number) => (((i * 37) % 9) - 4) * 0.55; // -2.2° to 2.2°
+const nudgeOf = (i: number) => (((i * 53) % 7) - 3) * 2.5; // -7.5px to 7.5px
+/** The flyer pointer's tilt: -11° to -3° or 3° to 9°, never quite straight. */
+function randomTilt() {
+  const tilt = 3 + Math.random() * 7;
+  return Math.random() < 0.6 ? -tilt - 1 : tilt - 1;
+}
 
 /**
- * An endless drum of business cards. Spin it with the mouse wheel (while the pointer is on
- * it), a drag or a swipe (with momentum) or the arrow keys; click a card to bring it to
- * the middle, or the middle one (or Enter) to open it. Rows curve away above and below
- * and fade. With a mouse, the pointer is the flyer of the business under it.
+ * Every business type on one wall: the same cards as before (tinted icon + name), in
+ * centred rows, each pinned at a slight tilt and height. They come in one after another
+ * when the wall scrolls into view. Hovering one straightens and lifts it, and with a
+ * mouse the pointer becomes that business's flyer (a fresh random tilt each time); a
+ * click or tap opens its card.
  */
-function Wheel({ position, onOpen }: { position: MotionValue<number>; onOpen: () => void }) {
-  const el = useRef<HTMLDivElement>(null);
-  const [p, setP] = useState(0);
-  useMotionValueEvent(position, "change", setP);
-  const moving = useRef<ReturnType<typeof animate> | null>(null);
-  const settle = useRef(0);
-
-  const goTo = (target: number, velocity = 0) => {
-    moving.current?.stop();
-    moving.current = animate(position, target, { ...snap, velocity });
-  };
-  /** Rows from the middle to the point at clientY. */
-  const rowsFromMiddle = (clientY: number) => {
-    const r = el.current?.getBoundingClientRect();
-    return r ? (clientY - (r.top + r.height / 2)) / ROW : 0;
-  };
-
-  // The mouse wheel spins it (and settles on a row once it stops). Not passive, so the
-  // page doesn't scroll while you spin it.
-  useEffect(() => {
-    const node = el.current;
-    if (!node) return;
-    const onWheel = (e: WheelEvent) => {
-      e.preventDefault();
-      moving.current?.stop();
-      position.set(position.get() + e.deltaY / ROW / 1.6);
-      window.clearTimeout(settle.current);
-      settle.current = window.setTimeout(() => goTo(Math.round(position.get())), 120);
-    };
-    node.addEventListener("wheel", onWheel, { passive: false });
-    return () => node.removeEventListener("wheel", onWheel);
-    // goTo only reads refs and the stable motion value.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [position]);
-
-  // The flyer pointer (mouse only): follows the pointer and shows the business under it,
-  // at a fresh random tilt each time that business changes, whether the pointer moved or
-  // the wheel spun under it.
-  const [hover, setHover] = useState<{ row: number; business: number; angle: number } | null>(null);
-  const tilted = (row: number, business: number) =>
-    setHover((h) => {
-      if (h && h.row === row && h.business === business) return h;
-      if (h && h.business === business) return { ...h, row };
-      // -11° to -3° or 3° to 9°: never quite straight
-      const tilt = 3 + Math.random() * 7;
-      return { row, business, angle: Math.random() < 0.6 ? -tilt - 1 : tilt - 1 };
-    });
-  useMotionValueEvent(position, "change", (v) => {
-    if (hover) tilted(hover.row, mod(Math.round(v) + hover.row));
-  });
+function Mural({ onOpen }: { onOpen: (i: number) => void }) {
+  const wrap = useRef<HTMLDivElement>(null);
+  const [hover, setHover] = useState<{ i: number; angle: number } | null>(null);
   const fx = useSpring(0, { stiffness: 500, damping: 40, mass: 0.4 });
   const fy = useSpring(0, { stiffness: 500, damping: 40, mass: 0.4 });
-  const wrap = useRef<HTMLDivElement>(null);
-  const trackFlyer = (e: React.PointerEvent) => {
-    if (e.pointerType !== "mouse") return;
+  const follow = (e: React.PointerEvent) => {
     const r = wrap.current?.getBoundingClientRect();
     if (!r) return;
     fx.set(e.clientX - r.left);
     fy.set(e.clientY - r.top);
-    const row = Math.round(rowsFromMiddle(e.clientY));
-    tilted(row, mod(Math.round(position.get()) + row));
   };
-
-  // Dragging: follows the finger or mouse; on release it coasts with the flick's speed and
-  // lands on a row. A press without movement is a click on the card under it.
-  const drag = useRef<{ y: number; from: number; t: number; v: number; moved: boolean } | null>(null);
-  const onPointerDown = (e: React.PointerEvent) => {
-    moving.current?.stop();
-    drag.current = { y: e.clientY, from: position.get(), t: performance.now(), v: 0, moved: false };
-    (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+  const enter = (i: number, e: React.PointerEvent) => {
+    if (e.pointerType !== "mouse") return;
+    follow(e);
+    setHover({ i, angle: randomTilt() });
   };
-  const onPointerMove = (e: React.PointerEvent) => {
-    trackFlyer(e);
-    const d = drag.current;
-    if (!d) return;
-    const dy = e.clientY - d.y;
-    if (Math.abs(dy) > 4) d.moved = true;
-    const next = d.from - dy / ROW;
-    const now = performance.now();
-    d.v = ((next - position.get()) / Math.max(1, now - d.t)) * 1000; // rows per second
-    d.t = now;
-    position.set(next);
-  };
-  const onPointerUp = (e: React.PointerEvent) => {
-    const d = drag.current;
-    drag.current = null;
-    if (!d) return;
-    if (!d.moved) {
-      // A click: open the chosen one, or bring the one under the pointer to the middle.
-      const rows = Math.round(rowsFromMiddle(e.clientY));
-      if (rows === 0 && Math.abs(position.get() - Math.round(position.get())) < 0.2) onOpen();
-      else goTo(Math.round(position.get()) + rows);
-      return;
-    }
-    goTo(Math.round(position.get() + d.v * 0.18), d.v);
-  };
-
-  const base = Math.round(p);
-  const slots = Array.from({ length: REACH * 2 + 1 }, (_, k) => base - REACH + k);
-  const hovered = hover ? industries[hover.business] : null;
+  const hovered = hover ? industries[hover.i] : null;
 
   return (
-    <div ref={wrap} className="relative">
-      <div
-        ref={el}
-        role="listbox"
-        tabIndex={0}
-        aria-label="Kinds of business. Enter opens the chosen one."
-        aria-activedescendant={`wheel-${mod(base)}`}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") {
-            e.preventDefault();
-            onOpen();
-            return;
-          }
-          const step = e.key === "ArrowDown" ? 1 : e.key === "ArrowUp" ? -1 : 0;
-          if (!step) return;
-          e.preventDefault();
-          goTo(Math.round(position.get()) + step);
-        }}
-        onPointerDown={onPointerDown}
-        onPointerMove={onPointerMove}
-        onPointerUp={onPointerUp}
-        onPointerCancel={onPointerUp}
-        onPointerLeave={() => setHover(null)}
-        className={cn(
-          "relative h-80 touch-none overflow-hidden rounded-3xl bg-muted/60 outline-none select-none focus-visible:ring-3 focus-visible:ring-ring/50 sm:h-[26rem] [mask-image:linear-gradient(transparent,black_22%,black_78%,transparent)] [perspective:900px]",
-          hover ? "cursor-none" : "cursor-grab active:cursor-grabbing"
-        )}
+    <div
+      ref={wrap}
+      onPointerMove={(e) => e.pointerType === "mouse" && follow(e)}
+      className="relative rounded-3xl bg-muted/60 bg-[radial-gradient(circle,var(--border)_1px,transparent_1.5px)] bg-size-[22px_22px] px-3 py-8 sm:px-10 sm:py-14"
+    >
+      <motion.ul
+        aria-label="Kinds of business"
+        className="mx-auto flex max-w-5xl flex-wrap justify-center gap-x-2 gap-y-3 sm:gap-x-4 sm:gap-y-5"
+        initial="hidden"
+        whileInView="shown"
+        viewport={{ once: true, amount: 0.3 }}
+        variants={{ shown: { transition: { staggerChildren: 0.035 } } }}
       >
-        {/* The window the chosen card sits in */}
-        <span aria-hidden className="absolute inset-x-3 top-1/2 h-15 -translate-y-1/2 rounded-2xl bg-foreground/[0.04]" />
-        {slots.map((v) => {
-          const d = v - p; // rows from the middle
-          const angle = d * STEP;
-          if (Math.abs(angle) >= 90) return null;
-          const i = mod(v);
-          const item = industries[i];
+        {industries.map((item, i) => {
           const Icon = icons[item.icon];
           const tone = tones[item.tone];
-          const chosen = Math.abs(d) < 0.5;
           return (
-            <div
-              key={v}
-              id={chosen ? `wheel-${i}` : undefined}
-              role="option"
-              aria-selected={chosen}
-              className="absolute inset-x-5 top-1/2 flex h-14 items-center gap-3 rounded-2xl bg-card px-3 shadow-sm will-change-transform"
-              style={{
-                transform: `translateY(calc(-50% + ${RADIUS * Math.sin((angle * Math.PI) / 180)}px)) rotateX(${-angle}deg)`,
-                opacity: Math.cos((angle * Math.PI) / 180) ** 1.6,
-                boxShadow: chosen ? "0 6px 20px -8px rgb(0 0 0 / 0.25)" : undefined,
+            <motion.li
+              key={item.name}
+              variants={{
+                hidden: { opacity: 0, y: 14, scale: 0.94 },
+                shown: { opacity: 1, y: 0, scale: 1, transition: { type: "spring", stiffness: 300, damping: 24 } },
               }}
+              // The nudge only from sm up: on a phone's tighter rows it would make cards overlap.
+              style={{ rotate: tiltOf(i), ["--nudge" as string]: `${nudgeOf(i)}px` }}
+              className="sm:translate-y-(--nudge)"
             >
-              <span className={cn("grid size-9 shrink-0 place-items-center rounded-xl", tone.panel, tone.icon)}>
-                <Icon className="size-5" aria-hidden />
-              </span>
-              <span className={cn("truncate font-heading font-semibold tracking-tight", chosen ? "text-foreground" : "text-muted-foreground")}>
-                {item.name}
-              </span>
-              {chosen && (
-                <IconArrowsMaximize className="ml-auto size-4 shrink-0 text-muted-foreground" aria-hidden />
-              )}
-            </div>
+              <button
+                type="button"
+                onClick={() => onOpen(i)}
+                onPointerEnter={(e) => enter(i, e)}
+                onPointerLeave={() => setHover((h) => (h?.i === i ? null : h))}
+                className={cn(
+                  "group flex h-11 cursor-pointer items-center gap-2.5 rounded-xl bg-card py-0 pr-3.5 pl-2 shadow-sm sm:h-14 sm:gap-3 sm:rounded-2xl sm:pr-5 sm:pl-3 outline-none transition-[rotate,translate,box-shadow] duration-300 ease-out hover:-translate-y-1 hover:shadow-lg focus-visible:ring-3 focus-visible:ring-ring/50 pointer-fine:cursor-none",
+                  "hover:[rotate:calc(var(--tilt)*-1)]"
+                )}
+                style={{ "--tilt": `${tiltOf(i)}deg` } as React.CSSProperties}
+              >
+                <span className={cn("grid size-7 shrink-0 place-items-center rounded-lg sm:size-9 sm:rounded-xl", tone.panel, tone.icon)}>
+                  <Icon className="size-4 sm:size-5" aria-hidden />
+                </span>
+                <span className="font-heading text-sm font-semibold tracking-tight whitespace-nowrap sm:text-base">{item.name}</span>
+              </button>
+            </motion.li>
           );
         })}
-      </div>
+      </motion.ul>
 
-      {/* The flyer as the pointer: outside the wheel, so its fade and clip don't cut it */}
+      {/* The flyer as the pointer */}
       <AnimatePresence>
         {hovered && (
           <motion.div
+            key="flyer"
             aria-hidden
             className="pointer-events-none absolute top-0 left-0 z-20 w-44"
-            style={{ x: fx, y: fy, translateX: "-50%", translateY: "-50%" }}
+            // Just above and right of the pointer, so the card being pointed at stays visible.
+            style={{ x: fx, y: fy, translateX: "-12%", translateY: "-108%" }}
             initial={{ opacity: 0, scale: 0.6, rotate: (hover?.angle ?? -6) * 1.8 }}
             animate={{ opacity: 1, scale: 1, rotate: hover?.angle ?? -6 }}
             exit={{ opacity: 0, scale: 0.6, transition: { duration: 0.15 } }}
             transition={{ type: "spring", stiffness: 400, damping: 26 }}
           >
-            <Postcard industry={hovered} />
+            <Postcard industry={hovered} copy={hovered.moments[0]} />
             <span className="mt-1.5 block text-center text-[10px] font-semibold tracking-wide text-foreground/70 uppercase">
-              {hover?.row === 0 ? "Click to open" : "Click to choose"}
+              Click to open
             </span>
           </motion.div>
         )}
