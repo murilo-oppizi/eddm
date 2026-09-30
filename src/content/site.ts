@@ -160,8 +160,14 @@ export const audiences = {
   industries: [
     {
       name: "Restaurants and cafés",
-      // What these businesses typically mail (draft copy).
-      ideas: ["New menu", "Grand opening", "Delivery-zone deal"],
+      // Draft copy, from typical EDDM advice (what to mail, to whom, when): review before launch.
+      // The moments to mail, and the best months for it (1 = January).
+      moments: [
+        { title: "Opening day", body: "Every home within a mile, two weeks before you open, with a first-visit offer." },
+        { title: "A new menu", body: "The streets you deliver to, with a taste of what's new." },
+        { title: "Quiet nights", body: "Nearby homes, midweek, with a weeknight deal to fill the tables." },
+      ],
+      months: [2, 5, 9, 10, 11],
       icon: "restaurant",
       tone: "warning",
       body: "Announce a new menu or an opening to every home within delivery distance.",
@@ -169,8 +175,14 @@ export const audiences = {
     },
     {
       name: "Real estate agents",
-      // What these businesses typically mail (draft copy).
-      ideas: ["Just listed", "Just sold", "Free home valuation"],
+      // Draft copy, from typical EDDM advice (what to mail, to whom, when): review before launch.
+      // The moments to mail, and the best months for it (1 = January).
+      moments: [
+        { title: "Just listed", body: "The blocks around a new listing, to find buyers next door." },
+        { title: "Just sold", body: "The surrounding streets, to show you sell homes right there." },
+        { title: "Market update", body: "Your farm area every quarter, with local prices and a free valuation." },
+      ],
+      months: [2, 3, 4, 5, 9],
       icon: "realEstate",
       tone: "info",
       body: "Farm your neighborhood with just-listed and just-sold cards that keep you top of mind.",
@@ -178,8 +190,14 @@ export const audiences = {
     },
     {
       name: "Salons and spas",
-      // What these businesses typically mail (draft copy).
-      ideas: ["First-visit offer", "Quiet-day special", "New stylist"],
+      // Draft copy, from typical EDDM advice (what to mail, to whom, when): review before launch.
+      // The moments to mail, and the best months for it (1 = January).
+      moments: [
+        { title: "New in the neighborhood", body: "Every home nearby, with a first-visit discount." },
+        { title: "Quiet weekdays", body: "Homes close by, with a Tuesday-to-Thursday offer." },
+        { title: "Gift season", body: "The same streets before the holidays, with gift cards." },
+      ],
+      months: [2, 4, 5, 11, 12],
       icon: "salon",
       // Cyan, not the brand pink: on the map, pink is "Your business".
       tone: "cyan",
@@ -188,8 +206,14 @@ export const audiences = {
     },
     {
       name: "Home services",
-      // What these businesses typically mail (draft copy).
-      ideas: ["Seasonal tune-up", "Storm-season check", "Referral deal"],
+      // Draft copy, from typical EDDM advice (what to mail, to whom, when): review before launch.
+      // The moments to mail, and the best months for it (1 = January).
+      moments: [
+        { title: "Before the season", body: "Homeowners, a few weeks before the heat or the cold arrives." },
+        { title: "Older homes", body: "Neighborhoods with older houses, for inspections and repairs." },
+        { title: "After a storm", body: "The streets it hit, with a free check-up." },
+      ],
+      months: [3, 4, 5, 9, 10],
       icon: "homeServices",
       tone: "success",
       body: "Reach homeowners right before the season hits: HVAC, roofing, cleaning, landscaping.",
@@ -197,8 +221,14 @@ export const audiences = {
     },
     {
       name: "Gyms and fitness",
-      // What these businesses typically mail (draft copy).
-      ideas: ["Free first week", "New class launch", "New location"],
+      // Draft copy, from typical EDDM advice (what to mail, to whom, when): review before launch.
+      // The moments to mail, and the best months for it (1 = January).
+      moments: [
+        { title: "New Year", body: "Everyone nearby in late December, with a free first week." },
+        { title: "New location", body: "Homes within a short drive, before the doors open." },
+        { title: "Back to routine", body: "Nearby homes in September, with an intro class pass." },
+      ],
+      months: [1, 3, 4, 5, 9],
       icon: "gym",
       tone: "ai",
       body: "Launch a new location or a new class with a free pass for the neighborhood.",
@@ -206,8 +236,14 @@ export const audiences = {
     },
     {
       name: "Retail stores",
-      // What these businesses typically mail (draft copy).
-      ideas: ["Grand opening", "Seasonal sale", "New collection"],
+      // Draft copy, from typical EDDM advice (what to mail, to whom, when): review before launch.
+      // The moments to mail, and the best months for it (1 = January).
+      moments: [
+        { title: "Grand opening", body: "Every home around the store, the week before you open." },
+        { title: "Seasonal sale", body: "Nearby homes, ahead of the big shopping weeks." },
+        { title: "New collection", body: "Your best neighborhoods, with an early-access offer." },
+      ],
+      months: [3, 8, 10, 11, 12],
       icon: "retail",
       tone: "neutral",
       body: "Bring foot traffic to a grand opening, a seasonal sale or a new collection.",
