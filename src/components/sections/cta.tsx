@@ -24,8 +24,24 @@ export function Cta() {
       <div className="container-page">
         <div className="relative">
           <div className="relative overflow-hidden rounded-3xl bg-brand px-6 py-14 text-brand-foreground sm:px-12">
+            {/* A soft light in the top-right corner: the same glow as a 256px circle at 20%
+                blurred by 40px, drawn as a gradient instead. iPhone Safari clips blurred
+                elements inside rounded, clipped boxes at hard edges, leaving bands of light. */}
             <div
-              className="absolute -top-16 -right-16 size-64 rounded-full bg-background/20 blur-2xl"
+              className="absolute inset-0"
+              style={{
+                backgroundImage: `radial-gradient(circle at calc(100% - 64px) 64px, ${[
+                  [20, 0],
+                  [19.5, 48],
+                  [16.8, 88],
+                  [10, 128],
+                  [3.2, 168],
+                  [0.5, 208],
+                  [0, 240],
+                ]
+                  .map(([a, d]) => `color-mix(in oklab, var(--background) ${a}%, transparent) ${d}px`)
+                  .join(", ")})`,
+              }}
               aria-hidden
             />
             <div className="relative grid items-center gap-8 lg:grid-cols-2">
