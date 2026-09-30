@@ -163,7 +163,7 @@ export function Audiences() {
               className="h-(--stage-h) min-w-0 lg:h-auto"
               style={{ "--stage-h": `${rows.length * STEP_SVH}svh` } as React.CSSProperties}
             >
-              <div className="sticky top-16 flex h-[calc(100svh-4rem)] flex-col justify-center gap-14 lg:top-[calc(50vh-15rem)] lg:block lg:h-auto">
+              <div className="sticky top-16 flex h-[calc(100svh-4rem)] flex-col justify-center gap-8 lg:top-[calc(50vh-15rem)] lg:block lg:h-auto">
                 {/* The map is capped by the screen's height (leaving 16rem for the gap and the
                     card, plus the header), so on short or wide screens, like a tablet, the
                     cards still fit below it. 1.222 is the map's aspect (440 / 360). */}
@@ -255,7 +255,9 @@ function Row({
  *  the hero's map: dealt in when the industry changes, then drifting gently. */
 function FloatingPostcard({ industry, index, instant }: { industry: Industry | null; index: number; instant: boolean }) {
   return (
-    <div className="pointer-events-none absolute -right-3 -bottom-10 w-[46%] sm:-right-6">
+    // Phones and tablets: tucked inside the map's bottom-right corner, so it doesn't crowd
+    // the cards below. Desktop: overhanging the corner, like the cards over the hero's map.
+    <div className="pointer-events-none absolute right-3 bottom-3 w-[42%] lg:-right-6 lg:-bottom-10 lg:w-[46%]">
       <AnimatePresence initial={false}>
         {industry && (
           <motion.div
