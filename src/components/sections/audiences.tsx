@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   IconArrowsMaximize,
   IconBarbell,
+  IconSend2,
   IconBuildingBank,
   IconCarGarage,
   IconDental,
@@ -378,7 +379,9 @@ function Wheel({ position, onOpen }: { position: MotionValue<number>; onOpen: ()
 /**
  * The chosen business, in a dialog over the blurred page: a white card with its name,
  * what EDDM does for it and its three moments to mail on one side, and its flyer, large
- * and tilted, on a soft panel in its color on the other. Stacked on phones.
+ * and tilted, on a soft panel in its color on the other. Stacked on phones. Picking a
+ * moment swaps the flyer for that moment's: the old one is sent off (up and away), the
+ * new one arrives from below and lands.
  */
 function BusinessDialog({
   industry,
@@ -391,8 +394,17 @@ function BusinessDialog({
 }) {
   const Icon = icons[industry.icon];
   const tone = tones[industry.tone];
+  // The chosen moment: back to the first once the card has closed, and for each business.
+  const [chosen, setChosen] = useState({ key: "", i: 0 });
+  const k = industry.name;
+  const current = chosen.key === k ? chosen.i : 0;
+  const moment = industry.moments[current];
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog
+      open={open}
+      onOpenChange={onOpenChange}
+      onOpenChangeComplete={(isOpen) => !isOpen && setChosen({ key: "", i: 0 })}
+    >
       <DialogContent className="max-w-4xl">
         <div
           className={cn(
@@ -408,21 +420,77 @@ function BusinessDialog({
 
             <p className={cn("mt-8 text-xs font-semibold tracking-wider uppercase", tone.text)}>3 moments to mail</p>
             <ol className="mt-3 divide-y divide-dashed divide-border border-y border-dashed border-border">
-              {industry.moments.map((moment, i) => (
-                <li key={moment.title} className="flex items-baseline gap-4 py-3.5">
-                  <span className={cn("font-heading text-sm font-bold tabular-nums", tone.icon)}>0{i + 1}</span>
-                  <span className="font-heading text-lg leading-snug font-semibold tracking-tight">{moment.title}</span>
-                </li>
-              ))}
+              {industry.moments.map((m, i) => {
+                const on = i === current;
+                return (
+                  <li key={m.title}>
+                    <button
+                      type="button"
+                      aria-pressed={on}
+                      onClick={() => setChosen({ key: k, i })}
+                      className="group flex w-full cursor-pointer items-baseline gap-4 py-3.5 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                    >
+                      <span
+                        className={cn(
+                          "font-heading text-sm font-bold tabular-nums transition-colors",
+                          on ? tone.icon : "text-muted-foreground/60"
+                        )}
+                      >
+                        0{i + 1}
+                      </span>
+                      <span
+                        className={cn(
+                          "flex-1 font-heading text-lg leading-snug font-semibold tracking-tight transition-colors",
+                          on ? "text-foreground" : "text-muted-foreground group-hover:text-foreground"
+                        )}
+                      >
+                        {m.title}
+                      </span>
+                      <IconSend2
+                        aria-hidden
+                        className={cn(
+                          "size-4 self-center transition-all duration-300",
+                          on ? cn("translate-x-0 opacity-100", tone.icon) : "-translate-x-1 opacity-0 group-hover:opacity-40"
+                        )}
+                      />
+                    </button>
+                  </li>
+                );
+              })}
             </ol>
           </div>
 
-          <figure className={cn("flex flex-col justify-center rounded-2xl px-6 py-8 sm:px-10", tone.panel)}>
-            <div className="rotate-2 drop-shadow-sm">
-              <Postcard industry={industry} />
+          <figure className={cn("flex flex-col justify-center overflow-hidden rounded-2xl px-6 py-8 sm:px-10", tone.panel)}>
+            {/* The flyer: sent off and replaced whenever the moment changes */}
+            <div className="grid">
+              <AnimatePresence initial={false}>
+                <motion.div
+                  key={current}
+                  className="drop-shadow-sm [grid-area:1/1]"
+                  initial={{ x: "-18%", y: "70%", rotate: -12, scale: 0.92, opacity: 0 }}
+                  animate={{
+                    x: 0,
+                    y: 0,
+                    rotate: 2,
+                    scale: 1,
+                    opacity: 1,
+                    transition: { type: "spring", stiffness: 190, damping: 20, delay: 0.18 },
+                  }}
+                  exit={{
+                    x: "70%",
+                    y: "-85%",
+                    rotate: 16,
+                    scale: 0.7,
+                    opacity: 0,
+                    transition: { duration: 0.45, ease: [0.5, 0, 0.75, 0] },
+                  }}
+                >
+                  <Postcard industry={industry} copy={moment} />
+                </motion.div>
+              </AnimatePresence>
             </div>
-            <figcaption className={cn("mt-5 text-center text-xs font-medium", tone.text)}>
-              An example {industry.name.toLowerCase()} postcard, 9″ × 6.25″
+            <figcaption className={cn("mt-5 text-center text-xs font-medium", tone.text)} aria-live="polite">
+              Example postcard · {moment.title} · 9″ × 6.25″
             </figcaption>
           </figure>
         </div>
@@ -432,10 +500,10 @@ function BusinessDialog({
 }
 
 /** A 9″ × 6.25″ EDDM postcard: the offer on the left, postage and addressing on the right. */
-function Postcard({ industry }: { industry: Industry }) {
+function Postcard({ industry, copy }: { industry: Industry; copy?: { headline: string; offer: string } }) {
   const Icon = icons[industry.icon];
   const tone = tones[industry.tone];
-  const card = industry.postcard;
+  const card = { ...industry.postcard, ...copy };
   return (
     <div className="@container grid aspect-[9/6.25] grid-cols-[1.4fr_1fr] overflow-hidden rounded-lg border bg-card shadow-md">
       {/* Front: the offer */}

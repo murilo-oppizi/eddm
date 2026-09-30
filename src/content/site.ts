@@ -161,11 +161,11 @@ export const audiences = {
     {
       name: "Restaurants and cafés",
       // Draft copy, from typical EDDM advice (what to mail, to whom, when): review before launch.
-      // The moments to mail.
+      // The moments to mail, each with the headline and offer its flyer would carry.
       moments: [
-        { title: "Opening day" },
-        { title: "A new menu" },
-        { title: "Quiet nights" },
+        { title: "Opening day", headline: "Now open on your block", offer: "A free pastry on your first visit" },
+        { title: "A new menu", headline: "Our fall menu is here", offer: "Free pastry with any coffee" },
+        { title: "Quiet nights", headline: "Tuesday nights, 2 for 1", offer: "Any pasta, every Tuesday" },
       ],
       icon: "restaurant",
       tone: "warning",
@@ -175,11 +175,11 @@ export const audiences = {
     {
       name: "Real estate agents",
       // Draft copy, from typical EDDM advice (what to mail, to whom, when): review before launch.
-      // The moments to mail.
+      // The moments to mail, each with the headline and offer its flyer would carry.
       moments: [
-        { title: "Just listed" },
-        { title: "Just sold" },
-        { title: "Market update" },
+        { title: "Just listed", headline: "Just listed on Maple Ave", offer: "Open house this Sunday, 1 to 4 pm" },
+        { title: "Just sold", headline: "Just sold on your street", offer: "Curious what your home is worth?" },
+        { title: "Market update", headline: "Your neighborhood, this quarter", offer: "See what homes sold for nearby" },
       ],
       icon: "realEstate",
       tone: "info",
@@ -189,11 +189,11 @@ export const audiences = {
     {
       name: "Salons and spas",
       // Draft copy, from typical EDDM advice (what to mail, to whom, when): review before launch.
-      // The moments to mail.
+      // The moments to mail, each with the headline and offer its flyer would carry.
       moments: [
-        { title: "New in town" },
-        { title: "Quiet weekdays" },
-        { title: "Gift season" },
+        { title: "New in town", headline: "Your first visit, 30% off", offer: "Cuts, color and facials" },
+        { title: "Quiet weekdays", headline: "A midweek glow-up", offer: "20% off, Tuesday to Thursday" },
+        { title: "Gift season", headline: "Give the gift of a day off", offer: "Gift cards in any amount" },
       ],
       icon: "salon",
       // Cyan, not the brand pink: on the map, pink is "Your business".
@@ -204,11 +204,11 @@ export const audiences = {
     {
       name: "Home services",
       // Draft copy, from typical EDDM advice (what to mail, to whom, when): review before launch.
-      // The moments to mail.
+      // The moments to mail, each with the headline and offer its flyer would carry.
       moments: [
-        { title: "Before the season" },
-        { title: "Older homes" },
-        { title: "After a storm" },
+        { title: "Before the season", headline: "Spring AC tune-up, $79", offer: "Beat the first heat wave" },
+        { title: "Older homes", headline: "Older home? Free inspection", offer: "Wiring, pipes and heating, checked" },
+        { title: "After a storm", headline: "Storm damage? We're nearby", offer: "A free check-up this week" },
       ],
       icon: "homeServices",
       tone: "success",
@@ -218,11 +218,11 @@ export const audiences = {
     {
       name: "Gyms and fitness",
       // Draft copy, from typical EDDM advice (what to mail, to whom, when): review before launch.
-      // The moments to mail.
+      // The moments to mail, each with the headline and offer its flyer would carry.
       moments: [
-        { title: "New Year" },
-        { title: "New location" },
-        { title: "Back to routine" },
+        { title: "New Year", headline: "New year, first week free", offer: "Classes, weights and coaching" },
+        { title: "New location", headline: "Now open on 5th Avenue", offer: "Founding-member rates this month" },
+        { title: "Back to routine", headline: "Back to your routine", offer: "An intro class pass, on us" },
       ],
       icon: "gym",
       tone: "ai",
@@ -232,11 +232,11 @@ export const audiences = {
     {
       name: "Retail stores",
       // Draft copy, from typical EDDM advice (what to mail, to whom, when): review before launch.
-      // The moments to mail.
+      // The moments to mail, each with the headline and offer its flyer would carry.
       moments: [
-        { title: "Grand opening" },
-        { title: "Seasonal sale" },
-        { title: "New collection" },
+        { title: "Grand opening", headline: "Grand opening Saturday", offer: "20% off everything, all weekend" },
+        { title: "Seasonal sale", headline: "Our biggest sale of the season", offer: "Up to 40% off, this week only" },
+        { title: "New collection", headline: "The new collection is in", offer: "Early access for neighbors" },
       ],
       icon: "retail",
       tone: "neutral",
@@ -246,11 +246,11 @@ export const audiences = {
     {
       name: "Dentists and clinics",
       // Draft copy, from typical EDDM advice (what to mail, to whom, when): review before launch.
-      // The moments to mail.
+      // The moments to mail, each with the headline and offer its flyer would carry.
       moments: [
-        { title: "New patients" },
-        { title: "Back to school" },
-        { title: "Year-end benefits" },
+        { title: "New patients", headline: "New patients welcome", offer: "Free exam with your first cleaning" },
+        { title: "Back to school", headline: "Back-to-school smiles", offer: "A checkup and cleaning for kids" },
+        { title: "Year-end benefits", headline: "Use your benefits this year", offer: "Book before December 31" },
       ],
       icon: "dental",
       tone: "sky",
@@ -260,11 +260,11 @@ export const audiences = {
     {
       name: "Auto repair",
       // Draft copy, from typical EDDM advice (what to mail, to whom, when): review before launch.
-      // The moments to mail.
+      // The moments to mail, each with the headline and offer its flyer would carry.
       moments: [
-        { title: "Before winter" },
-        { title: "Road-trip season" },
-        { title: "A new shop" },
+        { title: "Before winter", headline: "Get winter-ready", offer: "Battery, tires and brakes checked" },
+        { title: "Road-trip season", headline: "Road-trip ready?", offer: "A 30-point inspection, $49" },
+        { title: "A new shop", headline: "Now open on Main St", offer: "Your first oil change, $29.99" },
       ],
       icon: "autoRepair",
       tone: "orange",
@@ -274,11 +274,11 @@ export const audiences = {
     {
       name: "Pet care",
       // Draft copy, from typical EDDM advice (what to mail, to whom, when): review before launch.
-      // The moments to mail.
+      // The moments to mail, each with the headline and offer its flyer would carry.
       moments: [
-        { title: "Grand opening" },
-        { title: "Spring checkups" },
-        { title: "Holiday boarding" },
+        { title: "Grand opening", headline: "First groom, 20% off", offer: "Baths, trims and nail care" },
+        { title: "Spring checkups", headline: "Spring checkup time", offer: "A wellness visit for $39" },
+        { title: "Holiday boarding", headline: "Book their holiday stay", offer: "Early-booking rates for boarding" },
       ],
       icon: "pets",
       tone: "rose",
@@ -288,11 +288,11 @@ export const audiences = {
     {
       name: "Landscaping and lawn care",
       // Draft copy, from typical EDDM advice (what to mail, to whom, when): review before launch.
-      // The moments to mail.
+      // The moments to mail, each with the headline and offer its flyer would carry.
       moments: [
-        { title: "Spring cleanup" },
-        { title: "Fall leaves" },
-        { title: "Neighbor deal" },
+        { title: "Spring cleanup", headline: "Spring cleanup, $99", offer: "Free quote, same-week start" },
+        { title: "Fall leaves", headline: "Leave the leaves to us", offer: "Fall cleanup from $119" },
+        { title: "Neighbor deal", headline: "We're already on your street", offer: "15% off for neighbors" },
       ],
       icon: "landscaping",
       tone: "lime",
@@ -302,11 +302,11 @@ export const audiences = {
     {
       name: "Tutoring and schools",
       // Draft copy, from typical EDDM advice (what to mail, to whom, when): review before launch.
-      // The moments to mail.
+      // The moments to mail, each with the headline and offer its flyer would carry.
       moments: [
-        { title: "Back to school" },
-        { title: "Exam season" },
-        { title: "Summer camp" },
+        { title: "Back to school", headline: "Ace the new school year", offer: "First session free" },
+        { title: "Exam season", headline: "Finals are coming", offer: "A study pack for every subject" },
+        { title: "Summer camp", headline: "Summer camp is back", offer: "Early-bird spots now open" },
       ],
       icon: "school",
       tone: "indigo",
@@ -317,11 +317,11 @@ export const audiences = {
       name: "Community and nonprofits",
       // From Oppizi's Public & Community clients.
       // Draft copy, from typical EDDM advice (what to mail, to whom, when): review before launch.
-      // The moments to mail.
+      // The moments to mail, each with the headline and offer its flyer would carry.
       moments: [
-        { title: "A fundraiser" },
-        { title: "Volunteers" },
-        { title: "A public notice" },
+        { title: "A fundraiser", headline: "Help us feed 500 families", offer: "Every dollar stays local" },
+        { title: "Volunteers", headline: "Volunteers wanted", offer: "Two hours on a Saturday" },
+        { title: "A public notice", headline: "Town hall at Riverside Park", offer: "Thursday at 7 pm, all welcome" },
       ],
       icon: "community",
       tone: "teal",
@@ -332,11 +332,11 @@ export const audiences = {
       name: "Events and entertainment",
       // From Oppizi's Entertainment, Media & Events clients.
       // Draft copy, from typical EDDM advice (what to mail, to whom, when): review before launch.
-      // The moments to mail.
+      // The moments to mail, each with the headline and offer its flyer would carry.
       moments: [
-        { title: "Opening night" },
-        { title: "A local fair" },
-        { title: "Season passes" },
+        { title: "Opening night", headline: "Opening night, Friday", offer: "Two tickets for the price of one" },
+        { title: "A local fair", headline: "The fall fair is back", offer: "Food, music and games, free entry" },
+        { title: "Season passes", headline: "Your season pass is here", offer: "Early-bird price until May 1" },
       ],
       icon: "events",
       tone: "fuchsia",
@@ -347,11 +347,11 @@ export const audiences = {
       name: "Delivery apps and marketplaces",
       // From Oppizi's Internet Marketplace Platforms clients (food delivery, meal kits).
       // Draft copy, from typical EDDM advice (what to mail, to whom, when): review before launch.
-      // The moments to mail.
+      // The moments to mail, each with the headline and offer its flyer would carry.
       moments: [
-        { title: "A new zone" },
-        { title: "Win-back" },
-        { title: "A new category" },
+        { title: "A new zone", headline: "We now deliver here", offer: "$10 off your first order" },
+        { title: "Win-back", headline: "We miss you", offer: "$8 off your next order" },
+        { title: "A new category", headline: "Now delivering groceries", offer: "Free delivery on your first basket" },
       ],
       icon: "delivery",
       tone: "violet",
@@ -362,11 +362,11 @@ export const audiences = {
       name: "Builders and remodelers",
       // From Oppizi's Real Estate & Construction clients.
       // Draft copy, from typical EDDM advice (what to mail, to whom, when): review before launch.
-      // The moments to mail.
+      // The moments to mail, each with the headline and offer its flyer would carry.
       moments: [
-        { title: "Job-site neighbors" },
-        { title: "Remodel season" },
-        { title: "A new development" },
+        { title: "Job-site neighbors", headline: "Just finished on your street", offer: "Free design consultation" },
+        { title: "Remodel season", headline: "Plan your spring remodel", offer: "Book by March, save 10%" },
+        { title: "A new development", headline: "Coming soon: Oak Grove homes", offer: "Get a preview invite" },
       ],
       icon: "builders",
       tone: "amber",
@@ -377,11 +377,11 @@ export const audiences = {
       name: "Banks and tax preparers",
       // From Oppizi's Finance clients: the local ones (branches, tax offices).
       // Draft copy, from typical EDDM advice (what to mail, to whom, when): review before launch.
-      // The moments to mail.
+      // The moments to mail, each with the headline and offer its flyer would carry.
       moments: [
-        { title: "A new branch" },
-        { title: "Tax season" },
-        { title: "A better rate" },
+        { title: "A new branch", headline: "A new branch, around the corner", offer: "$100 when you open an account" },
+        { title: "Tax season", headline: "Tax season, sorted", offer: "A free first consultation" },
+        { title: "A better rate", headline: "A better savings rate", offer: "Visit your neighborhood branch" },
       ],
       icon: "finance",
       tone: "emerald",
