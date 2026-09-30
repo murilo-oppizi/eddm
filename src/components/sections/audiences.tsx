@@ -1,10 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
+import Link from "next/link";
 import {
+  IconArrowRight,
   IconBarbell,
+  IconChevronDown,
   IconHomeDollar,
-  IconMapPins,
   IconQrcode,
   IconScissors,
   IconShoppingBag,
@@ -12,31 +14,16 @@ import {
   IconToolsKitchen2,
   type TablerIcon,
 } from "@tabler/icons-react";
-import {
-  AnimatePresence,
-  MotionConfig,
-  easeInOut,
-  motion,
-  useMotionValue,
-  useMotionValueEvent,
-  useScroll,
-  useTransform,
-  useVelocity,
-} from "motion/react";
 
-import { NeighborhoodMap } from "@/components/sections/neighborhood-map";
 import { SectionHeading } from "@/components/sections/section-heading";
-import { audiences } from "@/content/site";
+import { audiences, site } from "@/content/site";
 import { cn } from "@/lib/utils";
 
-// "Who it's for": a sticky map of one city (left) glides to each industry's neighborhood
-// as its row scrolls through the middle of the screen (right): its pin pops in and its
-// route traces, with its postcard floating over the corner. The last row, "Your business",
-// folds the map up into its own postcard with the call to action (see neighborhood-map.tsx). On phones the
-// map and a row of industry cards pin to the screen, like How it works on desktop: scrolling
-// slides the cards along one at a time (each holds a moment, then moves on) and the map
-// follows the one in front. Rows are clickable everywhere: they scroll into place and move
-// the map.
+// "Who it's for" as expanding panels (after Square's industry panels): one tall panel per
+// kind of business. The open one takes most of the width, tinted in its color, with its
+// name, what EDDM does for it, the campaigns it typically mails and its postcard; the rest
+// fold down to slim spines (icon + sideways name). Desktop: hover or click a spine to
+// open it. Phones: the same panels stacked, one open at a time.
 
 type Industry = (typeof audiences.industries)[number];
 
@@ -49,15 +36,13 @@ const icons: Record<Industry["icon"], TablerIcon> = {
   retail: IconShoppingBag,
 };
 
-// Each industry's mailer gets its own tint from the Oppizi tokens.
-const tones: Record<Industry["tone"] | "brand", { panel: string; text: string; icon: string }> = {
-  brand: { panel: "bg-brand-subtle", text: "text-brand-subtle-foreground", icon: "text-brand" },
+// Each industry's tint from the Oppizi tokens (cyan from the design system's scale).
+const tones: Record<Industry["tone"], { panel: string; text: string; icon: string }> = {
   info: { panel: "bg-info-subtle", text: "text-info-subtle-foreground", icon: "text-info" },
   success: { panel: "bg-success-subtle", text: "text-success-subtle-foreground", icon: "text-success" },
   warning: { panel: "bg-warning-subtle", text: "text-warning-subtle-foreground", icon: "text-warning" },
   ai: { panel: "bg-ai-subtle", text: "text-ai-subtle-foreground", icon: "text-ai" },
   neutral: { panel: "bg-muted", text: "text-foreground", icon: "text-foreground" },
-  // From the design system's cyan scale (no semantic token for it).
   cyan: {
     panel: "bg-(--ds-tw-cyan-50) dark:bg-(--ds-tw-cyan-950)",
     text: "text-(--ds-tw-cyan-800) dark:text-(--ds-tw-cyan-200)",
@@ -65,231 +50,204 @@ const tones: Record<Industry["tone"] | "brand", { panel: string; text: string; i
   },
 };
 
-/** The list: every industry, then "Your business" (the city view). */
-const rows = [
-  ...audiences.industries.map((industry) => ({
-    name: industry.name,
-    body: industry.body,
-    Icon: icons[industry.icon],
-    tone: tones[industry.tone],
-  })),
-  // Its icon in the brand's pink, like its postcard.
-  { name: audiences.overview.name, body: audiences.overview.body, Icon: IconMapPins, tone: tones.brand },
-];
-
-/** Page scroll speed (px/s) above which a business appears already finished: someone
- *  flinging past shouldn't see half-drawn routes. */
-const FLING = 2500;
-/** Phones: scroll per card while the stage is pinned (svh, so the phone's toolbar
- *  showing and hiding doesn't shift it). */
-const STEP_SVH = 48;
-const clamp01 = (v: number) => Math.min(1, Math.max(0, v));
+/** How long the pointer rests on a spine before it opens (so sweeping across doesn't
+ *  flick through every panel). */
+const HOVER_INTENT = 120;
 
 export function Audiences() {
-  const [active, setActive] = useState(0);
-  const [instant, setInstant] = useState(false);
-  // The last business shown: the map the finale folds up.
-  const [business, setBusiness] = useState(0);
-  const [seen, setSeen] = useState(() => new Set([0]));
-  const speed = useVelocity(useScroll().scrollY);
-  const show = (i: number, fast = false) => {
-    setActive(i);
-    setInstant(fast);
-    if (i < audiences.industries.length) setBusiness(i);
-    setSeen((prev) => (prev.has(i) ? prev : new Set(prev).add(i)));
+  const [open, setOpen] = useState(0);
+  const intent = useRef(0);
+  const hover = (i: number) => {
+    if (!window.matchMedia("(pointer: fine)").matches) return;
+    window.clearTimeout(intent.current);
+    intent.current = window.setTimeout(() => setOpen(i), HOVER_INTENT);
   };
-  const desktop = () => window.matchMedia("(min-width: 64rem)").matches;
-  // While a clicked row scrolls into place, the rows it passes don't take over the map.
-  const lock = useRef({ on: false, timer: 0 });
-  const locked = () => lock.current.on;
-
-  // Phones: the pinned stage. Its scroll (0 → 1) becomes a position along the cards: each
-  // card holds for the first half of its stretch, then eases over to the next.
-  const stage = useRef<HTMLDivElement>(null);
-  const firstCard = useRef<HTMLLIElement>(null);
-  const track = useRef<HTMLOListElement>(null);
-  const stageScroll = useScroll({ target: stage, offset: ["start start", "end end"] }).scrollYProgress;
-  const last = rows.length - 1;
-  const cardAt = (p: number) => {
-    const raw = clamp01((p - 0.02) / 0.84) * last;
-    const i = Math.floor(raw);
-    return Math.min(last, i + easeInOut(clamp01((raw - i - 0.55) / 0.45)));
-  };
-  const position = useTransform(stageScroll, cardAt);
-  // The card in front sits in the middle, its neighbours peeking in equally either side.
-  // Placed as the scroll moves the cards, and also on load and on resize (the centring
-  // depends on the card's width), since the position may not change then.
-  const trackX = useMotionValue(0);
-  useEffect(() => {
-    const place = () => {
-      const card = firstCard.current;
-      const row = track.current;
-      if (card && row) trackX.set((row.offsetWidth - card.offsetWidth) / 2 - position.get() * (card.offsetWidth + 16));
-    };
-    place();
-    const off = position.on("change", place);
-    window.addEventListener("resize", place);
-    return () => {
-      off();
-      window.removeEventListener("resize", place);
-    };
-  }, [position, trackX]);
-  useMotionValueEvent(position, "change", (v) => {
-    if (desktop() || locked()) return;
-    const i = Math.round(v);
-    if (i !== active) show(i, Math.abs(speed.get()) > FLING);
-  });
-  /** Where to scroll the page so card `i` sits in front, holding still. */
-  const stageTop = (i: number) => {
-    const el = stage.current;
-    if (!el) return 0;
-    const p = 0.02 + ((i === last ? last : i + 0.2) / last) * 0.84;
-    return el.getBoundingClientRect().top + window.scrollY + p * (el.offsetHeight - window.innerHeight);
-  };
-
-  // A click shows that row's neighborhood right away and brings the row into place: to the
-  // middle of the screen on desktop, to the front of the pinned cards on phones.
-  const choose = (i: number, row: HTMLElement) => {
-    show(i);
-    window.clearTimeout(lock.current.timer);
-    lock.current.on = true;
-    lock.current.timer = window.setTimeout(() => (lock.current.on = false), 1200);
-    if (desktop()) row.scrollIntoView({ block: "center", behavior: "smooth" });
-    else window.scrollTo({ top: stageTop(i), behavior: "smooth" });
-  };
-
-  const map = (
-    <NeighborhoodMap active={active} backdrop={business} seen={seen} instant={instant}>
-      <FloatingPostcard industry={audiences.industries[active] ?? null} index={active} instant={instant} />
-    </NeighborhoodMap>
-  );
+  const unhover = () => window.clearTimeout(intent.current);
 
   return (
-    <MotionConfig reducedMotion="user">
-      <section id="who-its-for" className="scroll-mt-20 py-20">
-        <div className="container-page space-y-12">
-          <SectionHeading eyebrow={audiences.eyebrow} title={audiences.title} body={audiences.body} />
+    <section id="who-its-for" className="scroll-mt-20 py-20">
+      <div className="container-page space-y-12">
+        <SectionHeading eyebrow={audiences.eyebrow} title={audiences.title} body={audiences.body} />
 
-          <div className="grid gap-12 lg:grid-cols-[1.05fr_1fr] lg:gap-16">
-            {/* Desktop: the map, sticky beside the list. Phones: a tall stage whose inner
-                part pins under the header (map on top, cards below) while its height
-                scrolls by. */}
-            <div
-              ref={stage}
-              // min-w-0: the grid column mustn't grow to fit the long row of cards.
-              className="h-(--stage-h) min-w-0 lg:h-auto"
-              style={{ "--stage-h": `${rows.length * STEP_SVH}svh` } as React.CSSProperties}
-            >
-              <div className="sticky top-16 flex h-[calc(100svh-4rem)] flex-col justify-center gap-8 lg:top-[calc(50vh-15rem)] lg:block lg:h-auto">
-                {/* The map, with room below for the postcard that floats off its corner (pb-10
-                    matches the overhang), so the gap to the cards is measured from the
-                    postcard. Capped by the screen's height (header 4rem + overhang 2.5rem +
-                    gap 2rem + card ~12.5rem), so the cards always fit below it, even on short
-                    or wide screens like a tablet. 1.222 is the map's aspect (440 / 360). */}
-                <div className="mx-auto w-full max-w-[calc((100svh-21rem)*1.222)] pb-10 lg:max-w-none lg:pb-0">{map}</div>
-
-                {/* Phones: the cards, slid along by the scroll (clipped at the screen edges,
-                    the one in front centred, its neighbours peeking in). */}
-                <div className="-mx-4 overflow-hidden px-4 sm:-mx-6 sm:px-6 lg:hidden">
-                  <motion.ol ref={track} className="flex gap-4" style={{ x: trackX }}>
-                    {rows.map((row, i) => (
-                      <li key={row.name} ref={i === 0 ? firstCard : undefined} className="flex w-[85%] shrink-0 flex-col sm:w-[60%]">
-                        <Row {...row} active={i === active} onChoose={(el) => choose(i, el)} />
-                      </li>
-                    ))}
-                  </motion.ol>
-                </div>
-              </div>
-            </div>
-
-            {/* Desktop: a tall list that scrolls past the sticky map. */}
-            <ol className="hidden lg:block lg:py-[18vh]">
-              {rows.map((row, i) => (
-                <motion.li
-                  key={row.name}
-                  // Becomes active while it crosses the middle band of the screen.
-                  onViewportEnter={() => desktop() && !locked() && show(i, Math.abs(speed.get()) > FLING)}
-                  viewport={{ margin: "-45% 0px -45% 0px" }}
-                  className="lg:py-10"
-                >
-                  <Row {...row} active={i === active} onChoose={(el) => choose(i, el)} />
-                </motion.li>
-              ))}
-            </ol>
-          </div>
+        {/* Desktop: side by side */}
+        <div className="hidden h-[30rem] gap-3 lg:flex" onPointerLeave={unhover}>
+          {audiences.industries.map((industry, i) => (
+            <WidePanel
+              key={industry.name}
+              industry={industry}
+              open={i === open}
+              onOpen={() => setOpen(i)}
+              onHover={() => hover(i)}
+            />
+          ))}
         </div>
-      </section>
-    </MotionConfig>
+
+        {/* Phones and tablets: stacked */}
+        <div className="space-y-3 lg:hidden">
+          {audiences.industries.map((industry, i) => (
+            <StackedPanel key={industry.name} industry={industry} open={i === open} onOpen={() => setOpen(i)} />
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 
-/** A row of the list. The whole card is clickable (its name is the button, stretched
- *  over the card), and the chosen one is lit while the others dim. */
-function Row({
-  name,
-  body,
-  Icon,
-  tone,
-  active,
-  onChoose,
-}: (typeof rows)[number] & { active: boolean; onChoose: (row: HTMLElement) => void }) {
+/**
+ * Desktop panel. Open: most of the row's width, in its tint, with the details on the left
+ * and the postcard leaning out of the bottom-right corner. Closed: a slim spine with the
+ * icon on top and the name running up it. The width eases between the two; the details
+ * fade in once there's room, and are laid out at a fixed width so they never reflow.
+ */
+function WidePanel({
+  industry,
+  open,
+  onOpen,
+  onHover,
+}: {
+  industry: Industry;
+  open: boolean;
+  onOpen: () => void;
+  onHover: () => void;
+}) {
+  const Icon = icons[industry.icon];
+  const tone = tones[industry.tone];
   return (
     <div
+      onPointerEnter={onHover}
       className={cn(
-        "relative flex flex-1 gap-4 rounded-xl border bg-card p-5 transition-all duration-500 has-[button:focus-visible]:ring-3 has-[button:focus-visible]:ring-ring/50 lg:-m-4 lg:border-transparent lg:bg-transparent lg:p-4",
-        !active && "opacity-50 hover:opacity-80 lg:opacity-40"
+        "relative min-w-0 overflow-hidden rounded-3xl transition-[flex-grow,background-color] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none",
+        open ? tone.panel : "bg-muted/60 hover:bg-muted"
       )}
+      style={{ flexGrow: open ? 8 : 1, flexBasis: 0 }}
     >
-      <span
+      {/* The spine: the whole closed panel is its button. */}
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls={`who-${industry.icon}`}
+        onClick={onOpen}
+        onFocus={onOpen}
         className={cn(
-          "grid size-11 shrink-0 place-items-center rounded-lg transition-colors duration-500",
-          tone.panel,
-          tone.icon,
-          !active && "lg:bg-muted lg:text-muted-foreground"
+          "absolute inset-0 flex cursor-pointer flex-col items-center justify-between py-6 outline-none transition-opacity duration-300 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset",
+          open ? "pointer-events-none opacity-0" : "opacity-100"
         )}
       >
-        <Icon className="size-5" aria-hidden />
-      </span>
-      <div>
-        <h3 className="text-lg font-semibold">
-          <button
-            type="button"
-            aria-pressed={active}
-            onClick={(e) => onChoose(e.currentTarget.closest("li") ?? e.currentTarget)}
-            className="cursor-pointer text-left outline-none after:absolute after:inset-0 after:rounded-xl"
-          >
-            {name}
-          </button>
-        </h3>
-        <p className="mt-1 text-muted-foreground">{body}</p>
+        <span className={cn("grid size-11 place-items-center rounded-xl bg-card shadow-sm", tone.icon)}>
+          <Icon className="size-5" aria-hidden />
+        </span>
+        <span className="rotate-180 font-heading text-lg font-semibold tracking-tight whitespace-nowrap text-foreground [writing-mode:vertical-rl]">
+          {industry.name}
+        </span>
+      </button>
+
+      {/* The details */}
+      <div
+        id={`who-${industry.icon}`}
+        aria-hidden={!open}
+        className={cn(
+          "absolute inset-y-0 left-0 flex w-[19rem] flex-col p-8 transition-opacity motion-reduce:transition-none",
+          open ? "opacity-100 delay-200 duration-500" : "pointer-events-none opacity-0 duration-150"
+        )}
+      >
+        <span className={cn("grid size-11 place-items-center rounded-xl bg-card shadow-sm", tone.icon)}>
+          <Icon className="size-5" aria-hidden />
+        </span>
+        <h3 className="mt-6 font-heading text-3xl leading-tight font-bold tracking-tight text-balance">{industry.name}</h3>
+        <p className="mt-3 text-muted-foreground">{industry.body}</p>
+        <Ideas industry={industry} className="mt-6" />
+        <Link
+          href={site.primaryCta.href}
+          tabIndex={open ? undefined : -1}
+          className={cn(
+            "mt-auto inline-flex w-fit items-center gap-1.5 text-sm font-semibold underline-offset-4 hover:underline",
+            tone.text
+          )}
+        >
+          {site.primaryCta.label} <IconArrowRight className="size-4" aria-hidden />
+        </Link>
+      </div>
+
+      {/* The postcard, leaning out of the corner */}
+      <div
+        className={cn(
+          "pointer-events-none absolute -right-6 -bottom-8 w-[21rem] rotate-[-5deg] transition-[opacity,translate] ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none",
+          open ? "translate-y-0 opacity-100 delay-300 duration-700" : "translate-y-8 opacity-0 duration-150"
+        )}
+      >
+        <Postcard industry={industry} elevated />
       </div>
     </div>
   );
 }
 
-/** The active industry's postcard, floating over the map's corner like the cards over
- *  the hero's map: dealt in when the industry changes, then drifting gently. */
-function FloatingPostcard({ industry, index, instant }: { industry: Industry | null; index: number; instant: boolean }) {
+/**
+ * Phone and tablet panel: a row with the icon and name that opens (height easing open)
+ * to the details and the postcard. One open at a time.
+ */
+function StackedPanel({ industry, open, onOpen }: { industry: Industry; open: boolean; onOpen: () => void }) {
+  const Icon = icons[industry.icon];
+  const tone = tones[industry.tone];
   return (
-    // Overhangs the corner a little on phones and tablets (clear of the screen edge), more
-    // on desktop.
-    <div className="pointer-events-none absolute -right-1 -bottom-10 w-[46%] lg:-right-6">
-      <AnimatePresence initial={false}>
-        {industry && (
-          <motion.div
-            key={index}
-            className="absolute inset-x-0 bottom-0"
-            initial={instant ? false : { opacity: 0, y: 30, rotate: -8 }}
-            animate={{ opacity: 1, y: 0, rotate: -3, transition: { type: "spring", stiffness: 220, damping: 24, delay: 0.3 } }}
-            exit={{ opacity: 0, y: -16, rotate: 2, transition: { duration: 0.25 } }}
-          >
-            <div className="animate-[float-y_6s_ease-in-out_infinite] [--float-distance:6px] motion-reduce:animate-none">
+    <div
+      className={cn(
+        "overflow-hidden rounded-2xl transition-colors duration-500 motion-reduce:transition-none",
+        open ? tone.panel : "bg-muted/60"
+      )}
+    >
+      <h3>
+        <button
+          type="button"
+          aria-expanded={open}
+          aria-controls={`who-m-${industry.icon}`}
+          onClick={onOpen}
+          className="flex w-full cursor-pointer items-center gap-4 p-4 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset"
+        >
+          <span className={cn("grid size-10 shrink-0 place-items-center rounded-xl bg-card shadow-sm", tone.icon)}>
+            <Icon className="size-5" aria-hidden />
+          </span>
+          <span className="flex-1 font-heading text-lg font-semibold tracking-tight">{industry.name}</span>
+          <IconChevronDown
+            aria-hidden
+            className={cn("size-5 text-muted-foreground transition-transform duration-300", open && "rotate-180")}
+          />
+        </button>
+      </h3>
+      <div
+        id={`who-m-${industry.icon}`}
+        className="grid transition-[grid-template-rows] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none"
+        style={{ gridTemplateRows: open ? "1fr" : "0fr" }}
+      >
+        <div className="min-h-0 overflow-hidden" inert={!open}>
+          <div className="px-4 pb-6">
+            <p className="text-muted-foreground">{industry.body}</p>
+            <Ideas industry={industry} className="mt-4" />
+            <div className="mx-auto mt-6 max-w-sm rotate-[-2deg] px-2">
               <Postcard industry={industry} elevated />
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            <Link
+              href={site.primaryCta.href}
+              className={cn("mt-6 inline-flex items-center gap-1.5 text-sm font-semibold", tone.text)}
+            >
+              {site.primaryCta.label} <IconArrowRight className="size-4" aria-hidden />
+            </Link>
+          </div>
+        </div>
+      </div>
     </div>
+  );
+}
+
+/** The campaigns this kind of business typically mails, as small tags. */
+function Ideas({ industry, className }: { industry: Industry; className?: string }) {
+  return (
+    <ul className={cn("flex flex-wrap gap-2", className)} aria-label="Typical campaigns">
+      {industry.ideas.map((idea) => (
+        <li key={idea} className="rounded-full bg-card/80 px-3 py-1 text-xs font-medium text-foreground shadow-xs">
+          {idea}
+        </li>
+      ))}
+    </ul>
   );
 }
 
