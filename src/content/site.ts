@@ -161,11 +161,11 @@ export const audiences = {
     {
       name: "Restaurants and cafés",
       // Draft copy, from typical EDDM advice (what to mail, to whom, when): review before launch.
-      // The moments to mail: who gets it, when, and the offer.
+      // The moments to mail.
       moments: [
-        { title: "Opening day", who: "Every home within a mile", when: "Two weeks before you open", offer: "A first-visit treat" },
-        { title: "A new menu", who: "The streets you deliver to", when: "The week it launches", offer: "A taste of what's new" },
-        { title: "Quiet nights", who: "The homes closest to you", when: "Early in the week", offer: "A weeknight deal" },
+        { title: "Opening day" },
+        { title: "A new menu" },
+        { title: "Quiet nights" },
       ],
       icon: "restaurant",
       tone: "warning",
@@ -175,11 +175,11 @@ export const audiences = {
     {
       name: "Real estate agents",
       // Draft copy, from typical EDDM advice (what to mail, to whom, when): review before launch.
-      // The moments to mail: who gets it, when, and the offer.
+      // The moments to mail.
       moments: [
-        { title: "Just listed", who: "The blocks around the listing", when: "The day it goes live", offer: "An open-house invite" },
-        { title: "Just sold", who: "The surrounding streets", when: "Right after closing", offer: "What homes sell for here" },
-        { title: "Market update", who: "Your farm area", when: "Every quarter", offer: "A free valuation" },
+        { title: "Just listed" },
+        { title: "Just sold" },
+        { title: "Market update" },
       ],
       icon: "realEstate",
       tone: "info",
@@ -189,11 +189,11 @@ export const audiences = {
     {
       name: "Salons and spas",
       // Draft copy, from typical EDDM advice (what to mail, to whom, when): review before launch.
-      // The moments to mail: who gets it, when, and the offer.
+      // The moments to mail.
       moments: [
-        { title: "New in town", who: "Every home nearby", when: "Your opening month", offer: "A first-visit discount" },
-        { title: "Quiet weekdays", who: "The homes close by", when: "Tuesday to Thursday", offer: "A midweek offer" },
-        { title: "Gift season", who: "Your best streets", when: "Before the holidays", offer: "Gift cards" },
+        { title: "New in town" },
+        { title: "Quiet weekdays" },
+        { title: "Gift season" },
       ],
       icon: "salon",
       // Cyan, not the brand pink: on the map, pink is "Your business".
@@ -204,11 +204,11 @@ export const audiences = {
     {
       name: "Home services",
       // Draft copy, from typical EDDM advice (what to mail, to whom, when): review before launch.
-      // The moments to mail: who gets it, when, and the offer.
+      // The moments to mail.
       moments: [
-        { title: "Before the season", who: "Homeowners nearby", when: "Weeks before the heat or cold", offer: "A tune-up price" },
-        { title: "Older homes", who: "Streets of older houses", when: "Spring and fall", offer: "A free inspection" },
-        { title: "After a storm", who: "The streets it hit", when: "Within days", offer: "A free check-up" },
+        { title: "Before the season" },
+        { title: "Older homes" },
+        { title: "After a storm" },
       ],
       icon: "homeServices",
       tone: "success",
@@ -218,11 +218,11 @@ export const audiences = {
     {
       name: "Gyms and fitness",
       // Draft copy, from typical EDDM advice (what to mail, to whom, when): review before launch.
-      // The moments to mail: who gets it, when, and the offer.
+      // The moments to mail.
       moments: [
-        { title: "New Year", who: "Everyone nearby", when: "Late December", offer: "A free first week" },
-        { title: "New location", who: "Homes a short drive away", when: "Before the doors open", offer: "A founding-member rate" },
-        { title: "Back to routine", who: "Nearby homes", when: "Early September", offer: "An intro class pass" },
+        { title: "New Year" },
+        { title: "New location" },
+        { title: "Back to routine" },
       ],
       icon: "gym",
       tone: "ai",
@@ -232,11 +232,11 @@ export const audiences = {
     {
       name: "Retail stores",
       // Draft copy, from typical EDDM advice (what to mail, to whom, when): review before launch.
-      // The moments to mail: who gets it, when, and the offer.
+      // The moments to mail.
       moments: [
-        { title: "Grand opening", who: "Every home around the store", when: "The week before", offer: "An opening-weekend deal" },
-        { title: "Seasonal sale", who: "Nearby homes", when: "Before the big shopping weeks", offer: "A sale preview" },
-        { title: "New collection", who: "Your best neighborhoods", when: "Launch week", offer: "Early access" },
+        { title: "Grand opening" },
+        { title: "Seasonal sale" },
+        { title: "New collection" },
       ],
       icon: "retail",
       tone: "neutral",
@@ -246,11 +246,11 @@ export const audiences = {
     {
       name: "Dentists and clinics",
       // Draft copy, from typical EDDM advice (what to mail, to whom, when): review before launch.
-      // The moments to mail: who gets it, when, and the offer.
+      // The moments to mail.
       moments: [
-        { title: "New patients", who: "Families within a short drive", when: "Whenever you have openings", offer: "A free first exam" },
-        { title: "Back to school", who: "The homes around the practice", when: "Late summer", offer: "A checkup and cleaning deal" },
-        { title: "Year-end benefits", who: "Your nearby neighborhoods", when: "October and November", offer: "A reminder to use them" },
+        { title: "New patients" },
+        { title: "Back to school" },
+        { title: "Year-end benefits" },
       ],
       icon: "dental",
       tone: "sky",
@@ -260,11 +260,11 @@ export const audiences = {
     {
       name: "Auto repair",
       // Draft copy, from typical EDDM advice (what to mail, to whom, when): review before launch.
-      // The moments to mail: who gets it, when, and the offer.
+      // The moments to mail.
       moments: [
-        { title: "Before winter", who: "Drivers nearby", when: "October", offer: "A winter check" },
-        { title: "Road-trip season", who: "Homes within a few miles", when: "Late spring", offer: "A trip-ready inspection" },
-        { title: "A new shop", who: "Every home around the garage", when: "Your opening month", offer: "A first-service discount" },
+        { title: "Before winter" },
+        { title: "Road-trip season" },
+        { title: "A new shop" },
       ],
       icon: "autoRepair",
       tone: "orange",
@@ -274,11 +274,11 @@ export const audiences = {
     {
       name: "Pet care",
       // Draft copy, from typical EDDM advice (what to mail, to whom, when): review before launch.
-      // The moments to mail: who gets it, when, and the offer.
+      // The moments to mail.
       moments: [
-        { title: "Grand opening", who: "Every home nearby", when: "Two weeks before you open", offer: "A first-visit discount" },
-        { title: "Spring checkups", who: "Nearby homes", when: "Early spring", offer: "A wellness-visit deal" },
-        { title: "Holiday boarding", who: "The homes close by", when: "Before the holidays", offer: "An early-booking rate" },
+        { title: "Grand opening" },
+        { title: "Spring checkups" },
+        { title: "Holiday boarding" },
       ],
       icon: "pets",
       tone: "rose",
@@ -288,11 +288,11 @@ export const audiences = {
     {
       name: "Landscaping and lawn care",
       // Draft copy, from typical EDDM advice (what to mail, to whom, when): review before launch.
-      // The moments to mail: who gets it, when, and the offer.
+      // The moments to mail.
       moments: [
-        { title: "Spring cleanup", who: "Homeowners nearby", when: "Late winter", offer: "A cleanup price" },
-        { title: "Fall leaves", who: "The same streets", when: "September", offer: "A leaf-removal deal" },
-        { title: "Neighbor deal", who: "Streets you already serve", when: "Mid-season", offer: "A same-street discount" },
+        { title: "Spring cleanup" },
+        { title: "Fall leaves" },
+        { title: "Neighbor deal" },
       ],
       icon: "landscaping",
       tone: "lime",
@@ -302,11 +302,11 @@ export const audiences = {
     {
       name: "Tutoring and schools",
       // Draft copy, from typical EDDM advice (what to mail, to whom, when): review before launch.
-      // The moments to mail: who gets it, when, and the offer.
+      // The moments to mail.
       moments: [
-        { title: "Back to school", who: "Homes near the center", when: "August", offer: "A free first session" },
-        { title: "Exam season", who: "Nearby neighborhoods", when: "Before finals", offer: "A study-pack price" },
-        { title: "Summer camp", who: "Homes within a short drive", when: "Early spring", offer: "Early-bird enrollment" },
+        { title: "Back to school" },
+        { title: "Exam season" },
+        { title: "Summer camp" },
       ],
       icon: "school",
       tone: "indigo",
@@ -317,11 +317,11 @@ export const audiences = {
       name: "Community and nonprofits",
       // From Oppizi's Public & Community clients.
       // Draft copy, from typical EDDM advice (what to mail, to whom, when): review before launch.
-      // The moments to mail: who gets it, when, and the offer.
+      // The moments to mail.
       moments: [
-        { title: "A fundraiser", who: "The streets you serve", when: "Giving season", offer: "A way to donate" },
-        { title: "Volunteers", who: "Homes around the site", when: "A month ahead", offer: "A sign-up link" },
-        { title: "A public notice", who: "Every home it affects", when: "Weeks before it happens", offer: "The date and how to join" },
+        { title: "A fundraiser" },
+        { title: "Volunteers" },
+        { title: "A public notice" },
       ],
       icon: "community",
       tone: "teal",
@@ -332,11 +332,11 @@ export const audiences = {
       name: "Events and entertainment",
       // From Oppizi's Entertainment, Media & Events clients.
       // Draft copy, from typical EDDM advice (what to mail, to whom, when): review before launch.
-      // The moments to mail: who gets it, when, and the offer.
+      // The moments to mail.
       moments: [
-        { title: "Opening night", who: "Every home nearby", when: "Three weeks before", offer: "A two-for-one ticket" },
-        { title: "A local fair", who: "The whole neighborhood", when: "Two weeks ahead", offer: "Free entry" },
-        { title: "Season passes", who: "Your best streets", when: "Before the season", offer: "An early-bird price" },
+        { title: "Opening night" },
+        { title: "A local fair" },
+        { title: "Season passes" },
       ],
       icon: "events",
       tone: "fuchsia",
@@ -347,11 +347,11 @@ export const audiences = {
       name: "Delivery apps and marketplaces",
       // From Oppizi's Internet Marketplace Platforms clients (food delivery, meal kits).
       // Draft copy, from typical EDDM advice (what to mail, to whom, when): review before launch.
-      // The moments to mail: who gets it, when, and the offer.
+      // The moments to mail.
       moments: [
-        { title: "A new zone", who: "Every home in it", when: "Launch week", offer: "First-order credit" },
-        { title: "Win-back", who: "Streets with lapsed users", when: "After a quiet month", offer: "A comeback code" },
-        { title: "A new category", who: "Your busiest zones", when: "When it goes live", offer: "Free delivery" },
+        { title: "A new zone" },
+        { title: "Win-back" },
+        { title: "A new category" },
       ],
       icon: "delivery",
       tone: "violet",
@@ -362,11 +362,11 @@ export const audiences = {
       name: "Builders and remodelers",
       // From Oppizi's Real Estate & Construction clients.
       // Draft copy, from typical EDDM advice (what to mail, to whom, when): review before launch.
-      // The moments to mail: who gets it, when, and the offer.
+      // The moments to mail.
       moments: [
-        { title: "Job-site neighbors", who: "The blocks around a project", when: "While you're on site", offer: "A free estimate" },
-        { title: "Remodel season", who: "Older homes nearby", when: "Late winter", offer: "A spring booking deal" },
-        { title: "A new development", who: "Homes around the site", when: "Before sales open", offer: "A preview invite" },
+        { title: "Job-site neighbors" },
+        { title: "Remodel season" },
+        { title: "A new development" },
       ],
       icon: "builders",
       tone: "amber",
@@ -377,11 +377,11 @@ export const audiences = {
       name: "Banks and tax preparers",
       // From Oppizi's Finance clients: the local ones (branches, tax offices).
       // Draft copy, from typical EDDM advice (what to mail, to whom, when): review before launch.
-      // The moments to mail: who gets it, when, and the offer.
+      // The moments to mail.
       moments: [
-        { title: "A new branch", who: "Every home around it", when: "The month it opens", offer: "An opening bonus" },
-        { title: "Tax season", who: "Nearby homes", when: "January", offer: "A free first consult" },
-        { title: "A better rate", who: "Your branch's neighborhoods", when: "When rates change", offer: "The new rate" },
+        { title: "A new branch" },
+        { title: "Tax season" },
+        { title: "A better rate" },
       ],
       icon: "finance",
       tone: "emerald",

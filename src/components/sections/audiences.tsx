@@ -5,20 +5,17 @@ import {
   IconArrowsMaximize,
   IconBarbell,
   IconBuildingBank,
-  IconCalendarEvent,
   IconCarGarage,
   IconDental,
   IconHammer,
   IconHeartHandshake,
   IconHomeDollar,
-  IconMapPin,
   IconPaw,
   IconPlant2,
   IconQrcode,
   IconScissors,
   IconSchool,
   IconShoppingBag,
-  IconTag,
   IconTicket,
   IconTool,
   IconToolsKitchen2,
@@ -44,10 +41,9 @@ import { cn } from "@/lib/utils";
 
 // "Who it's for" as a picker wheel, like the iPhone's date picker: an endless drum of
 // business types (horizontal cards: icon + name) that you spin with the mouse wheel, a
-// drag or a swipe; the one in the middle is chosen. Beside it (below on phones), the
-// chosen business, tinted in its color, with its mailing plan: three moments to mail laid
-// out like a timetable (who gets it, when, the offer), all visible at once. Hovering that
-// card turns the pointer into its flyer; a click opens the flyer large.
+// drag or a swipe; the one in the middle is chosen. Over the wheel the pointer becomes the
+// flyer of the business under it. Clicking (or tapping) the chosen one opens its card in a
+// dialog: its name, what EDDM does for it, three moments to mail and its flyer.
 
 type Industry = (typeof audiences.industries)[number];
 const industries = audiences.industries;
@@ -145,6 +141,7 @@ export function Audiences() {
   // the row nearest the middle.
   const position = useMotionValue(0);
   const [active, setActive] = useState(0);
+  const [open, setOpen] = useState(false);
   useMotionValueEvent(position, "change", (p) => {
     const i = mod(Math.round(p));
     if (i !== active) {
@@ -152,19 +149,21 @@ export function Audiences() {
       playKey("tick", { gain: 0.16, pitch: 1.25 }); // a detent, if the meter's sounds are on
     }
   });
-  const industry = industries[active];
 
   return (
     <MotionConfig reducedMotion="user">
       <section id="who-its-for" className="scroll-mt-20 py-20">
-        <div className="container-page space-y-12">
+        <div className="container-page space-y-10">
           <SectionHeading eyebrow={audiences.eyebrow} title={audiences.title} body={audiences.body} />
-
-          <div className="grid gap-4 lg:min-h-[27rem] lg:grid-cols-[21rem_1fr] lg:gap-6">
-            <Wheel position={position} />
-            <Showcase key={industry.name} industry={industry} />
+          <div className="mx-auto max-w-xl">
+            <Wheel position={position} onOpen={() => setOpen(true)} />
+            <p className="mt-4 text-center text-sm text-muted-foreground">
+              <span className="pointer-coarse:hidden">Spin to find your business, then click it to see its plan.</span>
+              <span className="hidden pointer-coarse:inline">Swipe to find your business, then tap it to see its plan.</span>
+            </p>
           </div>
         </div>
+        <BusinessDialog industry={industries[active]} open={open} onOpenChange={setOpen} />
       </section>
     </MotionConfig>
   );
@@ -179,10 +178,11 @@ const REACH = 4; // rows drawn on each side of the middle
 
 /**
  * An endless drum of business cards. Spin it with the mouse wheel (while the pointer is on
- * it), a drag or a swipe (with momentum), the arrow keys, or click a card to bring it to
- * the middle. Rows curve away above and below and fade; the middle one is the choice.
+ * it), a drag or a swipe (with momentum) or the arrow keys; click a card to bring it to
+ * the middle, or the middle one (or Enter) to open it. Rows curve away above and below
+ * and fade. With a mouse, the pointer is the flyer of the business under it.
  */
-function Wheel({ position }: { position: MotionValue<number> }) {
+function Wheel({ position, onOpen }: { position: MotionValue<number>; onOpen: () => void }) {
   const el = useRef<HTMLDivElement>(null);
   const [p, setP] = useState(0);
   useMotionValueEvent(position, "change", setP);
@@ -192,6 +192,11 @@ function Wheel({ position }: { position: MotionValue<number> }) {
   const goTo = (target: number, velocity = 0) => {
     moving.current?.stop();
     moving.current = animate(position, target, { ...snap, velocity });
+  };
+  /** Rows from the middle to the point at clientY. */
+  const rowsFromMiddle = (clientY: number) => {
+    const r = el.current?.getBoundingClientRect();
+    return r ? (clientY - (r.top + r.height / 2)) / ROW : 0;
   };
 
   // The mouse wheel spins it (and settles on a row once it stops). Not passive, so the
@@ -212,8 +217,22 @@ function Wheel({ position }: { position: MotionValue<number> }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [position]);
 
+  // The flyer pointer (mouse only): follows the pointer and shows the business under it.
+  const [hover, setHover] = useState<{ row: number } | null>(null);
+  const fx = useSpring(0, { stiffness: 500, damping: 40, mass: 0.4 });
+  const fy = useSpring(0, { stiffness: 500, damping: 40, mass: 0.4 });
+  const wrap = useRef<HTMLDivElement>(null);
+  const trackFlyer = (e: React.PointerEvent) => {
+    if (e.pointerType !== "mouse") return;
+    const r = wrap.current?.getBoundingClientRect();
+    if (!r) return;
+    fx.set(e.clientX - r.left);
+    fy.set(e.clientY - r.top);
+    setHover({ row: Math.round(rowsFromMiddle(e.clientY)) });
+  };
+
   // Dragging: follows the finger or mouse; on release it coasts with the flick's speed and
-  // lands on a row. A press without movement counts as a click on the card under it.
+  // lands on a row. A press without movement is a click on the card under it.
   const drag = useRef<{ y: number; from: number; t: number; v: number; moved: boolean } | null>(null);
   const onPointerDown = (e: React.PointerEvent) => {
     moving.current?.stop();
@@ -221,6 +240,7 @@ function Wheel({ position }: { position: MotionValue<number> }) {
     (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
   };
   const onPointerMove = (e: React.PointerEvent) => {
+    trackFlyer(e);
     const d = drag.current;
     if (!d) return;
     const dy = e.clientY - d.y;
@@ -236,9 +256,10 @@ function Wheel({ position }: { position: MotionValue<number> }) {
     drag.current = null;
     if (!d) return;
     if (!d.moved) {
-      // A click: bring the card under the pointer to the middle.
-      const r = el.current?.getBoundingClientRect();
-      if (r) goTo(Math.round(position.get() + (e.clientY - (r.top + r.height / 2)) / ROW));
+      // A click: open the chosen one, or bring the one under the pointer to the middle.
+      const rows = Math.round(rowsFromMiddle(e.clientY));
+      if (rows === 0 && Math.abs(position.get() - Math.round(position.get())) < 0.2) onOpen();
+      else goTo(Math.round(position.get()) + rows);
       return;
     }
     goTo(Math.round(position.get() + d.v * 0.18), d.v);
@@ -246,225 +267,152 @@ function Wheel({ position }: { position: MotionValue<number> }) {
 
   const base = Math.round(p);
   const slots = Array.from({ length: REACH * 2 + 1 }, (_, k) => base - REACH + k);
+  const hovered = hover ? industries[mod(Math.round(p) + hover.row)] : null;
 
   return (
-    <div
-      ref={el}
-      role="listbox"
-      tabIndex={0}
-      aria-label="Kinds of business"
-      aria-activedescendant={`wheel-${mod(base)}`}
-      onKeyDown={(e) => {
-        const step = e.key === "ArrowDown" ? 1 : e.key === "ArrowUp" ? -1 : 0;
-        if (!step) return;
-        e.preventDefault();
-        goTo(Math.round(position.get()) + step);
-      }}
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
-      onPointerCancel={onPointerUp}
-      className="relative h-64 cursor-grab touch-none overflow-hidden rounded-3xl bg-muted/60 outline-none select-none focus-visible:ring-3 focus-visible:ring-ring/50 active:cursor-grabbing lg:h-auto [mask-image:linear-gradient(transparent,black_22%,black_78%,transparent)] [perspective:900px]"
-    >
-      {/* The window the chosen card sits in */}
-      <span aria-hidden className="absolute inset-x-3 top-1/2 h-15 -translate-y-1/2 rounded-2xl bg-foreground/[0.04]" />
-      {slots.map((v) => {
-        const d = v - p; // rows from the middle
-        const angle = d * STEP;
-        if (Math.abs(angle) >= 90) return null;
-        const i = mod(v);
-        const item = industries[i];
-        const Icon = icons[item.icon];
-        const tone = tones[item.tone];
-        const chosen = Math.abs(d) < 0.5;
-        return (
-          <div
-            key={v}
-            id={chosen ? `wheel-${i}` : undefined}
-            role="option"
-            aria-selected={chosen}
-            className="absolute inset-x-5 top-1/2 flex h-14 items-center gap-3 rounded-2xl bg-card px-3 shadow-sm will-change-transform"
-            style={{
-              transform: `translateY(calc(-50% + ${RADIUS * Math.sin((angle * Math.PI) / 180)}px)) rotateX(${-angle}deg)`,
-              opacity: Math.cos((angle * Math.PI) / 180) ** 1.6,
-              boxShadow: chosen ? "0 6px 20px -8px rgb(0 0 0 / 0.25)" : undefined,
-            }}
-          >
-            <span className={cn("grid size-9 shrink-0 place-items-center rounded-xl", tone.panel, tone.icon)}>
-              <Icon className="size-5" aria-hidden />
-            </span>
-            <span className={cn("truncate font-heading font-semibold tracking-tight", chosen ? "text-foreground" : "text-muted-foreground")}>
-              {item.name}
-            </span>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-/* ---------------------------- The chosen one ---------------------------- */
-
-/**
- * The chosen business, tinted in its color: its name and its mailing plan.
- * With a mouse, hovering the card turns the pointer into its flyer (except over the
- * moments and links, which keep the normal pointer), and a click opens the flyer large.
- * Phones get a small "See example mailer" button instead.
- */
-function Showcase({ industry }: { industry: Industry }) {
-  const Icon = icons[industry.icon];
-  const tone = tones[industry.tone];
-  const [flyer, setFlyer] = useState(false); // dialog open
-  const [hovering, setHovering] = useState(false);
-  const x = useSpring(0, { stiffness: 500, damping: 40, mass: 0.4 });
-  const y = useSpring(0, { stiffness: 500, damping: 40, mass: 0.4 });
-  const card = useRef<HTMLDivElement>(null);
-
-  const overControl = (t: EventTarget | null) => (t as HTMLElement | null)?.closest("button, a");
-  const track = (e: React.PointerEvent) => {
-    if (e.pointerType !== "mouse") return;
-    const r = card.current?.getBoundingClientRect();
-    if (!r) return;
-    x.set(e.clientX - r.left);
-    y.set(e.clientY - r.top);
-    setHovering(!overControl(e.target));
-  };
-
-  return (
-    <motion.div
-      ref={card}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.25 }}
-      onPointerMove={track}
-      onPointerLeave={() => setHovering(false)}
-      onClick={(e) => {
-        if (!overControl(e.target) && window.matchMedia("(pointer: fine)").matches) setFlyer(true);
-      }}
-      className={cn(
-        "relative flex min-h-full flex-col overflow-hidden rounded-3xl p-6 transition-colors duration-500 sm:p-8",
-        tone.panel,
-        hovering && "cursor-none"
-      )}
-    >
-      <div className="flex items-start gap-4 sm:items-center">
-        <span className={cn("grid size-11 shrink-0 place-items-center rounded-xl bg-card shadow-sm", tone.icon)}>
-          <Icon className="size-5" aria-hidden />
-        </span>
-        <div className="min-w-0 flex-1">
-          <h3 className="font-heading text-2xl leading-tight font-bold tracking-tight">{industry.name}</h3>
-          <p className="mt-0.5 text-sm text-muted-foreground">{industry.body}</p>
-        </div>
-        {/* Mouse: a hint that the card holds a flyer. Touch screens and keyboards: the
-            flyer behind a button. */}
-        <span aria-hidden className="hidden shrink-0 items-center gap-1.5 text-xs font-medium text-muted-foreground pointer-fine:flex">
-          <IconArrowsMaximize className="size-3.5" /> Hover for an example mailer
-        </span>
-        <button
-          type="button"
-          onClick={() => setFlyer(true)}
-          className="hidden shrink-0 cursor-pointer items-center gap-1.5 rounded-full bg-card/80 px-3 py-1.5 text-xs font-medium shadow-xs outline-none focus-visible:ring-3 focus-visible:ring-ring/50 sm:inline-flex pointer-fine:sr-only pointer-fine:focus-visible:not-sr-only"
-        >
-          Example mailer <IconArrowsMaximize className="size-3.5" aria-hidden />
-        </button>
+    <div ref={wrap} className="relative">
+      <div
+        ref={el}
+        role="listbox"
+        tabIndex={0}
+        aria-label="Kinds of business. Enter opens the chosen one."
+        aria-activedescendant={`wheel-${mod(base)}`}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onOpen();
+            return;
+          }
+          const step = e.key === "ArrowDown" ? 1 : e.key === "ArrowUp" ? -1 : 0;
+          if (!step) return;
+          e.preventDefault();
+          goTo(Math.round(position.get()) + step);
+        }}
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
+        onPointerLeave={() => setHover(null)}
+        className={cn(
+          "relative h-80 touch-none overflow-hidden rounded-3xl bg-muted/60 outline-none select-none focus-visible:ring-3 focus-visible:ring-ring/50 sm:h-[26rem] [mask-image:linear-gradient(transparent,black_22%,black_78%,transparent)] [perspective:900px]",
+          hover ? "cursor-none" : "cursor-grab active:cursor-grabbing"
+        )}
+      >
+        {/* The window the chosen card sits in */}
+        <span aria-hidden className="absolute inset-x-3 top-1/2 h-15 -translate-y-1/2 rounded-2xl bg-foreground/[0.04]" />
+        {slots.map((v) => {
+          const d = v - p; // rows from the middle
+          const angle = d * STEP;
+          if (Math.abs(angle) >= 90) return null;
+          const i = mod(v);
+          const item = industries[i];
+          const Icon = icons[item.icon];
+          const tone = tones[item.tone];
+          const chosen = Math.abs(d) < 0.5;
+          return (
+            <div
+              key={v}
+              id={chosen ? `wheel-${i}` : undefined}
+              role="option"
+              aria-selected={chosen}
+              className="absolute inset-x-5 top-1/2 flex h-14 items-center gap-3 rounded-2xl bg-card px-3 shadow-sm will-change-transform"
+              style={{
+                transform: `translateY(calc(-50% + ${RADIUS * Math.sin((angle * Math.PI) / 180)}px)) rotateX(${-angle}deg)`,
+                opacity: Math.cos((angle * Math.PI) / 180) ** 1.6,
+                boxShadow: chosen ? "0 6px 20px -8px rgb(0 0 0 / 0.25)" : undefined,
+              }}
+            >
+              <span className={cn("grid size-9 shrink-0 place-items-center rounded-xl", tone.panel, tone.icon)}>
+                <Icon className="size-5" aria-hidden />
+              </span>
+              <span className={cn("truncate font-heading font-semibold tracking-tight", chosen ? "text-foreground" : "text-muted-foreground")}>
+                {item.name}
+              </span>
+              {chosen && (
+                <IconArrowsMaximize className="ml-auto size-4 shrink-0 text-muted-foreground" aria-hidden />
+              )}
+            </div>
+          );
+        })}
       </div>
 
-      <MailingPlan industry={industry} className="mt-7" />
-
-      <button
-        type="button"
-        onClick={() => setFlyer(true)}
-        className="mt-5 inline-flex w-fit cursor-pointer items-center gap-1.5 rounded-full bg-card/80 px-3 py-1.5 text-xs font-medium shadow-xs outline-none focus-visible:ring-3 focus-visible:ring-ring/50 sm:hidden"
-      >
-        See example mailer <IconArrowsMaximize className="size-3.5" aria-hidden />
-      </button>
-
-      {/* The flyer as the pointer */}
+      {/* The flyer as the pointer: outside the wheel, so its fade and clip don't cut it */}
       <AnimatePresence>
-        {hovering && (
+        {hovered && (
           <motion.div
             aria-hidden
-            className="pointer-events-none absolute top-0 left-0 z-10 w-40"
-            style={{ x, y, translateX: "-50%", translateY: "-50%" }}
+            className="pointer-events-none absolute top-0 left-0 z-20 w-44"
+            style={{ x: fx, y: fy, translateX: "-50%", translateY: "-50%" }}
             initial={{ opacity: 0, scale: 0.6, rotate: -12 }}
             animate={{ opacity: 1, scale: 1, rotate: -6 }}
             exit={{ opacity: 0, scale: 0.6, transition: { duration: 0.15 } }}
             transition={{ type: "spring", stiffness: 400, damping: 26 }}
           >
-            <Postcard industry={industry} />
+            <Postcard industry={hovered} />
             <span className="mt-1.5 block text-center text-[10px] font-semibold tracking-wide text-foreground/70 uppercase">
-              Click to open
+              {hover?.row === 0 ? "Click to open" : "Click to choose"}
             </span>
           </motion.div>
         )}
       </AnimatePresence>
-
-      <Dialog open={flyer} onOpenChange={setFlyer}>
-        <DialogContent className="max-w-3xl">
-          <DialogTitle className="sr-only">Example mailer: {industry.postcard.business}</DialogTitle>
-          <Postcard industry={industry} />
-          <p className="mt-4 text-center text-sm text-white/80">
-            An example {industry.name.toLowerCase()} postcard, 9″ × 6.25″
-          </p>
-        </DialogContent>
-      </Dialog>
-    </motion.div>
+    </div>
   );
 }
 
-const FACTS = [
-  { key: "who", label: "Who gets it", Icon: IconMapPin },
-  { key: "when", label: "When", Icon: IconCalendarEvent },
-  { key: "offer", label: "The offer", Icon: IconTag },
-] as const;
+/* ---------------------------- The business card ---------------------------- */
 
 /**
- * The mailing plan: three moments to mail, laid out like a timetable, all at once. On a
- * wide card: a header row (who gets it, when, the offer, each with its icon) over three
- * rows, each a numbered moment and its three answers, with dashed rules between them.
- * On a narrow one: each moment on its own, its answers stacked with small labels.
- * Static on purpose: easy to scan, nothing to click.
+ * The chosen business, in a dialog over the blurred page: tinted in its color, with its
+ * name, what EDDM does for it and its three moments to mail on one side, and its flyer,
+ * large and tilted, on the other. Stacked on phones.
  */
-function MailingPlan({ industry, className }: { industry: Industry; className?: string }) {
+function BusinessDialog({
+  industry,
+  open,
+  onOpenChange,
+}: {
+  industry: Industry;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const Icon = icons[industry.icon];
   const tone = tones[industry.tone];
-  const cols = "@lg:grid @lg:grid-cols-[1.15fr_1fr_1fr_1fr] @lg:gap-5";
   return (
-    <div className={cn("@container", className)}>
-      <div className="rounded-2xl bg-card/85 px-5 shadow-xs">
-        {/* Header (wide only) */}
-        <div aria-hidden className={cn("hidden border-b py-3.5", cols)}>
-          <p className={cn("text-xs font-semibold tracking-wider uppercase", tone.text)}>3 moments to mail</p>
-          {FACTS.map(({ key, label, Icon }) => (
-            <p key={key} className="flex items-center gap-1.5 text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-              <Icon className={cn("size-3.5", tone.icon)} /> {label}
-            </p>
-          ))}
-        </div>
-        <p className={cn("pt-4 text-xs font-semibold tracking-wider uppercase @lg:hidden", tone.text)}>3 moments to mail</p>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-4xl">
+        <div
+          className={cn(
+            "grid max-h-[calc(100svh-3rem)] gap-8 overflow-y-auto rounded-3xl p-6 shadow-2xl sm:p-10 md:grid-cols-[1fr_1.15fr] md:items-center md:gap-10",
+            tone.panel
+          )}
+        >
+          <div>
+            <span className={cn("grid size-12 place-items-center rounded-xl bg-card shadow-sm", tone.icon)}>
+              <Icon className="size-6" aria-hidden />
+            </span>
+            <DialogTitle className="mt-5 text-3xl leading-tight font-bold tracking-tight">{industry.name}</DialogTitle>
+            <p className="mt-3 text-muted-foreground">{industry.body}</p>
 
-        <ol className="divide-y divide-dashed divide-foreground/12">
-          {industry.moments.map((moment, i) => (
-            <li key={moment.title} className={cn("py-4", cols)}>
-              <div className="flex items-baseline gap-2.5">
-                <span className={cn("font-heading text-sm font-bold tabular-nums", tone.icon)}>0{i + 1}</span>
-                <h4 className="font-heading text-base leading-snug font-semibold tracking-tight">{moment.title}</h4>
-              </div>
-              <dl className="mt-2.5 grid gap-1.5 pl-7 @lg:contents">
-                {FACTS.map(({ key, label, Icon }) => (
-                  <div key={key} className="flex items-start gap-2 @lg:block">
-                    <dt className="shrink-0 @lg:sr-only">
-                      <Icon className={cn("mt-0.5 size-3.5", tone.icon)} aria-hidden />
-                      <span className="sr-only">{label}</span>
-                    </dt>
-                    <dd className="text-sm leading-snug text-muted-foreground @lg:text-foreground/80">{moment[key]}</dd>
-                  </div>
-                ))}
-              </dl>
-            </li>
-          ))}
-        </ol>
-      </div>
-    </div>
+            <p className={cn("mt-8 text-xs font-semibold tracking-wider uppercase", tone.text)}>3 moments to mail</p>
+            <ol className="mt-3 divide-y divide-dashed divide-foreground/12 border-y border-dashed border-foreground/12">
+              {industry.moments.map((moment, i) => (
+                <li key={moment.title} className="flex items-baseline gap-4 py-3.5">
+                  <span className={cn("font-heading text-sm font-bold tabular-nums", tone.icon)}>0{i + 1}</span>
+                  <span className="font-heading text-lg leading-snug font-semibold tracking-tight">{moment.title}</span>
+                </li>
+              ))}
+            </ol>
+          </div>
+
+          <figure className="md:rotate-2">
+            <Postcard industry={industry} />
+            <figcaption className="mt-3 text-center text-xs text-muted-foreground">
+              An example {industry.name.toLowerCase()} postcard, 9″ × 6.25″
+            </figcaption>
+          </figure>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
