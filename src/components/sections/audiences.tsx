@@ -26,6 +26,8 @@ import {
   AnimatePresence,
   MotionConfig,
   motion,
+  useMotionValue,
+  useReducedMotion,
   useSpring,
 } from "motion/react";
 
@@ -162,22 +164,29 @@ function randomTilt() {
  * equal cells split by hairlines, four across on desktop, two on phones. Each cell has
  * its tinted icon and its name. Hovering a
  * cell washes it in the business's tint and brings up an arrow; with a mouse the pointer
- * becomes that business's flyer (a fresh random tilt each time). A click or tap opens its
- * business card.
+ * becomes a small ring (the exact click point, on time, readable on any background) with
+ * that business's flyer trailing beside it (a fresh random tilt each time). With reduced
+ * motion it's the normal pointer and no flyer. A click or tap opens its business card.
  */
 function Mural({ onOpen }: { onOpen: (i: number) => void }) {
   const wrap = useRef<HTMLDivElement>(null);
+  const reduce = useReducedMotion();
   const [hover, setHover] = useState<{ i: number; angle: number } | null>(null);
+  // The ring sits exactly on the pointer; the flyer follows it on a spring.
+  const px = useMotionValue(0);
+  const py = useMotionValue(0);
   const fx = useSpring(0, { stiffness: 500, damping: 40, mass: 0.4 });
   const fy = useSpring(0, { stiffness: 500, damping: 40, mass: 0.4 });
   const follow = (e: React.PointerEvent) => {
     const r = wrap.current?.getBoundingClientRect();
     if (!r) return;
+    px.set(e.clientX - r.left);
+    py.set(e.clientY - r.top);
     fx.set(e.clientX - r.left);
     fy.set(e.clientY - r.top);
   };
   const enter = (i: number, e: React.PointerEvent) => {
-    if (e.pointerType !== "mouse") return;
+    if (e.pointerType !== "mouse" || reduce) return;
     follow(e);
     setHover({ i, angle: randomTilt() });
   };
@@ -219,7 +228,8 @@ function Mural({ onOpen }: { onOpen: (i: number) => void }) {
                 onPointerEnter={(e) => enter(i, e)}
                 onPointerLeave={() => setHover((h) => (h?.i === i ? null : h))}
                 className={cn(
-                  "group relative flex h-full w-full cursor-pointer flex-col items-start gap-4 p-4 text-left outline-none transition-colors duration-300 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset sm:p-6 pointer-fine:cursor-none",
+                  "group relative flex h-full w-full cursor-pointer flex-col items-start gap-4 p-4 text-left outline-none transition-colors duration-300 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset sm:p-6",
+                  hover && "cursor-none",
                   hover?.i === i && tone.panel
                 )}
               >
@@ -253,15 +263,30 @@ function Mural({ onOpen }: { onOpen: (i: number) => void }) {
         })}
       </motion.ul>
 
-      {/* The flyer as the pointer */}
+      {/* The pointer: a small ring on the click point (white and dark rings, so it reads on
+          any tint), and the flyer beside it */}
+      <AnimatePresence>
+        {hovered && (
+          <motion.span
+            key="ring"
+            aria-hidden
+            className="pointer-events-none absolute top-0 left-0 z-30 -mt-2 -ml-2 size-4 rounded-full border-2 border-foreground bg-foreground/10 shadow-[0_0_0_2px_var(--card)]"
+            style={{ x: px, y: py }}
+            initial={{ opacity: 0, scale: 0.4 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0, scale: 0.4, transition: { duration: 0.12 } }}
+            transition={{ duration: 0.15 }}
+          />
+        )}
+      </AnimatePresence>
       <AnimatePresence>
         {hovered && (
           <motion.div
             key="flyer"
             aria-hidden
             className="pointer-events-none absolute top-0 left-0 z-20 w-44"
-            // Just above and right of the pointer, so the cell being pointed at stays visible.
-            style={{ x: fx, y: fy, translateX: "-12%", translateY: "-108%" }}
+            // Above and right of the ring, clear of it and of the cell being pointed at.
+            style={{ x: fx, y: fy, translateX: "18px", translateY: "calc(-100% - 14px)" }}
             initial={{ opacity: 0, scale: 0.6, rotate: (hover?.angle ?? -6) * 1.8 }}
             animate={{ opacity: 1, scale: 1, rotate: hover?.angle ?? -6 }}
             exit={{ opacity: 0, scale: 0.6, transition: { duration: 0.15 } }}
