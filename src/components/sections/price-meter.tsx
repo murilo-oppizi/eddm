@@ -473,9 +473,8 @@ export function PriceMeter() {
             href="/#get-started"
             onPointerDown={() => pressKey("enter")}
             onClick={printQuote}
-            // Solid white, not frosted like the screen and the size pill, and lifted higher,
-            // so it's the one thing on the device that says "press me"
-            className="group relative mt-5 flex h-14 items-center justify-center gap-2 rounded-2xl bg-white font-semibold text-primary shadow-[0_1px_2px_rgb(0_0_0/0.12),0_4px_8px_-2px_rgb(0_0_0/0.12),0_16px_32px_-12px_color-mix(in_oklab,var(--primary)_55%,black)] transition-[scale,box-shadow] duration-150 outline-none hover:shadow-[0_1px_2px_rgb(0_0_0/0.12),0_6px_12px_-2px_rgb(0_0_0/0.14),0_20px_36px_-12px_color-mix(in_oklab,var(--primary)_55%,black)] focus-visible:ring-3 focus-visible:ring-white/60 active:scale-[0.98]"
+            // White frosted glass with a rim of light, the pink text the call to act
+            className="group relative mt-5 flex h-14 items-center justify-center gap-2 rounded-2xl bg-white/90 font-semibold text-primary backdrop-blur-md shadow-[inset_0_1px_0_rgb(255_255_255/1),inset_0_-1px_0_rgb(255_255_255/0.5),0_1px_2px_rgb(0_0_0/0.1),0_10px_24px_-10px_rgb(0_0_0/0.35)] transition-[scale,background-color,box-shadow] duration-150 outline-none hover:bg-white focus-visible:ring-3 focus-visible:ring-white/60 active:scale-[0.98]"
           >
             {pricing.cta}{" "}
             <IconArrowRight className="size-4 transition-transform duration-200 group-hover:translate-x-1" aria-hidden />
