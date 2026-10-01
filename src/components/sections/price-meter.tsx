@@ -67,7 +67,7 @@ type Flight = { stamp: Stamp; left: number; top: number; x: number; y: number; s
 // between segments (like iOS's segmented control). Keys dip a little when pressed;
 // "pressed" is the same dip, for keys pressed from your own keyboard.
 const glassKey =
-  "bg-white/20 text-white backdrop-blur-md backdrop-saturate-150 shadow-[inset_0_1px_0_rgb(255_255_255/0.6),inset_0_-1px_0_rgb(255_255_255/0.2),inset_0_0_0_1px_rgb(255_255_255/0.22),0_1px_2px_rgb(0_0_0/0.08),0_6px_14px_-6px_rgb(0_0_0/0.25)] transition-[background-color,scale] duration-150 hover:bg-white/30 active:scale-[0.96] outline-none focus-visible:ring-3 focus-visible:ring-white/60";
+  "bg-white/20 text-white backdrop-blur-md backdrop-saturate-150 shadow-[inset_0_1px_0_rgb(255_255_255/0.3),inset_0_-1px_0_rgb(255_255_255/0.08),inset_0_0_0_1px_rgb(255_255_255/0.08),0_1px_2px_rgb(0_0_0/0.06),0_6px_14px_-6px_rgb(0_0_0/0.2)] transition-[background-color,scale] duration-150 hover:bg-white/30 active:scale-[0.96] outline-none focus-visible:ring-3 focus-visible:ring-white/60";
 const pressed = "scale-[0.96]";
 
 // The sound switch, shared by every meter on the page and remembered in the browser.
