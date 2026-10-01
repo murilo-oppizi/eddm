@@ -164,8 +164,8 @@ function randomTilt() {
  * equal cells split by hairlines, four across on desktop, two on phones. Each cell has
  * its tinted icon and its name. Hovering a
  * cell washes it in the business's tint and brings up an arrow; with a mouse the pointer
- * becomes a small badge with that business's icon (centred on the exact click point, on
- * time, readable on any background) with its flyer trailing beside it (a fresh random tilt each time). With reduced
+ * becomes a small ring (the exact click point, on time, readable on any background) with
+ * that business's flyer trailing beside it (a fresh random tilt each time). With reduced
  * motion it's the normal pointer and no flyer. A click or tap opens its business card.
  */
 function Mural({ onOpen }: { onOpen: (i: number) => void }) {
@@ -263,41 +263,20 @@ function Mural({ onOpen }: { onOpen: (i: number) => void }) {
         })}
       </motion.ul>
 
-      {/* The pointer: a small white badge with the hovered business's icon, centred on the
-          click point (a ring in its color and a soft shadow, so it reads on any tint), and
-          the flyer beside it */}
+      {/* The pointer: a small ring on the click point (white and dark rings, so it reads on
+          any tint), and the flyer beside it */}
       <AnimatePresence>
         {hovered && (
           <motion.span
-            key="pointer"
+            key="ring"
             aria-hidden
-            className={cn(
-              "pointer-events-none absolute top-0 left-0 z-30 -mt-4 -ml-4 grid size-8 place-items-center rounded-full bg-card shadow-md ring-2 ring-current",
-              tones[hovered.tone].icon
-            )}
+            className="pointer-events-none absolute top-0 left-0 z-30 -mt-2 -ml-2 size-4 rounded-full border-2 border-foreground bg-foreground/10 shadow-[0_0_0_2px_var(--card)]"
             style={{ x: px, y: py }}
             initial={{ opacity: 0, scale: 0.4 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.4, transition: { duration: 0.12 } }}
-            transition={{ type: "spring", stiffness: 500, damping: 28 }}
-          >
-            {/* Swaps (with a little pop) when the pointer moves onto another business */}
-            <AnimatePresence mode="popLayout" initial={false}>
-              <motion.span
-                key={hovered.icon}
-                className="grid"
-                initial={{ scale: 0.5, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.5, opacity: 0 }}
-                transition={{ duration: 0.15 }}
-              >
-                {(() => {
-                  const PointerIcon = icons[hovered.icon];
-                  return <PointerIcon className="size-4" />;
-                })()}
-              </motion.span>
-            </AnimatePresence>
-          </motion.span>
+            transition={{ duration: 0.15 }}
+          />
         )}
       </AnimatePresence>
       <AnimatePresence>
@@ -306,8 +285,8 @@ function Mural({ onOpen }: { onOpen: (i: number) => void }) {
             key="flyer"
             aria-hidden
             className="pointer-events-none absolute top-0 left-0 z-20 w-44"
-            // Above and right of the badge, clear of it and of the cell being pointed at.
-            style={{ x: fx, y: fy, translateX: "24px", translateY: "calc(-100% - 20px)" }}
+            // Above and right of the ring, clear of it and of the cell being pointed at.
+            style={{ x: fx, y: fy, translateX: "18px", translateY: "calc(-100% - 14px)" }}
             initial={{ opacity: 0, scale: 0.6, rotate: (hover?.angle ?? -6) * 1.8 }}
             animate={{ opacity: 1, scale: 1, rotate: hover?.angle ?? -6 }}
             exit={{ opacity: 0, scale: 0.6, transition: { duration: 0.15 } }}
