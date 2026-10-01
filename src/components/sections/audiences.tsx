@@ -27,7 +27,6 @@ import {
   MotionConfig,
   motion,
   useMotionValue,
-  useSpring,
 } from "motion/react";
 
 import { SectionHeading } from "@/components/sections/section-heading";
@@ -169,30 +168,19 @@ function randomTilt() {
 function Mural({ onOpen }: { onOpen: (i: number) => void }) {
   const wrap = useRef<HTMLDivElement>(null);
   const [hover, setHover] = useState<{ i: number; angle: number } | null>(null);
-  const fx = useSpring(0, { stiffness: 500, damping: 40, mass: 0.4 });
-  const fy = useSpring(0, { stiffness: 500, damping: 40, mass: 0.4 });
-  // The pointer's last position on screen. The flyer is placed inside the grid, so when
-  // the page scrolls under a still pointer it's re-placed from here (jumping, not
-  // springing, so it stays glued to the pointer like the real one).
+  // The pointer's last position on screen. The ring and flyer are placed inside the grid,
+  // so when the page scrolls under a still pointer they're re-placed from here.
   const last = useRef({ x: 0, y: 0 });
-  // The ring marks the exact click point, so it follows with no lag.
+  // The ring marks the exact click point, so it (and the flyer hanging off it) follows
+  // with no lag.
   const rx = useMotionValue(0);
   const ry = useMotionValue(0);
   const [pressed, setPressed] = useState(false);
-  const place = (instant = false) => {
+  const place = () => {
     const r = wrap.current?.getBoundingClientRect();
     if (!r) return;
-    const x = last.current.x - r.left;
-    const y = last.current.y - r.top;
-    rx.set(x);
-    ry.set(y);
-    if (instant) {
-      fx.jump(x);
-      fy.jump(y);
-    } else {
-      fx.set(x);
-      fy.set(y);
-    }
+    rx.set(last.current.x - r.left);
+    ry.set(last.current.y - r.top);
   };
   const follow = (e: React.PointerEvent) => {
     last.current = { x: e.clientX, y: e.clientY };
@@ -201,7 +189,7 @@ function Mural({ onOpen }: { onOpen: (i: number) => void }) {
   const hovering = hover !== null;
   useEffect(() => {
     if (!hovering) return;
-    const onScroll = () => place(true);
+    const onScroll = () => place();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
     // place only reads refs and stable motion values.
@@ -313,24 +301,29 @@ function Mural({ onOpen }: { onOpen: (i: number) => void }) {
         )}
       </AnimatePresence>
 
-      {/* The flyer, trailing the pointer */}
-      <AnimatePresence>
-        {hovered && (
-          <motion.div
-            key="flyer"
-            aria-hidden
-            className="pointer-events-none absolute top-0 left-0 z-20 w-44"
-            // Just above and right of the pointer, so the cell being pointed at stays visible.
-            style={{ x: fx, y: fy, translateX: "-12%", translateY: "-108%" }}
-            initial={{ opacity: 0, scale: 0.6, rotate: (hover?.angle ?? -6) * 1.8 }}
-            animate={{ opacity: 1, scale: 1, rotate: hover?.angle ?? -6 }}
-            exit={{ opacity: 0, scale: 0.6, transition: { duration: 0.15 } }}
-            transition={{ type: "spring", stiffness: 400, damping: 26 }}
-          >
-            <Postcard industry={hovered} copy={hovered.moments[0]} />
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* The flyer, hanging off the ring: its bottom-left corner pinned just above and right
+          of the ring, moving with it (no lag), and tilting and scaling around that corner,
+          so no tilt can swing it over the ring. */}
+      <motion.div
+        aria-hidden
+        className="pointer-events-none absolute top-0 left-0 z-20"
+        style={{ x: rx, y: ry }}
+      >
+        <AnimatePresence>
+          {hovered && (
+            <motion.div
+              key="flyer"
+              className="absolute bottom-2 left-2 w-44 origin-bottom-left"
+              initial={{ opacity: 0, scale: 0.6, rotate: (hover?.angle ?? -6) * 1.8 }}
+              animate={{ opacity: 1, scale: 1, rotate: hover?.angle ?? -6 }}
+              exit={{ opacity: 0, scale: 0.6, transition: { duration: 0.15 } }}
+              transition={{ type: "spring", stiffness: 400, damping: 26 }}
+            >
+              <Postcard industry={hovered} copy={hovered.moments[0]} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
     </div>
   );
 }
