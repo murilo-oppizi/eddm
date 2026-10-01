@@ -9,6 +9,7 @@ import {
   motion,
   useInView,
   useReducedMotion,
+  useSpring,
 } from "motion/react";
 
 import { PrintedStamp } from "@/components/sections/printed-stamp";
@@ -59,6 +60,14 @@ const FEED_STEPS = [0, 0.21, 0.42];
 const TAKE_OFF = 1050; // ms after printing starts
 const MAKE_ROOM = 0.45; // s to glide the page up when the stamp would print off screen
 const glide = [0.65, 0, 0.35, 1] as const;
+
+const TILT = 6; // degrees, the most the meter leans each way
+
+/** The browser's tilt events, with iPhone Safari's permission prompt when it has one. */
+const orientation = () =>
+  typeof DeviceOrientationEvent === "undefined"
+    ? undefined
+    : (DeviceOrientationEvent as unknown as { requestPermission?: () => Promise<string> });
 
 type Flight = { stamp: Stamp; left: number; top: number; x: number; y: number; scale: number; duration: number };
 
@@ -115,6 +124,46 @@ export function PriceMeter() {
   // clicks. Ignored while typing in a field or with modifier keys.
   const [held, setHeld] = useState<string | null>(null);
   const mostlyOnScreen = useInView(root, { amount: 0.5 });
+
+  // The meter tilts gently in 3D: following the mouse over it on desktops, and the phone's
+  // tilt on phones, on a soft spring. The light on it stays put. Off with reduced motion.
+  const rx = useSpring(0, { stiffness: 150, damping: 18 });
+  const ry = useSpring(0, { stiffness: 150, damping: 18 });
+  const lean = (x: number, y: number) => {
+    // x, y from −1 to 1: the side under the mouse (or tipped down) dips away, like a card
+    // on Apple TV
+    ry.set(Math.max(-1, Math.min(1, x)) * TILT);
+    rx.set(-Math.max(-1, Math.min(1, y)) * TILT);
+  };
+  const followPointer = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (e.pointerType !== "mouse" || reduce) return;
+    const r = e.currentTarget.getBoundingClientRect();
+    lean(((e.clientX - r.left) / r.width) * 2 - 1, ((e.clientY - r.top) / r.height) * 2 - 1);
+  };
+  // The phone's tilt. iPhones ask once for motion access; we ask on the first tap on the
+  // meter (a tap is the only time Safari allows it). Listening only while it's on screen.
+  const [tiltGranted, setTiltGranted] = useState(false);
+  const askForTilt = () => {
+    const ask = orientation()?.requestPermission;
+    if (!ask || tiltGranted) return;
+    ask().then((state) => setTiltGranted(state === "granted"), () => {});
+  };
+  useEffect(() => {
+    const D = orientation();
+    if (!D || (D.requestPermission && !tiltGranted) || !mostlyOnScreen || reduce) return;
+    const onTilt = (e: DeviceOrientationEvent) => {
+      if (e.gamma == null || e.beta == null) return;
+      // Side to side; and forward / back around the way a phone is usually held (~40°).
+      lean(e.gamma / 30, (e.beta - 40) / 30);
+    };
+    window.addEventListener("deviceorientation", onTilt);
+    return () => {
+      window.removeEventListener("deviceorientation", onTilt);
+      lean(0, 0);
+    };
+    // lean only sets the springs
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [tiltGranted, mostlyOnScreen, reduce]);
   useEffect(() => {
     if (!mostlyOnScreen) return;
     const onDown = (e: KeyboardEvent) => {
@@ -285,6 +334,10 @@ export function PriceMeter() {
 
         <motion.div
           ref={root}
+          style={{ rotateX: rx, rotateY: ry, transformPerspective: 1100 }}
+          onPointerMove={followPointer}
+          onPointerLeave={() => lean(0, 0)}
+          onPointerDownCapture={askForTilt}
           onPointerEnter={() => prepareSounds()}
           onFocus={() => prepareSounds()}
           // Corners nest: the body's 36px radius minus its 20px padding is the screen's 16px.
