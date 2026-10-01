@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   IconArrowUpRight,
   IconBarbell,
@@ -170,12 +170,36 @@ function Mural({ onOpen }: { onOpen: (i: number) => void }) {
   const [hover, setHover] = useState<{ i: number; angle: number } | null>(null);
   const fx = useSpring(0, { stiffness: 500, damping: 40, mass: 0.4 });
   const fy = useSpring(0, { stiffness: 500, damping: 40, mass: 0.4 });
-  const follow = (e: React.PointerEvent) => {
+  // The pointer's last position on screen. The flyer is placed inside the grid, so when
+  // the page scrolls under a still pointer it's re-placed from here (jumping, not
+  // springing, so it stays glued to the pointer like the real one).
+  const last = useRef({ x: 0, y: 0 });
+  const place = (instant = false) => {
     const r = wrap.current?.getBoundingClientRect();
     if (!r) return;
-    fx.set(e.clientX - r.left);
-    fy.set(e.clientY - r.top);
+    const x = last.current.x - r.left;
+    const y = last.current.y - r.top;
+    if (instant) {
+      fx.jump(x);
+      fy.jump(y);
+    } else {
+      fx.set(x);
+      fy.set(y);
+    }
   };
+  const follow = (e: React.PointerEvent) => {
+    last.current = { x: e.clientX, y: e.clientY };
+    place();
+  };
+  const hovering = hover !== null;
+  useEffect(() => {
+    if (!hovering) return;
+    const onScroll = () => place(true);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+    // place only reads refs and stable motion values.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hovering]);
   const enter = (i: number, e: React.PointerEvent) => {
     if (e.pointerType !== "mouse") return;
     follow(e);
