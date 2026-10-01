@@ -9,12 +9,12 @@ import {
   motion,
   useInView,
   useReducedMotion,
+  useSpring,
 } from "motion/react";
 
 import { PrintedStamp } from "@/components/sections/printed-stamp";
 import { OppiziSymbol } from "@/components/site/logo";
 import { Kbd } from "@/components/ui/kbd";
-import { Slider } from "@/components/ui/slider";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { pricing } from "@/content/site";
 import { playKey, prepareSounds, setSoundsOn, soundsOn } from "@/lib/key-sounds";
@@ -23,9 +23,10 @@ import { cn } from "@/lib/utils";
 
 // The "EDDM price meter": a flat, product-like object (after the postage meters post
 // offices use to price mail) instead of a form. A light screen shows the estimate in
-// rolling digits and a level meter; a fader with − / + sets the homes; five keycaps
-// pick the postcard size (the chosen one shows its shape and name in pink); a big key asks
-// for the quote. The first time it's on screen the fader glides up to 15,000 once.
+// rolling digits; a big rotary dial, with − / + at its feet, sets the homes (its ring of
+// ticks is the level meter, wrapped around the knob); five keycaps pick the postcard size
+// (the chosen one shows its shape and name in pink); a big key asks for the quote. The
+// first time it's on screen the dial turns up to 15,000 once.
 // It rests still, like an object on a desk, and its keys clack (Cream switch samples;
 // the speaker grille turns the sound off). Asking for the quote
 // prints a postage stamp with the estimate out of a slot at the bottom; it then floats
@@ -33,11 +34,7 @@ import { cn } from "@/lib/utils";
 
 type Size = (typeof pricing.sizes)[number];
 const { min, max, step, initial } = pricing.homes;
-const HOMES_PER_SEGMENT = 1000;
-const NOTCH_EVERY = 5000; // the fader's notch marks (and firmer ticks)
-const NOTCHES = Array.from({ length: Math.floor((max - 1) / NOTCH_EVERY) }, (_, i) => (i + 1) * NOTCH_EVERY).filter((v) => v > min);
-const FADER_CAP = 40; // px, the fader cap's width (w-10); its center travels inset by half
-const SEGMENTS = max / HOMES_PER_SEGMENT;
+const NOTCH_EVERY = 5000; // the dial's longer ticks (and firmer clicks)
 const ease = [0.22, 1, 0.36, 1] as const;
 
 /** Oppizi's calculator total at the anchor counts, straight lines in between. */
@@ -366,28 +363,6 @@ export function PriceMeter() {
                 <RollingNumber value={fmt(homes)} />
               </p>
             </div>
-            {/* Level meter: one segment per 1,000 homes, the current one a little taller */}
-            <div aria-hidden className="mt-5 flex h-4 items-end gap-0.5 sm:gap-[3px]">
-              {Array.from({ length: SEGMENTS }, (_, i) => {
-                const value = min + i * HOMES_PER_SEGMENT;
-                const on = value <= homes;
-                const head = on && value + HOMES_PER_SEGMENT > homes;
-                return (
-                  <span
-                    key={i}
-                    className={cn(
-                      "flex-1 rounded-[2px] transition-[background-color,height] duration-200",
-                      on ? "bg-primary" : "bg-muted-foreground/15",
-                      head ? "h-4" : "h-2.5"
-                    )}
-                  />
-                );
-              })}
-            </div>
-            <div aria-hidden className="mt-2 flex justify-between text-[11px] text-muted-foreground tabular-nums">
-              <span>{fmt(min)}</span>
-              <span>{fmt(max)}</span>
-            </div>
             {/* The details behind the estimate */}
             <div aria-hidden className="mt-4 flex justify-between gap-4 border-t border-dashed pt-3 text-sm">
               <span>
@@ -401,9 +376,8 @@ export function PriceMeter() {
             </div>
           </div>
 
-          {/* Homes: − / fader / + */}
-          <div className="mt-5 px-1">
-            <div className="flex items-center gap-3">
+          {/* Homes: the dial, with − / + at its feet (by the 1K and 30K ends of its ring) */}
+          <div className="mt-4 flex items-end justify-center gap-3 sm:gap-5">
               <Tooltip>
                 <TooltipTrigger
                   aria-label="1,000 fewer homes"
@@ -421,37 +395,15 @@ export function PriceMeter() {
                   1,000 fewer homes <Kbd>←</Kbd>
                 </TooltipContent>
               </Tooltip>
-              <Slider
-                getAriaLabel={() => "Homes to reach"}
+              <Dial
                 value={homes}
-                min={min}
-                max={max}
-                step={step}
-                largeStep={5000}
-                onValueChange={(v) => {
+                reduce={!!reduce}
+                onChange={(v) => {
                   set(v);
-                  // Passing a notch clicks a little firmer.
+                  // Passing a long tick clicks a little firmer.
                   playKey("tick", { gain: v % NOTCH_EVERY === 0 ? 0.4 : 0.22, pitch: 0.85 + (0.35 * (v - min)) / (max - min) });
                 }}
-                track={NOTCHES.map((v) => (
-                  <span
-                    key={v}
-                    aria-hidden
-                    className={cn(
-                      "absolute top-1/2 h-1 w-0.5 -translate-x-1/2 -translate-y-1/2 rounded-full transition-colors",
-                      v <= homes ? "bg-black/15" : "bg-white/35"
-                    )}
-                    style={{ left: `calc(${FADER_CAP / 2}px + ${(v - min) / (max - min)} * (100% - ${FADER_CAP}px))` }}
-                  />
-                ))}
-                getAriaValueText={(_, v: number) => `${fmt(v)} homes`}
-                className={cn(
-                  "[&_[data-slot=slider-track]]:h-2.5 [&_[data-slot=slider-track]]:bg-black/20 [&_[data-slot=slider-track]]:shadow-[inset_0_1px_2px_rgb(0_0_0/0.25)]",
-                  "[&_[data-slot=slider-range]]:bg-white/85",
-                  "[&_[data-slot=slider-thumb]]:h-7 [&_[data-slot=slider-thumb]]:w-10 [&_[data-slot=slider-thumb]]:rounded-lg [&_[data-slot=slider-thumb]]:border-0 [&_[data-slot=slider-thumb]]:shadow-[0_3px_0_rgb(0_0_0/0.22)] [&_[data-slot=slider-thumb]]:ring-white/50",
-                  // Grip lines on the fader cap
-                  "[&_[data-slot=slider-thumb]]:[background:repeating-linear-gradient(90deg,rgb(0_0_0/0.18)_0_1.5px,transparent_1.5px_4px)_center/10px_12px_no-repeat,white]"
-                )}
+                onGrab={() => sweep.current?.stop()}
               />
               <Tooltip>
                 <TooltipTrigger
@@ -470,7 +422,6 @@ export function PriceMeter() {
                   1,000 more homes <Kbd>→</Kbd>
                 </TooltipContent>
               </Tooltip>
-            </div>
           </div>
 
           {/* Postcard size keys */}
@@ -582,6 +533,158 @@ function Screw({ className }: { className: string }) {
         className
       )}
     />
+  );
+}
+
+// The dial's travel: 270°, from 1K at lower left (−135°, 0° is straight up) round to 30K
+// at lower right; the gap at the bottom is dead space, so it can't jump between ends.
+const ARC = 270;
+const START = -ARC / 2;
+const TICKS = Array.from({ length: (max - min) / step + 1 }, (_, i) => min + i * step);
+const angleFor = (v: number) => START + ((v - min) / (max - min)) * ARC;
+const polar = (deg: number, r: number) => {
+  const a = (deg * Math.PI) / 180;
+  return [Math.sin(a) * r, -Math.cos(a) * r] as const;
+};
+
+/**
+ * The homes dial. A ring of ticks, one per 1,000 homes, lights up to the count (the one
+ * at the count a little longer, like the old level meter's tallest bar); inside it, a
+ * knob made of the same stuff as the keys, knurled at the edge with a pink mark, turns
+ * on a spring. Drag round it (or tap the ring) to set the homes; it's a slider for
+ * keyboards and screen readers (arrows, Page Up / Down, Home / End).
+ */
+function Dial({
+  value,
+  reduce,
+  onChange,
+  onGrab,
+}: {
+  value: number;
+  reduce: boolean;
+  onChange: (v: number) => void;
+  onGrab: () => void;
+}) {
+  const turn = useSpring(angleFor(value), { stiffness: 420, damping: 32, mass: 0.6 });
+  useEffect(() => {
+    if (reduce) turn.jump(angleFor(value));
+    else turn.set(angleFor(value));
+  }, [value, reduce, turn]);
+
+  const [grabbed, setGrabbed] = useState(false);
+  const last = useRef(value);
+  useEffect(() => {
+    last.current = value;
+  }, [value]);
+
+  const pick = (e: React.PointerEvent<HTMLDivElement>) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    const deg = (Math.atan2(e.clientX - (r.left + r.width / 2), -(e.clientY - (r.top + r.height / 2))) * 180) / Math.PI;
+    const clamped = Math.max(START, Math.min(START + ARC, deg));
+    const v = clamp(Math.round((min + ((clamped - START) / ARC) * (max - min)) / step) * step);
+    // Never leap across the dead gap at the bottom from one end to the other.
+    if (grabbed && Math.abs(v - last.current) > (max - min) / 2) return;
+    if (v !== last.current) {
+      last.current = v;
+      onChange(v);
+    }
+  };
+
+  const nudge = (by: number) => {
+    const v = clamp(value + by);
+    if (v !== value) onChange(v);
+  };
+
+  return (
+    <div
+      role="slider"
+      tabIndex={0}
+      aria-label="Homes to reach"
+      aria-valuemin={min}
+      aria-valuemax={max}
+      aria-valuenow={value}
+      aria-valuetext={`${fmt(value)} homes`}
+      onPointerDown={(e) => {
+        e.currentTarget.setPointerCapture(e.pointerId);
+        onGrab();
+        setGrabbed(true);
+        pick(e);
+      }}
+      onPointerMove={(e) => grabbed && pick(e)}
+      onPointerUp={() => setGrabbed(false)}
+      onPointerCancel={() => setGrabbed(false)}
+      onKeyDown={(e) => {
+        const by =
+          e.key === "ArrowUp" || e.key === "ArrowRight" ? step
+          : e.key === "ArrowDown" || e.key === "ArrowLeft" ? -step
+          : e.key === "PageUp" ? NOTCH_EVERY
+          : e.key === "PageDown" ? -NOTCH_EVERY
+          : e.key === "Home" ? min - value
+          : e.key === "End" ? max - value
+          : 0;
+        if (!by) return;
+        e.preventDefault();
+        onGrab();
+        nudge(by);
+      }}
+      className={cn(
+        "relative aspect-square w-[176px] shrink-0 touch-none rounded-full outline-none select-none focus-visible:ring-3 focus-visible:ring-white/60 sm:w-[196px]",
+        grabbed ? "cursor-grabbing" : "cursor-grab"
+      )}
+    >
+      {/* The ring: ticks, and the 1K / 30K ends */}
+      <svg aria-hidden viewBox="-100 -100 200 200" className="absolute inset-0 size-full overflow-visible">
+        <g className="drop-shadow-[0_0_3px_rgb(255_255_255/0.45)]">
+          {TICKS.map((v) => {
+            const deg = angleFor(v);
+            const on = v <= value;
+            const head = on && v + step > value;
+            const long = v === min || v % NOTCH_EVERY === 0;
+            const [x1, y1] = polar(deg, 84);
+            const [x2, y2] = polar(deg, head ? 99 : long ? 95 : 91);
+            return (
+              <line
+                key={v}
+                x1={x1}
+                y1={y1}
+                x2={x2}
+                y2={y2}
+                strokeWidth={head ? 3.5 : 2.5}
+                strokeLinecap="round"
+                className={cn("transition-[stroke] duration-150", on ? "stroke-white" : "stroke-black/20")}
+              />
+            );
+          })}
+        </g>
+        {([[min, "1K"], [max, "30K"]] as const).map(([v, label]) => {
+          // Tucked under the end ticks, a little in toward the knob
+          const [x] = polar(angleFor(v), 70);
+          const [, y] = polar(angleFor(v), 94);
+          return (
+            <text key={label} x={x} y={y + 13} textAnchor="middle" className="fill-white/75 text-[10px] font-semibold tracking-wide">
+              {label}
+            </text>
+          );
+        })}
+      </svg>
+
+      {/* The knob: raised like the keys (the same off-white, the same top highlight and
+          travel shadow, only deeper), dipping a hair while held */}
+      <motion.div
+        aria-hidden
+        animate={{ scale: grabbed ? 0.975 : 1 }}
+        transition={{ type: "spring", stiffness: 500, damping: 30 }}
+        className="absolute inset-[19%] rounded-full bg-[var(--ds-tw-gray-100)] shadow-[0_0_0_1px_rgb(0_0_0/0.06),0_2px_2px_rgb(0_0_0/0.12),0_5px_0_rgb(0_0_0/0.2),0_18px_28px_-10px_rgb(0_0_0/0.45),inset_0_3px_0_rgb(255_255_255/1)]"
+      >
+        {/* What turns: the knurled edge and the mark */}
+        <motion.div style={{ rotate: turn }} className="absolute inset-0 rounded-full">
+          <div className="absolute inset-0 rounded-full bg-[repeating-conic-gradient(rgb(0_0_0/0.09)_0_1.5deg,transparent_1.5deg_6deg)] [mask:radial-gradient(closest-side,transparent_80%,black_81%)]" />
+          <div className="absolute top-[13%] left-1/2 h-[15%] w-[7px] -translate-x-1/2 rounded-full bg-primary shadow-[inset_0_1px_1px_rgb(0_0_0/0.25)]" />
+        </motion.div>
+        {/* The face: a shallow dish, lit from above (it doesn't turn, so the light stays put) */}
+        <div className="absolute inset-[24%] rounded-full bg-[radial-gradient(circle_at_50%_30%,white,var(--ds-tw-gray-100)_75%)] shadow-[inset_0_2px_3px_rgb(0_0_0/0.1),0_1px_0_rgb(255_255_255/0.9)]" />
+      </motion.div>
+    </div>
   );
 }
 
