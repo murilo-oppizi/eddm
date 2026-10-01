@@ -555,10 +555,10 @@ function RollingNumber({ value }: { value: string }) {
 }
 
 /**
- * The postcard as a line icon, in the manner of Lucide and Tabler (1.5px strokes, round
- * caps and corners): the card at its real proportions, all on one scale (2px an inch), with
- * a stamp in the corner and address lines, as many as fit. Strokes stay 1.5px at every
- * size, so the small cards stay as crisp as the big one.
+ * The postcard as a line icon, in the manner of Lucide and Tabler (fine 1px strokes,
+ * round caps and corners): the card at its real proportions, all on one scale (2px an
+ * inch), with a stamp in the corner and address lines, as many as fit. Strokes stay 1px
+ * at every size, so the small cards stay as crisp as the big one.
  */
 function SizeGlyph({ size, active }: { size: Size; active: boolean }) {
   const w = size.w * 2;
@@ -573,12 +573,12 @@ function SizeGlyph({ size, active }: { size: Size; active: boolean }) {
         viewBox={`0 0 ${w} ${h}`}
         fill="none"
         stroke="currentColor"
-        strokeWidth={1.5}
+        strokeWidth={1}
         strokeLinecap="round"
         strokeLinejoin="round"
         className={cn("transition-colors duration-200", active ? "text-primary" : "text-white/80")}
       >
-        <rect x={0.75} y={0.75} width={w - 1.5} height={h - 1.5} rx={2} />
+        <rect x={0.5} y={0.5} width={w - 1} height={h - 1} rx={2} />
         <rect x={w - 2.75 - stamp} y={2.75} width={stamp} height={stamp} rx={0.75} fill="currentColor" stroke="none" />
         {lines.map((y, i) => (
           <path key={y} d={`M3 ${y}H${i === lines.length - 1 ? w * 0.55 : w * 0.4}`} />
