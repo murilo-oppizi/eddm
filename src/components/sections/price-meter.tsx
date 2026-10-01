@@ -66,19 +66,20 @@ const glide = [0.65, 0, 0.35, 1] as const;
 
 type Flight = { stamp: Stamp; left: number; top: number; x: number; y: number; scale: number; duration: number };
 
-// Liquid glass (after iOS 26): the device is a pane of frosted glass floating over soft
-// pools of the brand's colors, which show through it, blurred and more saturated. Every
-// glass part has the same recipe: a bright rim of light along its top edge, a fainter one
-// along the bottom where light passes through, and a soft shadow under it.
-// Keys: small panes of clearer glass. Pressed, they sink a hair and turn a bit whiter.
-const keycap = "bg-white/45 text-foreground backdrop-blur-md backdrop-saturate-150 shadow-[inset_0_1px_0_rgb(255_255_255/0.85),inset_0_-1px_0_rgb(255_255_255/0.35),inset_0_0_0_1px_rgb(255_255_255/0.25),0_1px_2px_rgb(0_0_0/0.06),0_6px_14px_-6px_rgb(0_0_0/0.2)] transition-[translate,scale,background-color,box-shadow] duration-150 active:translate-y-px active:scale-[0.97] active:bg-white/65 outline-none focus-visible:ring-3 focus-visible:ring-ring/50";
-const pressed = "translate-y-px scale-[0.97] bg-white/65";
-const lift = "hover:bg-white/60";
-// The quote key: glass tinted with the brand pink, the one strong color on the device.
-const actionKey = "bg-primary/85 text-primary-foreground backdrop-blur-md backdrop-saturate-150 shadow-[inset_0_1px_0_rgb(255_255_255/0.55),inset_0_-1px_0_rgb(255_255_255/0.2),inset_0_0_0_1px_rgb(255_255_255/0.15),0_1px_2px_rgb(0_0_0/0.08),0_10px_24px_-10px_color-mix(in_oklab,var(--primary)_70%,black)] transition-[translate,scale,background-color,box-shadow] duration-150 hover:bg-primary/95 active:translate-y-px active:scale-[0.98] outline-none focus-visible:ring-3 focus-visible:ring-ring/50";
+// Keycaps: off-white (the design system's gray-100, dark in dark mode) so a crisp white
+// highlight shows along the top edge, like a real keycap catching the light; a hairline
+// edge and soft drop over our deeper "travel" shadow. Pressed keys sink 2px, shrink a
+// hair and lose some highlight.
+const keycap =
+  "bg-[var(--ds-tw-gray-100)] text-card-foreground dark:bg-card shadow-[0_0_0_1px_rgb(0_0_0/0.06),0_1px_1px_rgb(0_0_0/0.1),0_3px_0_rgb(0_0_0/0.2),inset_0_3px_0_rgb(255_255_255/1)] dark:shadow-[0_0_0_1px_rgb(0_0_0/0.06),0_1px_1px_rgb(0_0_0/0.1),0_3px_0_rgb(0_0_0/0.2),inset_0_3px_0_rgb(255_255_255/0.12)] transition-[translate,scale,box-shadow] duration-100 active:translate-y-[2px] active:scale-[0.98] active:shadow-[0_0_0_1px_rgb(0_0_0/0.06),0_1px_0_rgb(0_0_0/0.2),inset_0_1px_0_rgb(255_255_255/0.5)] outline-none focus-visible:ring-3 focus-visible:ring-ring/50";
+const pressed =
+  "translate-y-[2px] scale-[0.98] shadow-[0_0_0_1px_rgb(0_0_0/0.06),0_1px_0_rgb(0_0_0/0.2),inset_0_1px_0_rgb(255_255_255/0.5)]";
+const lift =
+  "hover:-translate-y-px hover:shadow-[0_0_0_1px_rgb(0_0_0/0.06),0_2px_2px_rgb(0_0_0/0.1),0_4px_0_rgb(0_0_0/0.2),inset_0_3px_0_rgb(255_255_255/1)]";
 
-// The name and the speaker: thin glass pills.
-const plate = "inline-flex h-7 items-center rounded-full bg-white/35 text-foreground/80 backdrop-blur-md shadow-[inset_0_1px_0_rgb(255_255_255/0.85),inset_0_-1px_0_rgb(255_255_255/0.35),inset_0_0_0_1px_rgb(255_255_255/0.25)]";
+// A debossed plate on the device body: darker, pressed in, with a light lower edge.
+const plate =
+  "inline-flex h-7 items-center rounded-full bg-black/20 text-white shadow-[inset_0_1px_2px_rgb(0_0_0/0.3),0_1px_0_rgb(255_255_255/0.3)]";
 
 // The sound switch, shared by every meter on the page and remembered in the browser.
 const soundListeners = new Set<() => void>();
@@ -289,22 +290,19 @@ export function PriceMeter() {
   return (
     <TooltipProvider delay={300}>
       <div className="relative mx-auto w-full max-w-[540px]">
-        {/* Pools of color behind the glass (radial gradients, not blur filters, which
-            iPhone Safari draws badly at this size) */}
-        <div aria-hidden className="pointer-events-none absolute -inset-12">
-          <div className="absolute top-[4%] left-[2%] size-[60%] rounded-full bg-[radial-gradient(closest-side,color-mix(in_oklab,var(--primary)_75%,transparent),transparent)]" />
-          <div className="absolute right-[0%] bottom-[6%] size-[58%] rounded-full bg-[radial-gradient(closest-side,color-mix(in_oklab,var(--ds-tw-orange-400)_70%,transparent),transparent)]" />
-          <div className="absolute top-[38%] right-[18%] size-[42%] rounded-full bg-[radial-gradient(closest-side,color-mix(in_oklab,var(--ds-tw-fuchsia-400)_55%,transparent),transparent)]" />
-        </div>
+        {/* Soft pink glow on the "table" under the device */}
+        <div aria-hidden className="absolute inset-x-10 -bottom-8 h-16 rounded-full bg-primary/30 blur-3xl" />
 
         <motion.div
           ref={root}
           onPointerEnter={() => prepareSounds()}
           onFocus={() => prepareSounds()}
-          className="relative rounded-[32px] bg-white/20 p-6 backdrop-blur-2xl backdrop-saturate-[1.8] shadow-[inset_0_1.5px_0_rgb(255_255_255/0.9),inset_0_-1px_0_rgb(255_255_255/0.4),inset_0_0_0_1px_rgb(255_255_255/0.35),inset_0_0_32px_rgb(255_255_255/0.25),0_2px_6px_rgb(0_0_0/0.05),0_30px_60px_-28px_rgb(0_0_0/0.35)]"
+          className="relative rounded-[30px] bg-primary p-6 shadow-[inset_0_1px_0_rgb(255_255_255/0.4),inset_0_-5px_0_rgb(0_0_0/0.14),0_30px_60px_-24px_color-mix(in_oklab,var(--primary)_70%,black)]"
         >
-          {/* A sheen across the top-left, where the light hits the glass */}
-          <span aria-hidden className="pointer-events-none absolute inset-0 rounded-[inherit] bg-[linear-gradient(135deg,rgb(255_255_255/0.45),transparent_38%)]" />
+          <Screw className="top-3.5 left-3.5" />
+          <Screw className="top-3.5 right-3.5" />
+          <Screw className="bottom-3.5 left-3.5" />
+          <Screw className="right-3.5 bottom-3.5" />
 
           {/* The printer: a slot along the bottom edge, and the stamp that feeds out of it.
               The stamp sits behind the slot's lip, so it looks like it comes from inside. */}
@@ -321,7 +319,7 @@ export function PriceMeter() {
               </motion.div>
             )}
           </div>
-          <span aria-hidden className="absolute bottom-0 left-1/2 z-20 h-[5px] w-[196px] -translate-x-1/2 rounded-t-[4px] bg-black/15 shadow-[inset_0_-2px_2px_rgb(0_0_0/0.15)]" />
+          <span aria-hidden className="absolute bottom-0 left-1/2 z-20 h-[5px] w-[196px] -translate-x-1/2 rounded-t-[4px] bg-black/35 shadow-[inset_0_-2px_2px_rgb(0_0_0/0.35)]" />
 
           {/* Top plate: the maker's nameplate and the speaker, both debossed into the body
               (a darker, inset plate with a light lower edge), so white reads clearly */}
@@ -338,20 +336,20 @@ export function PriceMeter() {
               title={sound ? "Key sounds on" : "Key sounds off"}
               className={cn(
                 plate,
-                "cursor-pointer gap-2 px-2.5 outline-none transition-colors hover:bg-white/55 focus-visible:ring-3 focus-visible:ring-ring/50"
+                "cursor-pointer gap-2 px-2.5 outline-none transition-colors hover:bg-black/25 focus-visible:ring-3 focus-visible:ring-ring/50"
               )}
             >
               {sound ? <IconVolume className="size-3.5" /> : <IconVolumeOff className="size-3.5 opacity-70" />}
               <span aria-hidden className="grid grid-cols-6 gap-[3px]">
                 {Array.from({ length: 12 }, (_, i) => (
-                  <span key={i} className={cn("size-[3px] rounded-full transition-colors", sound ? "bg-foreground/55" : "bg-foreground/20")} />
+                  <span key={i} className={cn("size-[3px] rounded-full transition-colors", sound ? "bg-white/70" : "bg-white/30")} />
                 ))}
               </span>
             </button>
           </div>
 
           {/* The screen */}
-          <div className="relative rounded-[20px] bg-white/75 p-5 backdrop-blur-xl shadow-[inset_0_1px_0_rgb(255_255_255/1),inset_0_0_0_1px_rgb(255_255_255/0.5),0_1px_2px_rgb(0_0_0/0.05),0_8px_20px_-10px_rgb(0_0_0/0.18)]">
+          <div className="rounded-2xl bg-card p-5 shadow-[inset_0_2px_8px_rgb(0_0_0/0.14)] ring-1 ring-black/10">
             {/* The two figures: what it costs, and how many homes it reaches */}
             <p className="sr-only" aria-live="polite">
               {usd(total)} for {fmt(homes)} homes with a {size.name} postcard, {perPiece} per piece.
@@ -415,7 +413,7 @@ export function PriceMeter() {
                     if (e.detail === 0) playKey("space");
                     set(homes - step);
                   }}
-                  className={cn(keycap, held === "minus" ? pressed : lift, "grid size-10 shrink-0 place-items-center rounded-full")}
+                  className={cn(keycap, held === "minus" ? pressed : lift, "grid size-10 shrink-0 place-items-center rounded-xl")}
               >
                   <IconMinus className="size-4" />
                 </TooltipTrigger>
@@ -441,19 +439,18 @@ export function PriceMeter() {
                     aria-hidden
                     className={cn(
                       "absolute top-1/2 h-1 w-0.5 -translate-x-1/2 -translate-y-1/2 rounded-full transition-colors",
-                      v <= homes ? "bg-white/50" : "bg-black/15"
+                      v <= homes ? "bg-black/15" : "bg-white/35"
                     )}
                     style={{ left: `calc(${FADER_CAP / 2}px + ${(v - min) / (max - min)} * (100% - ${FADER_CAP}px))` }}
                   />
                 ))}
                 getAriaValueText={(_, v: number) => `${fmt(v)} homes`}
                 className={cn(
-                  "[&_[data-slot=slider-track]]:h-2 [&_[data-slot=slider-track]]:bg-black/10 [&_[data-slot=slider-track]]:shadow-[inset_0_1px_2px_rgb(0_0_0/0.15),0_1px_0_rgb(255_255_255/0.5)]",
-                  "[&_[data-slot=slider-range]]:bg-primary",
-                  "[&_[data-slot=slider-thumb]]:h-7 [&_[data-slot=slider-thumb]]:w-10 [&_[data-slot=slider-thumb]]:rounded-full [&_[data-slot=slider-thumb]]:border-0 [&_[data-slot=slider-thumb]]:bg-white/90 [&_[data-slot=slider-thumb]]:backdrop-blur-md [&_[data-slot=slider-thumb]]:ring-white/50",
-                  // While dragged, the knob turns to clear glass and grows, like iOS 26's
-                  "[&_[data-slot=slider-thumb]]:transition-[scale,background-color,box-shadow] [&_[data-slot=slider-thumb]]:duration-200 [&_[data-slot=slider-thumb][data-dragging]]:scale-125 [&_[data-slot=slider-thumb][data-dragging]]:bg-white/25",
-                  "[&_[data-slot=slider-thumb]]:shadow-[inset_0_1px_0_rgb(255_255_255/1),inset_0_-1px_0_rgb(255_255_255/0.4),inset_0_0_0_1px_rgb(255_255_255/0.4),0_1px_2px_rgb(0_0_0/0.1),0_6px_14px_-4px_rgb(0_0_0/0.25)]"
+                  "[&_[data-slot=slider-track]]:h-2.5 [&_[data-slot=slider-track]]:bg-black/20 [&_[data-slot=slider-track]]:shadow-[inset_0_1px_2px_rgb(0_0_0/0.25)]",
+                  "[&_[data-slot=slider-range]]:bg-white/85",
+                  "[&_[data-slot=slider-thumb]]:h-7 [&_[data-slot=slider-thumb]]:w-10 [&_[data-slot=slider-thumb]]:rounded-lg [&_[data-slot=slider-thumb]]:border-0 [&_[data-slot=slider-thumb]]:shadow-[0_3px_0_rgb(0_0_0/0.22)] [&_[data-slot=slider-thumb]]:ring-white/50",
+                  // Grip lines on the fader cap
+                  "[&_[data-slot=slider-thumb]]:[background:repeating-linear-gradient(90deg,rgb(0_0_0/0.18)_0_1.5px,transparent_1.5px_4px)_center/10px_12px_no-repeat,white]"
                 )}
               />
               <Tooltip>
@@ -465,7 +462,7 @@ export function PriceMeter() {
                     if (e.detail === 0) playKey("space");
                     set(homes + step);
                   }}
-                  className={cn(keycap, held === "plus" ? pressed : lift, "grid size-10 shrink-0 place-items-center rounded-full")}
+                  className={cn(keycap, held === "plus" ? pressed : lift, "grid size-10 shrink-0 place-items-center rounded-xl")}
               >
                   <IconPlus className="size-4" />
                 </TooltipTrigger>
@@ -504,9 +501,8 @@ export function PriceMeter() {
                     <span
                       className={cn(
                         keycap,
-                        "relative flex h-full flex-col items-center gap-1.5 rounded-2xl px-1 pt-3 pb-2 text-center peer-focus-visible:ring-3 peer-focus-visible:ring-ring/50",
-                        held === s.name ? pressed : lift,
-                        on && "bg-white/80"
+                        "relative flex h-full flex-col items-center gap-1.5 rounded-xl px-1 pt-3 pb-2 text-center peer-focus-visible:ring-3 peer-focus-visible:ring-ring/50",
+                        held === s.name ? pressed : lift
                       )}
                     >
                       <SizeGlyph size={s} active={on} />
@@ -528,7 +524,7 @@ export function PriceMeter() {
             href="/#get-started"
             onPointerDown={() => pressKey("enter")}
             onClick={printQuote}
-            className={cn(actionKey, "group mt-5 flex h-14 items-center justify-center gap-2 rounded-full font-semibold")}
+            className={cn(keycap, lift, "group mt-5 flex h-14 items-center justify-center gap-2 rounded-2xl font-semibold text-primary")}
           >
             {pricing.cta}{" "}
             <IconArrowRight className="size-4 transition-transform duration-200 group-hover:translate-x-1" aria-hidden />
@@ -577,6 +573,18 @@ export function PriceMeter() {
 }
 
 
+function Screw({ className }: { className: string }) {
+  return (
+    <span
+      aria-hidden
+      className={cn(
+        "absolute size-2 rounded-full bg-black/15 shadow-[inset_0_1px_1px_rgb(0_0_0/0.3)] after:absolute after:inset-x-0.5 after:top-1/2 after:h-px after:-translate-y-1/2 after:rotate-45 after:bg-white/40",
+        className
+      )}
+    />
+  );
+}
+
 /**
  * A number whose digits roll like an odometer when it changes. Digits are keyed from
  * the right, so adding a thousands digit doesn't make the others jump.
@@ -616,7 +624,7 @@ function SizeGlyph({ size, active }: { size: Size; active: boolean }) {
       <span
         className={cn(
           "block rounded-[2px] border-[1.5px] transition-colors",
-          active ? "border-primary bg-primary/15" : "border-foreground/30 bg-white/40"
+          active ? "border-primary bg-primary/15" : "border-muted-foreground/40 bg-muted"
         )}
         style={{ width: `${(size.w / largest) * 30}px`, height: `${(size.h / largest) * 30}px` }}
       />
