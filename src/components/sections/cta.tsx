@@ -44,8 +44,8 @@ export function Cta() {
               aria-hidden
             />
             {/* The text takes all the room the button doesn't (the line in two lines on
-                desktop), the button stays at the right edge */}
-            <div className="relative grid items-center gap-8 lg:grid-cols-[1fr_auto] lg:gap-16">
+                desktop), the button stays at the right edge, level with the text's last line */}
+            <div className="relative grid items-end gap-8 lg:grid-cols-[1fr_auto] lg:gap-16">
               <div className="max-w-2xl space-y-3">
                 <h2 className="text-3xl font-bold sm:text-4xl">{cta.title}</h2>
                 <p className="text-lg text-pretty opacity-80">{cta.body}</p>
