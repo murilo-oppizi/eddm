@@ -5,6 +5,7 @@ import "./globals.css";
 import { SiteFooter } from "@/components/site/site-footer";
 import { SiteHeader } from "@/components/site/site-header";
 import { site } from "@/content/site";
+import { isPreview } from "@/lib/asset";
 
 // Inter for body text, buttons and labels (`font-sans`, as the Oppizi design system
 // specifies); Geist for titles and headings (`font-heading`, see globals.css).
@@ -38,6 +39,8 @@ export const metadata: Metadata = {
     locale: "en_US",
   },
   twitter: { card: "summary_large_image" },
+  // The GitHub Pages preview is public but not the real site: keep it out of search.
+  ...(isPreview && { robots: { index: false, follow: false } }),
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

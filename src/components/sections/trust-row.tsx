@@ -2,6 +2,8 @@
 
 import { useEffect, useRef } from "react";
 import Image from "next/image";
+
+import { asset } from "@/lib/asset";
 import { motion, useInView, useMotionValue, useReducedMotion } from "motion/react";
 
 import { trust } from "@/content/site";
@@ -153,7 +155,7 @@ function LogoList({ className, ...props }: React.ComponentProps<"ul">) {
       {trust.clients.map((client) => (
         <li key={client.name} className="shrink-0">
           <Image
-            src={client.src}
+            src={asset(client.src)}
             alt={props["aria-hidden"] ? "" : client.name}
             width={client.width}
             height={client.height}

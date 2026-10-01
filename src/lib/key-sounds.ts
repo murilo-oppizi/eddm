@@ -4,7 +4,9 @@
 // the samples decoded) when the pointer first comes near the meter, and resumed on the
 // first press, since browsers only allow sound after a user gesture.
 
-const BASE = "/sounds/cream";
+import { asset } from "@/lib/asset";
+
+const BASE = asset("/sounds/cream");
 const FILES = {
   press1: "press-generic-r1",
   press2: "press-generic-r2",
