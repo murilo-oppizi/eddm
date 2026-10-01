@@ -230,14 +230,20 @@ function Mural({ onOpen }: { onOpen: (i: number) => void }) {
                 >
                   <Icon className="size-5" aria-hidden />
                 </span>
-                <span className="min-w-0 font-heading leading-snug font-semibold tracking-tight">{item.name}</span>
-                <IconArrowUpRight
-                  aria-hidden
-                  className={cn(
-                    "absolute top-4 right-4 size-4 -translate-x-1 translate-y-1 opacity-0 transition-all duration-300 group-hover:translate-0 group-hover:opacity-100 sm:top-6 sm:right-6",
-                    tone.icon
-                  )}
-                />
+                {/* The arrow follows the name's last word (and never wraps onto a line alone) */}
+                <span className="min-w-0 font-heading leading-snug font-semibold tracking-tight">
+                  {item.name.split(" ").slice(0, -1).join(" ")}{" "}
+                  <span className="whitespace-nowrap">
+                    {item.name.split(" ").at(-1)}
+                    <IconArrowUpRight
+                      aria-hidden
+                      className={cn(
+                        "ml-1 inline size-4 -translate-x-1 translate-y-0.5 align-baseline opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:-translate-y-px group-hover:opacity-100",
+                        tone.icon
+                      )}
+                    />
+                  </span>
+                </span>
               </button>
             </motion.li>
           );
