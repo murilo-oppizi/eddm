@@ -256,8 +256,8 @@ function Mural({ onOpen }: { onOpen: (i: number) => void }) {
             key="flyer"
             aria-hidden
             className="pointer-events-none absolute top-0 left-0 z-20 w-44"
-            // Just above and right of the pointer, so the cell being pointed at stays visible.
-            style={{ x: fx, y: fy, translateX: "-12%", translateY: "-108%" }}
+            // Centred on the pointer: the flyer is the pointer.
+            style={{ x: fx, y: fy, translateX: "-50%", translateY: "-50%" }}
             initial={{ opacity: 0, scale: 0.6, rotate: (hover?.angle ?? -6) * 1.8 }}
             animate={{ opacity: 1, scale: 1, rotate: hover?.angle ?? -6 }}
             exit={{ opacity: 0, scale: 0.6, transition: { duration: 0.15 } }}
