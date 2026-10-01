@@ -23,7 +23,7 @@ export const site = {
 // app login eddm.com uses, for now: confirm the sign-up link before launch).
 export const cta = {
   title: "Ready to reach every door?",
-  body: "Pick routes on a map, design your postcard, and we handle printing and USPS delivery.",
+  body: "Your next customers are already in the neighborhood. Meet them at their front door.",
   button: { label: "Create a campaign", href: "https://app.oppizi.com/login?oppizi_source=eddm" },
 }
 
