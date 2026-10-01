@@ -555,20 +555,35 @@ function RollingNumber({ value }: { value: string }) {
 }
 
 /**
- * The postcard's shape at its real proportions, all drawn on the same scale: a plain
- * frosted shape, no outline (too small to carry detail), pink on the chosen size.
+ * The postcard as a line icon, in the manner of Lucide and Tabler (1.5px strokes, round
+ * caps and corners): the card at its real proportions, all on one scale (2px an inch), with
+ * a stamp in the corner and address lines, as many as fit. Strokes stay 1.5px at every
+ * size, so the small cards stay as crisp as the big one.
  */
 function SizeGlyph({ size, active }: { size: Size; active: boolean }) {
-  const largest = 15; // inches, the Oversized card's width
+  const w = size.w * 2;
+  const h = size.h * 2;
+  const stamp = Math.min(4, h * 0.3);
+  const lines = h >= 12 ? [h - 6.25, h - 3.25] : [h - 3.25];
   return (
-    <span aria-hidden className="flex h-6 items-end">
-      <span
-        className={cn(
-          "relative block rounded-[3px] transition-colors duration-200",
-          active ? "bg-primary" : "bg-white/45"
-        )}
-        style={{ width: `${(size.w / largest) * 30}px`, height: `${(size.h / largest) * 30}px` }}
-      />
+    <span aria-hidden className="relative flex h-6 items-end">
+      <svg
+        width={w}
+        height={h}
+        viewBox={`0 0 ${w} ${h}`}
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        className={cn("transition-colors duration-200", active ? "text-primary" : "text-white/80")}
+      >
+        <rect x={0.75} y={0.75} width={w - 1.5} height={h - 1.5} rx={2} />
+        <rect x={w - 2.75 - stamp} y={2.75} width={stamp} height={stamp} rx={0.75} fill="currentColor" stroke="none" />
+        {lines.map((y, i) => (
+          <path key={y} d={`M3 ${y}H${i === lines.length - 1 ? w * 0.55 : w * 0.4}`} />
+        ))}
+      </svg>
     </span>
   );
 }
