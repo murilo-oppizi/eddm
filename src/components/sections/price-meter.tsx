@@ -441,14 +441,12 @@ export function PriceMeter() {
                   playKey("tick", { gain: v % NOTCH_EVERY === 0 ? 0.4 : 0.22, pitch: 0.85 + (0.35 * (v - min)) / (max - min) });
                 }}
                 getAriaValueText={(_, v: number) => `${fmt(v)} homes`}
-                // iOS 26-style: a thin groove filled white, and a round white knob that turns
-                // to clear, bigger glass while it's dragged
+                // iOS-style: a thin groove filled white, and a round white knob
                 className={cn(
                   "[&_[data-slot=slider-track]]:h-1.5 [&_[data-slot=slider-track]]:bg-black/20 [&_[data-slot=slider-track]]:shadow-[inset_0_1px_1px_rgb(0_0_0/0.15),0_1px_0_rgb(255_255_255/0.25)]",
                   "[&_[data-slot=slider-range]]:bg-white",
                   "[&_[data-slot=slider-thumb]]:size-7 [&_[data-slot=slider-thumb]]:border-0 [&_[data-slot=slider-thumb]]:bg-white/90 [&_[data-slot=slider-thumb]]:backdrop-blur-md [&_[data-slot=slider-thumb]]:ring-white/40",
                   "[&_[data-slot=slider-thumb]]:shadow-[inset_0_1px_0_rgb(255_255_255/1),inset_0_-1px_0_rgb(255_255_255/0.4),inset_0_0_0_1px_rgb(255_255_255/0.4),0_1px_2px_rgb(0_0_0/0.1),0_6px_14px_-4px_rgb(0_0_0/0.25)]",
-                  "[&_[data-slot=slider-thumb]]:transition-[scale,background-color,box-shadow] [&_[data-slot=slider-thumb]]:duration-200 [&_[data-slot=slider-thumb][data-dragging]]:scale-[1.35] [&_[data-slot=slider-thumb][data-dragging]]:bg-white/25"
                 )}
               />
               <button
