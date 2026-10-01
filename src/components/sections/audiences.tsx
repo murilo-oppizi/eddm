@@ -230,17 +230,14 @@ function Mural({ onOpen }: { onOpen: (i: number) => void }) {
                 >
                   <Icon className="size-5" aria-hidden />
                 </span>
-                {/* The name, with the arrow on its first line, at the cell's right edge */}
-                <span className="flex w-full items-start justify-between gap-3">
-                  <span className="min-w-0 font-heading leading-snug font-semibold tracking-tight">{item.name}</span>
-                  <IconArrowUpRight
-                    aria-hidden
-                    className={cn(
-                      "mt-[0.2em] size-4 shrink-0 -translate-x-1 translate-y-1 opacity-0 transition-all duration-300 group-hover:translate-0 group-hover:opacity-100",
-                      tone.icon
-                    )}
-                  />
-                </span>
+                <span className="min-w-0 font-heading leading-snug font-semibold tracking-tight">{item.name}</span>
+                <IconArrowUpRight
+                  aria-hidden
+                  className={cn(
+                    "absolute top-4 right-4 size-4 -translate-x-1 translate-y-1 opacity-0 transition-all duration-300 group-hover:translate-0 group-hover:opacity-100 sm:top-6 sm:right-6",
+                    tone.icon
+                  )}
+                />
               </button>
             </motion.li>
           );
