@@ -62,6 +62,9 @@ export function prepareSounds() {
 
 let lastTick = 0;
 
+/** Every sound's volume is scaled by this: a quiet clack, there if you listen for it. */
+const MASTER = 0.25;
+
 /** Play a key sound. `pitch` nudges the playback rate (1 = as recorded). */
 export function playKey(sound: KeySound, { gain = 0.5, pitch = 1 }: { gain?: number; pitch?: number } = {}) {
   if (!ctx || !soundsOn()) return;
@@ -81,7 +84,7 @@ export function playKey(sound: KeySound, { gain = 0.5, pitch = 1 }: { gain?: num
   // A hair of random pitch, so repeated presses don't sound like a loop.
   source.playbackRate.value = pitch * (0.97 + Math.random() * 0.06);
   const volume = ctx.createGain();
-  volume.gain.value = gain;
+  volume.gain.value = gain * MASTER;
   source.connect(volume).connect(ctx.destination);
   source.start();
 }
