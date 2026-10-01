@@ -71,9 +71,17 @@ type Flight = { stamp: Stamp; left: number; top: number; x: number; y: number; s
 // edge and soft drop over our deeper "travel" shadow. Pressed keys sink 2px, shrink a
 // hair and lose some highlight.
 const keycap =
-  "bg-[var(--ds-tw-gray-100)] text-card-foreground dark:bg-card shadow-[0_0_0_1px_rgb(0_0_0/0.06),0_1px_1px_rgb(0_0_0/0.1),0_3px_0_rgb(0_0_0/0.2),inset_0_3px_0_rgb(255_255_255/1)] dark:shadow-[0_0_0_1px_rgb(0_0_0/0.06),0_1px_1px_rgb(0_0_0/0.1),0_3px_0_rgb(0_0_0/0.2),inset_0_3px_0_rgb(255_255_255/0.12)] transition-[translate,scale,box-shadow] duration-100 active:translate-y-[2px] active:scale-[0.98] active:shadow-[0_0_0_1px_rgb(0_0_0/0.06),0_1px_0_rgb(0_0_0/0.2),inset_0_1px_0_rgb(255_255_255/0.5)] outline-none focus-visible:ring-3 focus-visible:ring-ring/50";
+  "bg-[var(--ds-tw-gray-100)] text-[color-mix(in_oklab,var(--primary)_72%,black)] dark:bg-card shadow-[0_0_0_1px_rgb(0_0_0/0.06),0_1px_1px_rgb(0_0_0/0.1),0_3px_0_rgb(0_0_0/0.2),inset_0_3px_0_rgb(255_255_255/1)] dark:shadow-[0_0_0_1px_rgb(0_0_0/0.06),0_1px_1px_rgb(0_0_0/0.1),0_3px_0_rgb(0_0_0/0.2),inset_0_3px_0_rgb(255_255_255/0.12)] transition-[translate,scale,box-shadow] duration-100 active:translate-y-[2px] active:scale-[0.98] active:shadow-[0_0_0_1px_rgb(0_0_0/0.06),0_1px_0_rgb(0_0_0/0.2),inset_0_1px_0_rgb(255_255_255/0.5)] outline-none focus-visible:ring-3 focus-visible:ring-ring/50";
 const pressed =
   "translate-y-[2px] scale-[0.98] shadow-[0_0_0_1px_rgb(0_0_0/0.06),0_1px_0_rgb(0_0_0/0.2),inset_0_1px_0_rgb(255_255_255/0.5)]";
+// − / +: function keys in a lighter shade of the body, white legends, so the size keys and
+// the quote key read first.
+const functionKey =
+  "bg-[color-mix(in_oklab,var(--primary)_60%,white)] text-white shadow-[0_0_0_1px_rgb(0_0_0/0.04),0_1px_1px_rgb(0_0_0/0.1),0_3px_0_color-mix(in_oklab,var(--primary)_75%,black),inset_0_2px_0_rgb(255_255_255/0.4)] transition-[translate,scale,box-shadow] duration-100 active:translate-y-[2px] active:scale-[0.98] active:shadow-[0_0_0_1px_rgb(0_0_0/0.04),0_1px_0_color-mix(in_oklab,var(--primary)_75%,black),inset_0_1px_0_rgb(255_255_255/0.3)] outline-none focus-visible:ring-3 focus-visible:ring-ring/50";
+const functionPressed =
+  "translate-y-[2px] scale-[0.98] shadow-[0_0_0_1px_rgb(0_0_0/0.04),0_1px_0_color-mix(in_oklab,var(--primary)_75%,black),inset_0_1px_0_rgb(255_255_255/0.3)]";
+const functionLift =
+  "hover:-translate-y-px hover:shadow-[0_0_0_1px_rgb(0_0_0/0.04),0_2px_2px_rgb(0_0_0/0.1),0_4px_0_color-mix(in_oklab,var(--primary)_75%,black),inset_0_2px_0_rgb(255_255_255/0.4)]";
 const lift =
   "hover:-translate-y-px hover:shadow-[0_0_0_1px_rgb(0_0_0/0.06),0_2px_2px_rgb(0_0_0/0.1),0_4px_0_rgb(0_0_0/0.2),inset_0_3px_0_rgb(255_255_255/1)]";
 
@@ -413,7 +421,7 @@ export function PriceMeter() {
                     if (e.detail === 0) playKey("space");
                     set(homes - step);
                   }}
-                  className={cn(keycap, held === "minus" ? pressed : lift, "grid size-10 shrink-0 place-items-center rounded-xl")}
+                  className={cn(functionKey, held === "minus" ? functionPressed : functionLift, "grid size-10 shrink-0 place-items-center rounded-xl")}
               >
                   <IconMinus className="size-4" />
                 </TooltipTrigger>
@@ -462,7 +470,7 @@ export function PriceMeter() {
                     if (e.detail === 0) playKey("space");
                     set(homes + step);
                   }}
-                  className={cn(keycap, held === "plus" ? pressed : lift, "grid size-10 shrink-0 place-items-center rounded-xl")}
+                  className={cn(functionKey, held === "plus" ? functionPressed : functionLift, "grid size-10 shrink-0 place-items-center rounded-xl")}
               >
                   <IconPlus className="size-4" />
                 </TooltipTrigger>
@@ -502,14 +510,14 @@ export function PriceMeter() {
                       className={cn(
                         keycap,
                         "relative flex h-full flex-col items-center gap-1.5 rounded-xl px-1 pt-3 pb-2 text-center peer-focus-visible:ring-3 peer-focus-visible:ring-ring/50",
-                        held === s.name ? pressed : lift
+                        held === s.name || on ? pressed : lift // the chosen size stays down
                       )}
                     >
                       <SizeGlyph size={s} active={on} />
                       <span className={cn("block text-[10px] leading-tight font-semibold tracking-tight transition-colors sm:text-[11px] sm:tracking-normal", on && "text-primary")}>
                         {s.name}
                       </span>
-                      <span className="hidden text-[10px] leading-tight whitespace-nowrap text-muted-foreground sm:block">
+                      <span className="hidden text-[10px] leading-tight whitespace-nowrap opacity-60 sm:block">
                         {s.dims} in
                       </span>
                     </span>
@@ -624,7 +632,7 @@ function SizeGlyph({ size, active }: { size: Size; active: boolean }) {
       <span
         className={cn(
           "block rounded-[2px] border-[1.5px] transition-colors",
-          active ? "border-primary bg-primary/15" : "border-muted-foreground/40 bg-muted"
+          active ? "border-primary bg-primary/15" : "border-current/35 bg-current/5"
         )}
         style={{ width: `${(size.w / largest) * 30}px`, height: `${(size.h / largest) * 30}px` }}
       />
