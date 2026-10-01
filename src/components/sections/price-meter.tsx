@@ -78,131 +78,8 @@ const lift =
   "hover:-translate-y-px hover:shadow-[0_0_0_1px_rgb(0_0_0/0.06),0_2px_2px_rgb(0_0_0/0.1),0_4px_0_rgb(0_0_0/0.2),inset_0_3px_0_rgb(255_255_255/1)]";
 
 // A debossed plate on the device body: darker, pressed in, with a light lower edge.
-const plateBase = "inline-flex h-7 items-center rounded-full";
-
-/**
- * The device's finish: its body and the small parts set into it (nameplate and speaker
- * plates, the stamp slot, the fader, the screws, the glow on the table under it), and
- * how the quote key stands out. The screen and keycaps are the same in every finish.
- */
-type Finish = {
-  body: string;
-  glow: string;
-  plate: string;
-  plateHover: string;
-  dots: [on: string, off: string];
-  slot: string;
-  track: string;
-  thumb: string;
-  notches: [filled: string, empty: string];
-  screw: string;
-  quote: string;
-};
-const finishes = {
-  // Braun ET66 (Dieter Rams): a dark graphite body, light keys, and the one key that
-  // matters in color (its yellow "=", our pink quote key).
-  graphite: {
-    body: "bg-[linear-gradient(180deg,#3b3b3f,#232327)] shadow-[0_0_0_1px_rgb(0_0_0/0.4),inset_0_1px_0_rgb(255_255_255/0.12),inset_0_-5px_0_rgb(0_0_0/0.35),0_30px_60px_-24px_rgb(0_0_0/0.55)]",
-    glow: "bg-foreground/15",
-    plate: "bg-black/30 text-white/75 shadow-[inset_0_1px_2px_rgb(0_0_0/0.5),0_1px_0_rgb(255_255_255/0.08)]",
-    plateHover: "hover:bg-black/40",
-    dots: ["bg-white/60", "bg-white/20"],
-    slot: "bg-black/60 shadow-[inset_0_-2px_2px_rgb(0_0_0/0.6)]",
-    track: "[&_[data-slot=slider-track]]:bg-black/40 [&_[data-slot=slider-track]]:shadow-[inset_0_1px_2px_rgb(0_0_0/0.5)]",
-    thumb: "[&_[data-slot=slider-thumb]]:shadow-[0_3px_0_rgb(0_0_0/0.45)]",
-    notches: ["bg-white/50", "bg-white/20"],
-    screw: "bg-black/40 shadow-[inset_0_1px_1px_rgb(0_0_0/0.6)] after:bg-white/20",
-    quote:
-      "bg-primary text-primary-foreground shadow-[0_0_0_1px_rgb(0_0_0/0.2),0_1px_1px_rgb(0_0_0/0.2),0_3px_0_color-mix(in_oklab,var(--primary)_55%,black),inset_0_2px_0_rgb(255_255_255/0.3)] hover:shadow-[0_0_0_1px_rgb(0_0_0/0.2),0_2px_2px_rgb(0_0_0/0.2),0_4px_0_color-mix(in_oklab,var(--primary)_55%,black),inset_0_2px_0_rgb(255_255_255/0.3)] dark:bg-primary",
-  },
-  // Brushed aluminium (Rams-era Braun, Teenage Engineering): cool silver with a fine
-  // horizontal grain, dark grey plates.
-  aluminum: {
-    body: "bg-[repeating-linear-gradient(0deg,rgb(255_255_255/0.18)_0_1px,transparent_1px_3px),linear-gradient(180deg,#eceef1,#c7cbd1)] shadow-[0_0_0_1px_rgb(0_0_0/0.12),inset_0_1px_0_rgb(255_255_255/0.9),inset_0_-5px_0_rgb(0_0_0/0.1),0_30px_60px_-26px_rgb(0_0_0/0.4)]",
-    glow: "bg-foreground/10",
-    plate: "bg-black/[0.08] text-foreground/70 shadow-[inset_0_1px_2px_rgb(0_0_0/0.2),0_1px_0_rgb(255_255_255/0.7)]",
-    plateHover: "hover:bg-black/[0.12]",
-    dots: ["bg-foreground/50", "bg-foreground/20"],
-    slot: "bg-black/30 shadow-[inset_0_-2px_2px_rgb(0_0_0/0.35)]",
-    track: "[&_[data-slot=slider-track]]:bg-black/[0.12] [&_[data-slot=slider-track]]:shadow-[inset_0_1px_2px_rgb(0_0_0/0.25)]",
-    thumb: "[&_[data-slot=slider-thumb]]:shadow-[0_0_0_1px_rgb(0_0_0/0.08),0_3px_0_rgb(0_0_0/0.22)]",
-    notches: ["bg-white/50", "bg-black/20"],
-    screw: "bg-black/20 shadow-[inset_0_1px_1px_rgb(0_0_0/0.35)] after:bg-white/50",
-    quote:
-      "bg-primary text-primary-foreground shadow-[0_0_0_1px_rgb(0_0_0/0.2),0_1px_1px_rgb(0_0_0/0.2),0_3px_0_color-mix(in_oklab,var(--primary)_55%,black),inset_0_2px_0_rgb(255_255_255/0.3)] hover:shadow-[0_0_0_1px_rgb(0_0_0/0.2),0_2px_2px_rgb(0_0_0/0.2),0_4px_0_color-mix(in_oklab,var(--primary)_55%,black),inset_0_2px_0_rgb(255_255_255/0.3)] dark:bg-primary",
-  },
-  // Blush: the brand's pink, but barely there, a pale tinted body.
-  blush: {
-    body: "bg-[linear-gradient(180deg,color-mix(in_oklab,var(--primary)_7%,white),color-mix(in_oklab,var(--primary)_15%,white))] shadow-[0_0_0_1px_color-mix(in_oklab,var(--primary)_18%,transparent),inset_0_1px_0_rgb(255_255_255/1),inset_0_-5px_0_color-mix(in_oklab,var(--primary)_12%,transparent),0_30px_60px_-26px_color-mix(in_oklab,var(--primary)_35%,black)]",
-    glow: "bg-primary/10",
-    plate: "bg-primary/[0.08] text-primary shadow-[inset_0_1px_2px_color-mix(in_oklab,var(--primary)_25%,transparent),0_1px_0_rgb(255_255_255/0.9)]",
-    plateHover: "hover:bg-primary/[0.12]",
-    dots: ["bg-primary/60", "bg-primary/20"],
-    slot: "bg-primary/25 shadow-[inset_0_-2px_2px_color-mix(in_oklab,var(--primary)_40%,transparent)]",
-    track: "[&_[data-slot=slider-track]]:bg-primary/[0.12] [&_[data-slot=slider-track]]:shadow-[inset_0_1px_2px_color-mix(in_oklab,var(--primary)_30%,transparent)]",
-    thumb: "[&_[data-slot=slider-thumb]]:shadow-[0_0_0_1px_rgb(0_0_0/0.06),0_3px_0_color-mix(in_oklab,var(--primary)_30%,transparent)]",
-    notches: ["bg-white/50", "bg-primary/25"],
-    screw: "bg-primary/20 shadow-[inset_0_1px_1px_color-mix(in_oklab,var(--primary)_40%,transparent)] after:bg-white/60",
-    quote: "text-primary",
-  },
-} satisfies Record<string, Finish>;
-const FINISH: keyof typeof finishes = "aluminum";
-const finish: Finish = finishes[FINISH];
-const plate = cn(plateBase, finish.plate);
-
-/**
- * Where the brand red shows. "everywhere": the level meter, the fader and the chosen
- * size too. "key": only the quote key; the rest in dark ink, like the Braun ET66's one
- * colored key. "signal": as "key", plus the meter's tallest segment, a small red light.
- */
-type Accent = { bar: string | null; head: string | null; range: string; glyph: string; label: string };
-// A null bar or head is drawn in the screen's ink (dark on the light screen, light on the dark one).
-const accents = {
-  everywhere: {
-    bar: "bg-primary",
-    head: "bg-primary",
-    range: "[&_[data-slot=slider-range]]:bg-primary",
-    glyph: "border-primary bg-primary/15",
-    label: "text-primary",
-  },
-  key: {
-    bar: null,
-    head: null,
-    range: "[&_[data-slot=slider-range]]:bg-foreground/70",
-    glyph: "border-foreground bg-foreground/15",
-    label: "text-foreground",
-  },
-  signal: {
-    bar: null,
-    head: "bg-primary",
-    range: "[&_[data-slot=slider-range]]:bg-foreground/70",
-    glyph: "border-foreground bg-foreground/15",
-    label: "text-foreground",
-  },
-} satisfies Record<string, Accent>;
-const ACCENT: keyof typeof accents = "signal";
-const accent: Accent = accents[ACCENT];
-
-/** The screen: "light" (white, like paper) or "dark" (a black display, light figures). */
-type Screen = { root: string; label: string; off: string; rule: string; ink: string };
-const screens = {
-  light: {
-    root: "bg-card shadow-[inset_0_2px_8px_rgb(0_0_0/0.14)] ring-1 ring-black/10",
-    label: "text-muted-foreground",
-    off: "bg-muted-foreground/15",
-    rule: "",
-    ink: "bg-foreground/80",
-  },
-  dark: {
-    root: "bg-[linear-gradient(180deg,#1b1d21,#25282d)] text-white shadow-[inset_0_2px_10px_rgb(0_0_0/0.6)] ring-1 ring-black/40",
-    label: "text-white/50",
-    off: "bg-white/10",
-    rule: "border-white/15",
-    ink: "bg-white/85",
-  },
-} satisfies Record<string, Screen>;
-const SCREEN: keyof typeof screens = "light";
-const screen: Screen = screens[SCREEN];
+const plate =
+  "inline-flex h-7 items-center rounded-full bg-black/20 text-white shadow-[inset_0_1px_2px_rgb(0_0_0/0.3),0_1px_0_rgb(255_255_255/0.3)]";
 
 // The sound switch, shared by every meter on the page and remembered in the browser.
 const soundListeners = new Set<() => void>();
@@ -414,14 +291,13 @@ export function PriceMeter() {
     <TooltipProvider delay={300}>
       <div className="relative mx-auto w-full max-w-[540px]">
         {/* Soft pink glow on the "table" under the device */}
-        <div aria-hidden className={cn("absolute inset-x-12 -bottom-6 h-12 rounded-full blur-2xl", finish.glow)} />
+        <div aria-hidden className="absolute inset-x-10 -bottom-8 h-16 rounded-full bg-primary/30 blur-3xl" />
 
         <motion.div
           ref={root}
           onPointerEnter={() => prepareSounds()}
           onFocus={() => prepareSounds()}
-          // The body in the chosen finish (see `finishes`).
-          className={cn("relative rounded-[30px] p-6", finish.body)}
+          className="relative rounded-[30px] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--primary)_86%,white),var(--primary)_55%)] p-6 shadow-[inset_0_1px_0_rgb(255_255_255/0.4),inset_0_-5px_0_rgb(0_0_0/0.14),0_30px_60px_-24px_color-mix(in_oklab,var(--primary)_70%,black)]"
         >
           <Screw className="top-3.5 left-3.5" />
           <Screw className="top-3.5 right-3.5" />
@@ -443,7 +319,7 @@ export function PriceMeter() {
               </motion.div>
             )}
           </div>
-          <span aria-hidden className={cn("absolute bottom-0 left-1/2 z-20 h-[5px] w-[196px] -translate-x-1/2 rounded-t-[4px]", finish.slot)} />
+          <span aria-hidden className="absolute bottom-0 left-1/2 z-20 h-[5px] w-[196px] -translate-x-1/2 rounded-t-[4px] bg-black/35 shadow-[inset_0_-2px_2px_rgb(0_0_0/0.35)]" />
 
           {/* Top plate: the maker's nameplate and the speaker, both debossed into the body
               (a darker, inset plate with a light lower edge), so white reads clearly */}
@@ -460,29 +336,28 @@ export function PriceMeter() {
               title={sound ? "Key sounds on" : "Key sounds off"}
               className={cn(
                 plate,
-                "cursor-pointer gap-2 px-2.5 outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/50",
-                finish.plateHover
+                "cursor-pointer gap-2 px-2.5 outline-none transition-colors hover:bg-black/25 focus-visible:ring-3 focus-visible:ring-ring/50"
               )}
             >
               {sound ? <IconVolume className="size-3.5" /> : <IconVolumeOff className="size-3.5 opacity-70" />}
               <span aria-hidden className="grid grid-cols-6 gap-[3px]">
                 {Array.from({ length: 12 }, (_, i) => (
-                  <span key={i} className={cn("size-[3px] rounded-full transition-colors", sound ? finish.dots[0] : finish.dots[1])} />
+                  <span key={i} className={cn("size-[3px] rounded-full transition-colors", sound ? "bg-white/70" : "bg-white/30")} />
                 ))}
               </span>
             </button>
           </div>
 
           {/* The screen */}
-          <div className={cn("rounded-2xl p-5", screen.root)}>
+          <div className="rounded-2xl bg-card p-5 shadow-[inset_0_2px_8px_rgb(0_0_0/0.14)] ring-1 ring-black/10">
             {/* The two figures: what it costs, and how many homes it reaches */}
             <p className="sr-only" aria-live="polite">
               {usd(total)} for {fmt(homes)} homes with a {size.name} postcard, {perPiece} per piece.
             </p>
             {/* Labels share a line, and so do the figures (bottoms aligned) */}
             <div aria-hidden className="grid grid-cols-[1fr_auto] items-end gap-x-4 gap-y-1">
-              <p className={cn("text-[11px] font-semibold tracking-wider uppercase", screen.label)}>Estimate</p>
-              <p className={cn("text-right text-[11px] font-semibold tracking-wider uppercase", screen.label)}>Homes</p>
+              <p className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">Estimate</p>
+              <p className="text-right text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">Homes</p>
               {/* Same size and weight, so the two read as a pair */}
               <p className="font-heading text-3xl font-bold tracking-tight sm:text-4xl">
                 <RollingNumber value={usd(total)} />
@@ -502,24 +377,24 @@ export function PriceMeter() {
                     key={i}
                     className={cn(
                       "flex-1 rounded-[2px] transition-[background-color,height] duration-200",
-                      on ? ((head ? accent.head : accent.bar) ?? screen.ink) : screen.off,
+                      on ? "bg-primary" : "bg-muted-foreground/15",
                       head ? "h-4" : "h-2.5"
                     )}
                   />
                 );
               })}
             </div>
-            <div aria-hidden className={cn("mt-2 flex justify-between text-[11px] tabular-nums", screen.label)}>
+            <div aria-hidden className="mt-2 flex justify-between text-[11px] text-muted-foreground tabular-nums">
               <span>{fmt(min)}</span>
               <span>{fmt(max)}</span>
             </div>
             {/* The details behind the estimate */}
-            <div aria-hidden className={cn("mt-4 flex justify-between gap-4 border-t border-dashed pt-3 text-sm", screen.rule)}>
+            <div aria-hidden className="mt-4 flex justify-between gap-4 border-t border-dashed pt-3 text-sm">
               <span>
                 <span className="font-semibold tabular-nums">{perPiece}</span>
-                <span className={screen.label}> each, all-in</span>
+                <span className="text-muted-foreground"> each, all-in</span>
               </span>
-              <span className={screen.label}>
+              <span className="text-muted-foreground">
                 {size.name}
                 <span className="hidden sm:inline"> · {size.dims} in</span>
               </span>
@@ -564,18 +439,16 @@ export function PriceMeter() {
                     aria-hidden
                     className={cn(
                       "absolute top-1/2 h-1 w-0.5 -translate-x-1/2 -translate-y-1/2 rounded-full transition-colors",
-                      v <= homes ? finish.notches[0] : finish.notches[1]
+                      v <= homes ? "bg-black/15" : "bg-white/35"
                     )}
                     style={{ left: `calc(${FADER_CAP / 2}px + ${(v - min) / (max - min)} * (100% - ${FADER_CAP}px))` }}
                   />
                 ))}
                 getAriaValueText={(_, v: number) => `${fmt(v)} homes`}
                 className={cn(
-                  "[&_[data-slot=slider-track]]:h-2.5",
-                  finish.track,
-                  accent.range,
-                  "[&_[data-slot=slider-thumb]]:h-7 [&_[data-slot=slider-thumb]]:w-10 [&_[data-slot=slider-thumb]]:rounded-lg [&_[data-slot=slider-thumb]]:border-0 [&_[data-slot=slider-thumb]]:ring-white/50",
-                  finish.thumb,
+                  "[&_[data-slot=slider-track]]:h-2.5 [&_[data-slot=slider-track]]:bg-black/20 [&_[data-slot=slider-track]]:shadow-[inset_0_1px_2px_rgb(0_0_0/0.25)]",
+                  "[&_[data-slot=slider-range]]:bg-white/85",
+                  "[&_[data-slot=slider-thumb]]:h-7 [&_[data-slot=slider-thumb]]:w-10 [&_[data-slot=slider-thumb]]:rounded-lg [&_[data-slot=slider-thumb]]:border-0 [&_[data-slot=slider-thumb]]:shadow-[0_3px_0_rgb(0_0_0/0.22)] [&_[data-slot=slider-thumb]]:ring-white/50",
                   // Grip lines on the fader cap
                   "[&_[data-slot=slider-thumb]]:[background:repeating-linear-gradient(90deg,rgb(0_0_0/0.18)_0_1.5px,transparent_1.5px_4px)_center/10px_12px_no-repeat,white]"
                 )}
@@ -633,7 +506,7 @@ export function PriceMeter() {
                       )}
                     >
                       <SizeGlyph size={s} active={on} />
-                      <span className={cn("block text-[10px] leading-tight font-semibold tracking-tight transition-colors sm:text-[11px] sm:tracking-normal", on && accent.label)}>
+                      <span className={cn("block text-[10px] leading-tight font-semibold tracking-tight transition-colors sm:text-[11px] sm:tracking-normal", on && "text-primary")}>
                         {s.name}
                       </span>
                       <span className="hidden text-[10px] leading-tight whitespace-nowrap text-muted-foreground sm:block">
@@ -651,7 +524,7 @@ export function PriceMeter() {
             href="/#get-started"
             onPointerDown={() => pressKey("enter")}
             onClick={printQuote}
-            className={cn(keycap, lift, "group mt-5 flex h-14 items-center justify-center gap-2 rounded-2xl font-semibold", finish.quote)}
+            className={cn(keycap, lift, "group mt-5 flex h-14 items-center justify-center gap-2 rounded-2xl font-semibold text-primary")}
           >
             {pricing.cta}{" "}
             <IconArrowRight className="size-4 transition-transform duration-200 group-hover:translate-x-1" aria-hidden />
@@ -705,8 +578,7 @@ function Screw({ className }: { className: string }) {
     <span
       aria-hidden
       className={cn(
-        "absolute size-2 rounded-full after:absolute after:inset-x-0.5 after:top-1/2 after:h-px after:-translate-y-1/2 after:rotate-45",
-        finish.screw,
+        "absolute size-2 rounded-full bg-black/15 shadow-[inset_0_1px_1px_rgb(0_0_0/0.3)] after:absolute after:inset-x-0.5 after:top-1/2 after:h-px after:-translate-y-1/2 after:rotate-45 after:bg-white/40",
         className
       )}
     />
@@ -752,7 +624,7 @@ function SizeGlyph({ size, active }: { size: Size; active: boolean }) {
       <span
         className={cn(
           "block rounded-[2px] border-[1.5px] transition-colors",
-          active ? accent.glyph : "border-muted-foreground/40 bg-muted"
+          active ? "border-primary bg-primary/15" : "border-muted-foreground/40 bg-muted"
         )}
         style={{ width: `${(size.w / largest) * 30}px`, height: `${(size.h / largest) * 30}px` }}
       />
