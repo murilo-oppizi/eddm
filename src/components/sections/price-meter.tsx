@@ -13,9 +13,7 @@ import {
 
 import { PrintedStamp } from "@/components/sections/printed-stamp";
 import { OppiziSymbol } from "@/components/site/logo";
-import { Kbd } from "@/components/ui/kbd";
 import { Slider } from "@/components/ui/slider";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { pricing } from "@/content/site";
 import { playKey, prepareSounds, setSoundsOn, soundsOn } from "@/lib/key-sounds";
 import { placeStamp, STAMP_H, STAMP_SPOT_ID, STAMP_TILT, STAMP_W, type Stamp } from "@/lib/quote-stamp";
@@ -280,7 +278,7 @@ export function PriceMeter() {
   };
 
   return (
-    <TooltipProvider delay={300}>
+    <>
       <div className="relative mx-auto w-full max-w-[540px]">
         {/* Soft pink glow on the "table" under the device */}
         <div aria-hidden className="absolute inset-x-10 -bottom-8 h-16 rounded-full bg-primary/30 blur-3xl" />
@@ -364,23 +362,19 @@ export function PriceMeter() {
           {/* Homes: − / slider / + */}
           <div className="mt-5 px-1">
             <div className="flex items-center gap-3">
-              <Tooltip>
-                <TooltipTrigger
-                  aria-label="1,000 fewer homes"
-                  aria-keyshortcuts="ArrowLeft"
-                  onPointerDown={() => pressKey("space")}
-                  onClick={(e) => {
-                    if (e.detail === 0) playKey("space");
-                    set(homes - step);
-                  }}
-                  className={cn(glassKey, held === "minus" && pressed, "grid size-10 shrink-0 place-items-center rounded-full")}
+              <button
+                type="button"
+                aria-label="1,000 fewer homes"
+                aria-keyshortcuts="ArrowLeft"
+                onPointerDown={() => pressKey("space")}
+                onClick={(e) => {
+                  if (e.detail === 0) playKey("space");
+                  set(homes - step);
+                }}
+                className={cn(glassKey, held === "minus" && pressed, "grid size-10 shrink-0 place-items-center rounded-full")}
               >
-                  <IconMinus className="size-4" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  1,000 fewer homes <Kbd>←</Kbd>
-                </TooltipContent>
-              </Tooltip>
+                <IconMinus className="size-4" />
+              </button>
               <Slider
                 getAriaLabel={() => "Homes to reach"}
                 value={homes}
@@ -404,23 +398,19 @@ export function PriceMeter() {
                   "[&_[data-slot=slider-thumb]]:transition-[scale,background-color,box-shadow] [&_[data-slot=slider-thumb]]:duration-200 [&_[data-slot=slider-thumb][data-dragging]]:scale-[1.35] [&_[data-slot=slider-thumb][data-dragging]]:bg-white/25"
                 )}
               />
-              <Tooltip>
-                <TooltipTrigger
-                  aria-label="1,000 more homes"
-                  aria-keyshortcuts="ArrowRight"
-                  onPointerDown={() => pressKey("space")}
-                  onClick={(e) => {
-                    if (e.detail === 0) playKey("space");
-                    set(homes + step);
-                  }}
-                  className={cn(glassKey, held === "plus" && pressed, "grid size-10 shrink-0 place-items-center rounded-full")}
+              <button
+                type="button"
+                aria-label="1,000 more homes"
+                aria-keyshortcuts="ArrowRight"
+                onPointerDown={() => pressKey("space")}
+                onClick={(e) => {
+                  if (e.detail === 0) playKey("space");
+                  set(homes + step);
+                }}
+                className={cn(glassKey, held === "plus" && pressed, "grid size-10 shrink-0 place-items-center rounded-full")}
               >
-                  <IconPlus className="size-4" />
-                </TooltipTrigger>
-                <TooltipContent>
-                  1,000 more homes <Kbd>→</Kbd>
-                </TooltipContent>
-              </Tooltip>
+                <IconPlus className="size-4" />
+              </button>
             </div>
           </div>
 
@@ -528,7 +518,7 @@ export function PriceMeter() {
           </motion.div>,
           document.body
         )}
-    </TooltipProvider>
+    </>
   );
 }
 
