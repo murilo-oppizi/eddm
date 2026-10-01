@@ -20,10 +20,11 @@ export const site = {
 }
 
 // The closing card. Its button opens the Oppizi app, where a campaign is made (the same
-// app login eddm.com uses, for now: confirm the sign-up link before launch).
+// app login eddm.com uses, for now: confirm the sign-up link before launch). The line is
+// the closing card's on oppizi.com's EDDM page (Oct 2026).
 export const cta = {
   title: "Ready to reach every door?",
-  body: "Your next customers are already in the neighborhood. Meet them at their front door.",
+  body: "Reach every household in your target area, launch in minutes, and track delivery and performance in one place.",
   button: { label: "Create a campaign", href: "https://app.oppizi.com/login?oppizi_source=eddm" },
 }
 

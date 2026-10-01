@@ -46,7 +46,7 @@ export function Cta() {
             <div className="relative grid items-center gap-8 lg:grid-cols-2">
               <div className="space-y-3">
                 <h2 className="text-3xl font-bold sm:text-4xl">{cta.title}</h2>
-                <p className="text-lg opacity-80">{cta.body}</p>
+                <p className="text-lg text-pretty opacity-80">{cta.body}</p>
               </div>
               <div className="lg:justify-self-end">
                 <Button
