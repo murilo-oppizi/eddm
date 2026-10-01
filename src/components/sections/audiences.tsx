@@ -284,7 +284,7 @@ function Mural({ onOpen }: { onOpen: (i: number) => void }) {
       </motion.ul>
 
       {/* The pointer itself (under the flyer): a small, quiet ring on the click point (the page's foreground
-          at low strength over a frosted fill), easing in like the page's cards and giving a
+          at low strength over a see-through white fill), easing in like the page's cards and giving a
           little when pressed */}
       <AnimatePresence>
         {hovered && (
@@ -302,10 +302,10 @@ function Mural({ onOpen }: { onOpen: (i: number) => void }) {
                 per business, so the bounce replays) */}
             <motion.span
               key={hover?.i}
-              className="block size-full rounded-full border border-foreground/35 bg-card/60 backdrop-blur-[2px]"
+              className="block size-full rounded-full border border-foreground/35 bg-white/60"
               initial={{ scale: 1 }}
-              animate={{ scale: [1, 1.45, 0.9, 1] }}
-              transition={{ duration: 0.5, times: [0, 0.3, 0.65, 1], ease: "easeOut" }}
+              animate={{ scale: [1, 1.2, 0.96, 1] }}
+              transition={{ duration: 0.45, times: [0, 0.35, 0.7, 1], ease: "easeOut" }}
             />
           </motion.span>
         )}
