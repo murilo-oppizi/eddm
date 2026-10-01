@@ -22,10 +22,10 @@ import { placeStamp, STAMP_H, STAMP_SPOT_ID, STAMP_TILT, STAMP_W, type Stamp } f
 import { cn } from "@/lib/utils";
 
 // The "EDDM price meter": a flat, product-like object (after the postage meters post
-// offices use to price mail) instead of a form. A white screen shows the estimate in
-// rolling digits, with the homes and the price per piece under it; a fader with − / +
-// sets the homes; five keycaps pick the postcard size (the chosen one shows its shape and
-// name in pink); a big key asks for the quote. The first time it's on screen the fader glides up to 15,000 once.
+// offices use to price mail) instead of a form. A light screen shows the estimate in
+// rolling digits and a level meter; a fader with − / + sets the homes; five keycaps
+// pick the postcard size (the chosen one shows its shape and name in pink); a big key asks
+// for the quote. The first time it's on screen the fader glides up to 15,000 once.
 // It rests still, like an object on a desk, and its keys clack (Cream switch samples;
 // the speaker grille turns the sound off). Asking for the quote
 // prints a postage stamp with the estimate out of a slot at the bottom; it then floats
@@ -33,9 +33,11 @@ import { cn } from "@/lib/utils";
 
 type Size = (typeof pricing.sizes)[number];
 const { min, max, step, initial } = pricing.homes;
+const HOMES_PER_SEGMENT = 1000;
 const NOTCH_EVERY = 5000; // the fader's notch marks (and firmer ticks)
 const NOTCHES = Array.from({ length: Math.floor((max - 1) / NOTCH_EVERY) }, (_, i) => (i + 1) * NOTCH_EVERY).filter((v) => v > min);
 const FADER_CAP = 40; // px, the fader cap's width (w-10); its center travels inset by half
+const SEGMENTS = max / HOMES_PER_SEGMENT;
 const ease = [0.22, 1, 0.36, 1] as const;
 
 /** Oppizi's calculator total at the anchor counts, straight lines in between. */
@@ -346,26 +348,56 @@ export function PriceMeter() {
             </button>
           </div>
 
-          {/* The screen: white, one hero number (the price); the homes and the price per
-              piece quietly under it */}
-          <div className="rounded-2xl bg-white px-5 pt-4 pb-5 text-neutral-950 shadow-[0_1px_2px_rgb(0_0_0/0.1)]">
+          {/* The screen */}
+          <div className="rounded-2xl bg-card p-5 shadow-[inset_0_2px_8px_rgb(0_0_0/0.14)] ring-1 ring-black/10">
+            {/* The two figures: what it costs, and how many homes it reaches */}
             <p className="sr-only" aria-live="polite">
               {usd(total)} for {fmt(homes)} homes with a {size.name} postcard, {perPiece} per piece.
             </p>
-            <div aria-hidden>
-              <p className="text-xs font-medium text-neutral-500">Estimate</p>
-              <p className="mt-1 font-heading text-5xl font-semibold tracking-tighter sm:text-6xl">
+            {/* Labels share a line, and so do the figures (bottoms aligned) */}
+            <div aria-hidden className="grid grid-cols-[1fr_auto] items-end gap-x-4 gap-y-1">
+              <p className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">Estimate</p>
+              <p className="text-right text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">Homes</p>
+              {/* Same size and weight, so the two read as a pair */}
+              <p className="font-heading text-3xl font-bold tracking-tight sm:text-4xl">
                 <RollingNumber value={usd(total)} />
               </p>
-              <p className="mt-3 flex flex-wrap items-baseline gap-x-1.5 text-sm text-neutral-500">
-                <span className="font-medium leading-none text-neutral-950">
-                  <RollingNumber value={fmt(homes)} /> homes
-                </span>
-                <span>·</span>
-                <span>
-                  <span className="tabular-nums">{perPiece}</span> each, all-in
-                </span>
+              <p className="text-right font-heading text-3xl font-bold tracking-tight sm:text-4xl">
+                <RollingNumber value={fmt(homes)} />
               </p>
+            </div>
+            {/* Level meter: one segment per 1,000 homes, the current one a little taller */}
+            <div aria-hidden className="mt-5 flex h-4 items-end gap-0.5 sm:gap-[3px]">
+              {Array.from({ length: SEGMENTS }, (_, i) => {
+                const value = min + i * HOMES_PER_SEGMENT;
+                const on = value <= homes;
+                const head = on && value + HOMES_PER_SEGMENT > homes;
+                return (
+                  <span
+                    key={i}
+                    className={cn(
+                      "flex-1 rounded-[2px] transition-[background-color,height] duration-200",
+                      on ? "bg-primary" : "bg-muted-foreground/15",
+                      head ? "h-4" : "h-2.5"
+                    )}
+                  />
+                );
+              })}
+            </div>
+            <div aria-hidden className="mt-2 flex justify-between text-[11px] text-muted-foreground tabular-nums">
+              <span>{fmt(min)}</span>
+              <span>{fmt(max)}</span>
+            </div>
+            {/* The details behind the estimate */}
+            <div aria-hidden className="mt-4 flex justify-between gap-4 border-t border-dashed pt-3 text-sm">
+              <span>
+                <span className="font-semibold tabular-nums">{perPiece}</span>
+                <span className="text-muted-foreground"> each, all-in</span>
+              </span>
+              <span className="text-muted-foreground">
+                {size.name}
+                <span className="hidden sm:inline"> · {size.dims} in</span>
+              </span>
             </div>
           </div>
 
