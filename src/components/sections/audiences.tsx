@@ -160,7 +160,7 @@ function randomTilt() {
 /**
  * Every business type in one tidy grid (a "blueprint" grid, after Vercel's and Linear's):
  * equal cells split by hairlines, four across on desktop, two on phones. Each cell has
- * its tinted icon, its name and its three moments to mail as a quiet line. Hovering a
+ * its tinted icon and its name. Hovering a
  * cell washes it in the business's tint and brings up an arrow; with a mouse the pointer
  * becomes that business's flyer (a fresh random tilt each time). A click or tap opens its
  * business card.
@@ -230,12 +230,7 @@ function Mural({ onOpen }: { onOpen: (i: number) => void }) {
                 >
                   <Icon className="size-5" aria-hidden />
                 </span>
-                <span className="min-w-0">
-                  <span className="block font-heading leading-snug font-semibold tracking-tight">{item.name}</span>
-                  <span className="mt-1 hidden text-sm leading-snug text-muted-foreground sm:block">
-                    {item.moments.map((m) => m.title).join(" · ")}
-                  </span>
-                </span>
+                <span className="min-w-0 font-heading leading-snug font-semibold tracking-tight">{item.name}</span>
                 <IconArrowUpRight
                   aria-hidden
                   className={cn(
