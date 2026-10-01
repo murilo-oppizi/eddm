@@ -77,23 +77,9 @@ const pressed =
 const lift =
   "hover:-translate-y-px hover:shadow-[0_0_0_1px_rgb(0_0_0/0.06),0_2px_2px_rgb(0_0_0/0.1),0_4px_0_rgb(0_0_0/0.2),inset_0_3px_0_rgb(255_255_255/1)]";
 
-// After a numpad-style device: everything in shades of the brand pink, laid out in zones.
-// A lighter strip on top holds the name and the speaker; a pale tray, set into the body,
-// holds every key. Keys have three ranks: grey keys with pink legends (the sizes), body-
-// colored function keys (− / +), and one solid pink key that does the thing (the quote).
-const ink = "text-[color-mix(in_oklab,var(--primary)_72%,black)]"; // key legends
-const strip =
-  "bg-[color-mix(in_oklab,var(--primary)_62%,white)] shadow-[inset_0_1px_0_rgb(255_255_255/0.45),0_0_0_1px_rgb(0_0_0/0.04),0_2px_0_color-mix(in_oklab,var(--primary)_80%,black),0_6px_12px_-6px_rgb(0_0_0/0.3)]";
-const tray =
-  "bg-[color-mix(in_oklab,var(--primary)_20%,white)] shadow-[inset_0_3px_6px_color-mix(in_oklab,var(--primary)_45%,transparent),inset_0_0_0_1px_color-mix(in_oklab,var(--primary)_25%,transparent),0_1px_0_rgb(255_255_255/0.3)]";
-const functionKey =
-  "bg-[color-mix(in_oklab,var(--primary)_62%,white)] text-white shadow-[0_0_0_1px_rgb(0_0_0/0.05),0_1px_1px_rgb(0_0_0/0.1),0_3px_0_color-mix(in_oklab,var(--primary)_78%,black),inset_0_2px_0_rgb(255_255_255/0.4)] transition-[translate,scale,box-shadow] duration-100 active:translate-y-[2px] active:scale-[0.98] active:shadow-[0_0_0_1px_rgb(0_0_0/0.05),0_1px_0_color-mix(in_oklab,var(--primary)_78%,black),inset_0_1px_0_rgb(255_255_255/0.3)] outline-none focus-visible:ring-3 focus-visible:ring-ring/50";
-const functionPressed =
-  "translate-y-[2px] scale-[0.98] shadow-[0_0_0_1px_rgb(0_0_0/0.05),0_1px_0_color-mix(in_oklab,var(--primary)_78%,black),inset_0_1px_0_rgb(255_255_255/0.3)]";
-const functionLift =
-  "hover:-translate-y-px hover:shadow-[0_0_0_1px_rgb(0_0_0/0.05),0_2px_2px_rgb(0_0_0/0.1),0_4px_0_color-mix(in_oklab,var(--primary)_78%,black),inset_0_2px_0_rgb(255_255_255/0.4)]";
-const actionKey =
-  "bg-primary text-white shadow-[0_0_0_1px_rgb(0_0_0/0.08),0_1px_1px_rgb(0_0_0/0.12),0_4px_0_color-mix(in_oklab,var(--primary)_78%,black),inset_0_2px_0_rgb(255_255_255/0.3)] transition-[translate,scale,box-shadow] duration-100 hover:-translate-y-px hover:shadow-[0_0_0_1px_rgb(0_0_0/0.08),0_2px_2px_rgb(0_0_0/0.12),0_5px_0_color-mix(in_oklab,var(--primary)_78%,black),inset_0_2px_0_rgb(255_255_255/0.3)] active:translate-y-[3px] active:scale-[0.99] active:shadow-[0_0_0_1px_rgb(0_0_0/0.08),0_1px_0_color-mix(in_oklab,var(--primary)_78%,black),inset_0_1px_0_rgb(255_255_255/0.2)] outline-none focus-visible:ring-3 focus-visible:ring-ring/50";
+// A debossed plate on the device body: darker, pressed in, with a light lower edge.
+const plate =
+  "inline-flex h-7 items-center rounded-full bg-black/20 text-white shadow-[inset_0_1px_2px_rgb(0_0_0/0.3),0_1px_0_rgb(255_255_255/0.3)]";
 
 // The sound switch, shared by every meter on the page and remembered in the browser.
 const soundListeners = new Set<() => void>();
@@ -311,8 +297,12 @@ export function PriceMeter() {
           ref={root}
           onPointerEnter={() => prepareSounds()}
           onFocus={() => prepareSounds()}
-          className="relative rounded-[30px] bg-primary p-4 shadow-[inset_0_1px_0_rgb(255_255_255/0.4),inset_0_-5px_0_rgb(0_0_0/0.14),0_30px_60px_-24px_color-mix(in_oklab,var(--primary)_70%,black)] sm:p-5"
+          className="relative rounded-[30px] bg-primary p-6 shadow-[inset_0_1px_0_rgb(255_255_255/0.4),inset_0_-5px_0_rgb(0_0_0/0.14),0_30px_60px_-24px_color-mix(in_oklab,var(--primary)_70%,black)]"
         >
+          <Screw className="top-3.5 left-3.5" />
+          <Screw className="top-3.5 right-3.5" />
+          <Screw className="bottom-3.5 left-3.5" />
+          <Screw className="right-3.5 bottom-3.5" />
 
           {/* The printer: a slot along the bottom edge, and the stamp that feeds out of it.
               The stamp sits behind the slot's lip, so it looks like it comes from inside. */}
@@ -331,13 +321,10 @@ export function PriceMeter() {
           </div>
           <span aria-hidden className="absolute bottom-0 left-1/2 z-20 h-[5px] w-[196px] -translate-x-1/2 rounded-t-[4px] bg-black/35 shadow-[inset_0_-2px_2px_rgb(0_0_0/0.35)]" />
 
-          {/* Top strip: a lighter panel screwed onto the body, with the maker's name and the
-              speaker (three status lights and a grille of tiny crosses; it turns the key
-              sounds on and off) */}
-          <div className={cn("relative mb-4 flex h-11 items-center justify-between rounded-2xl px-6", strip)}>
-            <Screw className="top-1/2 left-2.5 -translate-y-1/2" />
-            <Screw className="top-1/2 right-2.5 -translate-y-1/2" />
-            <span className="inline-flex items-center gap-2 text-xs font-semibold tracking-wide text-white">
+          {/* Top plate: the maker's nameplate and the speaker, both debossed into the body
+              (a darker, inset plate with a light lower edge), so white reads clearly */}
+          <div className="flex items-center justify-between pb-4">
+            <span className={cn(plate, "gap-2 px-3 text-xs font-semibold tracking-wide")}>
               <OppiziSymbol cropped className="h-2.5 w-auto" />
               EDDM Price Meter
             </span>
@@ -347,31 +334,21 @@ export function PriceMeter() {
               aria-pressed={sound}
               aria-label="Key sounds"
               title={sound ? "Key sounds on" : "Key sounds off"}
-              className="inline-flex h-8 cursor-pointer items-center gap-2.5 rounded-lg px-2 text-white outline-none transition-colors hover:bg-black/5 focus-visible:ring-3 focus-visible:ring-ring/50"
+              className={cn(
+                plate,
+                "cursor-pointer gap-2 px-2.5 outline-none transition-colors hover:bg-black/25 focus-visible:ring-3 focus-visible:ring-ring/50"
+              )}
             >
               {sound ? <IconVolume className="size-3.5" /> : <IconVolumeOff className="size-3.5 opacity-70" />}
-              <span aria-hidden className="flex gap-1.5">
-                {[0, 1, 2].map((i) => (
-                  <span
-                    key={i}
-                    className={cn(
-                      "size-1.5 rotate-45 rounded-[1px] transition-[background-color,box-shadow] duration-300",
-                      sound ? "bg-white shadow-[0_0_6px_rgb(255_255_255/0.9)]" : "bg-black/15"
-                    )}
-                  />
-                ))}
-              </span>
-              <span aria-hidden className="grid grid-cols-6 gap-x-[3px] text-[8px] leading-[7px] font-bold text-black/20">
-                {Array.from({ length: 18 }, (_, i) => (
-                  <span key={i}>+</span>
+              <span aria-hidden className="grid grid-cols-6 gap-[3px]">
+                {Array.from({ length: 12 }, (_, i) => (
+                  <span key={i} className={cn("size-[3px] rounded-full transition-colors", sound ? "bg-white/70" : "bg-white/30")} />
                 ))}
               </span>
             </button>
           </div>
 
           {/* The screen */}
-          {/* It sits in a bezel: a dark rim, pressed into the body */}
-          <div className="rounded-[20px] bg-black/20 p-1 shadow-[inset_0_1px_3px_rgb(0_0_0/0.35),0_1px_0_rgb(255_255_255/0.3)]">
           <div className="rounded-2xl bg-card p-5 shadow-[inset_0_2px_8px_rgb(0_0_0/0.14)] ring-1 ring-black/10">
             {/* The two figures: what it costs, and how many homes it reaches */}
             <p className="sr-only" aria-live="polite">
@@ -424,12 +401,8 @@ export function PriceMeter() {
             </div>
           </div>
 
-          </div>
-
-          {/* The key tray: every key sits in this pale, recessed well */}
-          <div className={cn("mt-4 rounded-[22px] p-2.5 sm:p-3", tray)}>
           {/* Homes: − / fader / + */}
-          <div className="px-0.5">
+          <div className="mt-5 px-1">
             <div className="flex items-center gap-3">
               <Tooltip>
                 <TooltipTrigger
@@ -440,7 +413,7 @@ export function PriceMeter() {
                     if (e.detail === 0) playKey("space");
                     set(homes - step);
                   }}
-                  className={cn(functionKey, held === "minus" ? functionPressed : functionLift, "grid size-10 shrink-0 place-items-center rounded-xl")}
+                  className={cn(keycap, held === "minus" ? pressed : lift, "grid size-10 shrink-0 place-items-center rounded-xl")}
               >
                   <IconMinus className="size-4" />
                 </TooltipTrigger>
@@ -466,16 +439,16 @@ export function PriceMeter() {
                     aria-hidden
                     className={cn(
                       "absolute top-1/2 h-1 w-0.5 -translate-x-1/2 -translate-y-1/2 rounded-full transition-colors",
-                      v <= homes ? "bg-white/50" : "bg-black/15"
+                      v <= homes ? "bg-black/15" : "bg-white/35"
                     )}
                     style={{ left: `calc(${FADER_CAP / 2}px + ${(v - min) / (max - min)} * (100% - ${FADER_CAP}px))` }}
                   />
                 ))}
                 getAriaValueText={(_, v: number) => `${fmt(v)} homes`}
                 className={cn(
-                  "[&_[data-slot=slider-track]]:h-2.5 [&_[data-slot=slider-track]]:bg-[color-mix(in_oklab,var(--primary)_18%,transparent)] [&_[data-slot=slider-track]]:shadow-[inset_0_1px_2px_color-mix(in_oklab,var(--primary)_50%,transparent)]",
-                  "[&_[data-slot=slider-range]]:bg-primary",
-                  "[&_[data-slot=slider-thumb]]:h-7 [&_[data-slot=slider-thumb]]:w-10 [&_[data-slot=slider-thumb]]:rounded-lg [&_[data-slot=slider-thumb]]:border-0 [&_[data-slot=slider-thumb]]:shadow-[0_0_0_1px_rgb(0_0_0/0.08),0_3px_0_rgb(0_0_0/0.2)] [&_[data-slot=slider-thumb]]:ring-white/50",
+                  "[&_[data-slot=slider-track]]:h-2.5 [&_[data-slot=slider-track]]:bg-black/20 [&_[data-slot=slider-track]]:shadow-[inset_0_1px_2px_rgb(0_0_0/0.25)]",
+                  "[&_[data-slot=slider-range]]:bg-white/85",
+                  "[&_[data-slot=slider-thumb]]:h-7 [&_[data-slot=slider-thumb]]:w-10 [&_[data-slot=slider-thumb]]:rounded-lg [&_[data-slot=slider-thumb]]:border-0 [&_[data-slot=slider-thumb]]:shadow-[0_3px_0_rgb(0_0_0/0.22)] [&_[data-slot=slider-thumb]]:ring-white/50",
                   // Grip lines on the fader cap
                   "[&_[data-slot=slider-thumb]]:[background:repeating-linear-gradient(90deg,rgb(0_0_0/0.18)_0_1.5px,transparent_1.5px_4px)_center/10px_12px_no-repeat,white]"
                 )}
@@ -489,7 +462,7 @@ export function PriceMeter() {
                     if (e.detail === 0) playKey("space");
                     set(homes + step);
                   }}
-                  className={cn(functionKey, held === "plus" ? functionPressed : functionLift, "grid size-10 shrink-0 place-items-center rounded-xl")}
+                  className={cn(keycap, held === "plus" ? pressed : lift, "grid size-10 shrink-0 place-items-center rounded-xl")}
               >
                   <IconPlus className="size-4" />
                 </TooltipTrigger>
@@ -501,7 +474,7 @@ export function PriceMeter() {
           </div>
 
           {/* Postcard size keys */}
-          <fieldset className="mt-4">
+          <fieldset className="mt-5 px-1">
             <legend className="sr-only">Postcard size</legend>
             <div className="grid grid-cols-5 gap-1.5 max-[360px]:grid-cols-3 max-[360px]:gap-2 sm:gap-2">
               {pricing.sizes.map((s) => {
@@ -529,28 +502,14 @@ export function PriceMeter() {
                       className={cn(
                         keycap,
                         "relative flex h-full flex-col items-center gap-1.5 rounded-xl px-1 pt-3 pb-2 text-center peer-focus-visible:ring-3 peer-focus-visible:ring-ring/50",
-                        ink,
-                        // The chosen size latches down, like a toggle key, and lights up
-                        held === s.name || on ? pressed : lift
+                        held === s.name ? pressed : lift
                       )}
                     >
-                      {/* Latched down: a faint pink wash and a lit status light */}
-                      <span
-                        aria-hidden
-                        className={cn("absolute inset-0 rounded-xl bg-primary/[0.07] transition-opacity duration-200", !on && "opacity-0")}
-                      />
-                      <span
-                        aria-hidden
-                        className={cn(
-                          "absolute top-1.5 left-1.5 size-1.5 rounded-full transition-[background-color,box-shadow] duration-200",
-                          on ? "bg-primary shadow-[0_0_6px_var(--primary)]" : "bg-black/10"
-                        )}
-                      />
                       <SizeGlyph size={s} active={on} />
-                      <span className="block text-[10px] leading-tight font-semibold tracking-tight sm:text-[11px] sm:tracking-normal">
+                      <span className={cn("block text-[10px] leading-tight font-semibold tracking-tight transition-colors sm:text-[11px] sm:tracking-normal", on && "text-primary")}>
                         {s.name}
                       </span>
-                      <span className="hidden text-[10px] leading-tight whitespace-nowrap opacity-60 sm:block">
+                      <span className="hidden text-[10px] leading-tight whitespace-nowrap text-muted-foreground sm:block">
                         {s.dims} in
                       </span>
                     </span>
@@ -565,12 +524,11 @@ export function PriceMeter() {
             href="/#get-started"
             onPointerDown={() => pressKey("enter")}
             onClick={printQuote}
-            className={cn(actionKey, "group mt-4 flex h-14 items-center justify-center gap-2 rounded-2xl font-semibold")}
+            className={cn(keycap, lift, "group mt-5 flex h-14 items-center justify-center gap-2 rounded-2xl font-semibold text-primary")}
           >
             {pricing.cta}{" "}
             <IconArrowRight className="size-4 transition-transform duration-200 group-hover:translate-x-1" aria-hidden />
           </Link>
-          </div>
 
         </motion.div>
       </div>
@@ -620,7 +578,7 @@ function Screw({ className }: { className: string }) {
     <span
       aria-hidden
       className={cn(
-        "absolute size-2 rounded-full bg-black/15 shadow-[inset_0_1px_1px_rgb(0_0_0/0.3),0_1px_0_rgb(255_255_255/0.4)] after:absolute after:inset-x-0.5 after:top-1/2 after:h-px after:-translate-y-1/2 after:rotate-45 after:bg-white/50",
+        "absolute size-2 rounded-full bg-black/15 shadow-[inset_0_1px_1px_rgb(0_0_0/0.3)] after:absolute after:inset-x-0.5 after:top-1/2 after:h-px after:-translate-y-1/2 after:rotate-45 after:bg-white/40",
         className
       )}
     />
@@ -666,7 +624,7 @@ function SizeGlyph({ size, active }: { size: Size; active: boolean }) {
       <span
         className={cn(
           "block rounded-[2px] border-[1.5px] transition-colors",
-          active ? "border-primary bg-primary/15" : "border-current/35 bg-current/5"
+          active ? "border-primary bg-primary/15" : "border-muted-foreground/40 bg-muted"
         )}
         style={{ width: `${(size.w / largest) * 30}px`, height: `${(size.h / largest) * 30}px` }}
       />
