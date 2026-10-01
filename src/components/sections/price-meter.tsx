@@ -62,12 +62,12 @@ const glide = [0.65, 0, 0.35, 1] as const;
 
 type Flight = { stamp: Stamp; left: number; top: number; x: number; y: number; scale: number; duration: number };
 
-// Keys: small panes of clearer glass, each with the same rim of light (bright along the
-// top edge, fainter along the bottom). The chosen size sits on a whiter pane that slides
-// between segments (like iOS's segmented control). Keys dip a little when pressed;
-// "pressed" is the same dip, for keys pressed from your own keyboard.
+// Keys: − / + are white frosted glass like the quote key (a rim of light, no shadow),
+// with pink signs. The chosen size sits on a whiter pane that slides between segments
+// (like iOS's segmented control). Keys dip a little when pressed; "pressed" is the same
+// dip, for keys pressed from your own keyboard.
 const glassKey =
-  "bg-white/20 text-white backdrop-blur-md backdrop-saturate-150 shadow-[inset_0_1px_0_rgb(255_255_255/0.3),inset_0_-1px_0_rgb(255_255_255/0.08),inset_0_0_0_1px_rgb(255_255_255/0.08),0_1px_2px_rgb(0_0_0/0.06),0_6px_14px_-6px_rgb(0_0_0/0.2)] transition-[background-color,scale] duration-150 hover:bg-white/30 active:scale-[0.96] outline-none focus-visible:ring-3 focus-visible:ring-white/60";
+  "bg-white/90 text-primary backdrop-blur-md shadow-[inset_0_1px_0_rgb(255_255_255/1),inset_0_-1px_0_rgb(255_255_255/0.5)] transition-[background-color,scale] duration-150 hover:bg-white active:scale-[0.96] outline-none focus-visible:ring-3 focus-visible:ring-white/60";
 const pressed = "scale-[0.96]";
 
 // The sound switch, shared by every meter on the page and remembered in the browser.
