@@ -344,7 +344,7 @@ export const audiences = {
       postcard: { business: "The Grand Theater", headline: "Opening night, Friday", offer: "Two tickets for the price of one", cta: "Scan for tickets" },
     },
     {
-      name: "Delivery apps and marketplaces",
+      name: "Delivery apps",
       // From Oppizi's Internet Marketplace Platforms clients (food delivery, meal kits).
       // Draft copy, from typical EDDM advice (what to mail, to whom, when): review before launch.
       // The moments to mail, each with the headline and offer its flyer would carry.
