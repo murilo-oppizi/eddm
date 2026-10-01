@@ -6,8 +6,10 @@ import { createPortal } from "react-dom";
 import { IconArrowRight, IconMinus, IconPlus, IconVolume, IconVolumeOff } from "@tabler/icons-react";
 import {
   animate,
+  cubicBezier,
   motion,
   useInView,
+  useMotionValue,
   useReducedMotion,
   useSpring,
 } from "motion/react";
@@ -69,7 +71,10 @@ const orientation = () =>
     ? undefined
     : (DeviceOrientationEvent as unknown as { requestPermission?: () => Promise<string> });
 
-type Flight = { stamp: Stamp; left: number; top: number; x: number; y: number; scale: number; duration: number };
+type Flight = { stamp: Stamp; left: number; top: number; scale: number; duration: number };
+const glideEase = cubicBezier(...glide);
+// What a visitor does to scroll the page themselves
+const USER_SCROLL = ["wheel", "touchstart", "keydown"] as const;
 
 // Keys: − / + are white frosted glass like the quote key (a rim of light, no shadow),
 // with pink signs. The chosen size sits on a whiter pane that slides between segments
@@ -209,8 +214,10 @@ export function PriceMeter() {
 
   // The quote key prints the stamp, which then flies (in a fixed layer above the page)
   // to its spot on the "Ready to reach every door?" card while the page glides there.
-  // Scrolling or typing mid-flight lands it at once. Reduced motion skips the show:
-  // the stamp is simply on the card when the page jumps there.
+  // Scrolling yourself at any point hands the page back to you (the glide stops), but the
+  // show goes on: the stamp still prints and flies to the card, wherever the card is by
+  // then. Reduced motion skips the show: the stamp is simply on the card when the page
+  // jumps there.
   const [printing, setPrinting] = useState<Stamp | null>(null);
   const [flight, setFlight] = useState<Flight | null>(null);
   const feedRef = useRef<HTMLDivElement>(null);
@@ -218,10 +225,21 @@ export function PriceMeter() {
   const glideAnim = useRef<ReturnType<typeof animate> | null>(null);
   const busy = useRef(false); // from the press until the stamp lands
   const landRef = useRef<() => void>(() => {});
+  const flightAnim = useRef<ReturnType<typeof animate> | null>(null);
+  const fx = useMotionValue(0); // the stamp's flight, from where it printed
+  const fy = useMotionValue(0);
+  const tookOver = useRef(false); // the visitor scrolled during the show
+  const yieldToUser = useRef(() => {
+    tookOver.current = true;
+    glideAnim.current?.stop();
+  });
+  const stopYielding = () => USER_SCROLL.forEach((t) => window.removeEventListener(t, yieldToUser.current));
   useEffect(
     () => () => {
       timers.current.forEach(clearTimeout);
       glideAnim.current?.stop();
+      flightAnim.current?.stop();
+      USER_SCROLL.forEach((t) => window.removeEventListener(t, yieldToUser.current));
       landRef.current();
     },
     []
@@ -241,6 +259,7 @@ export function PriceMeter() {
     setPrinting(null);
     if (!from || !spot) {
       busy.current = false;
+      stopYielding();
       return placeStamp(stamp);
     }
     const endScroll = cardScroll(spot);
@@ -249,15 +268,9 @@ export function PriceMeter() {
     const cx = from.left + from.width / 2;
     const cy = from.top + from.height / 2;
     const duration = Math.min(1.6, 0.9 + Math.abs(delta) / 3000);
-    setFlight({
-      stamp,
-      left: cx - STAMP_W / 2,
-      top: cy - STAMP_H / 2,
-      x: to.left + to.width / 2 - cx,
-      y: to.top + to.height / 2 - delta - cy,
-      scale: to.width / STAMP_W,
-      duration,
-    });
+    fx.set(0);
+    fy.set(0);
+    setFlight({ stamp, left: cx - STAMP_W / 2, top: cy - STAMP_H / 2, scale: to.width / STAMP_W, duration });
 
     let landed = false;
     const land = () => {
@@ -265,17 +278,32 @@ export function PriceMeter() {
       landed = true;
       busy.current = false;
       glideAnim.current?.stop();
-      ["wheel", "touchstart", "keydown"].forEach((t) => window.removeEventListener(t, land));
+      flightAnim.current?.stop();
+      stopYielding();
       placeStamp(stamp);
       setFlight(null);
       playKey("press", { gain: 0.55, pitch: 0.8 });
     };
     landRef.current = land;
-    ["wheel", "touchstart", "keydown"].forEach((t) => window.addEventListener(t, land, { passive: true }));
-    glideAnim.current = animate(window.scrollY, endScroll, {
+    if (!tookOver.current) {
+      glideAnim.current = animate(window.scrollY, endScroll, {
+        duration,
+        ease: glide,
+        onUpdate: (v) => window.scrollTo({ top: v, behavior: "instant" }),
+      });
+    }
+    // The path aims at the card where it is right now, every frame: with the page gliding
+    // it moves along with it; if you scroll yourself, it still finds the card.
+    flightAnim.current = animate(0, 1, {
       duration,
-      ease: glide,
-      onUpdate: (v) => window.scrollTo({ top: v, behavior: "instant" }),
+      ease: "linear",
+      onUpdate: (p) => {
+        const t = spot.getBoundingClientRect();
+        const k = glideEase(p);
+        fx.set((t.left + t.width / 2 - cx) * k);
+        fy.set((t.top + t.height / 2 - cy) * k);
+      },
+      onComplete: land,
     });
   };
 
@@ -298,6 +326,8 @@ export function PriceMeter() {
       return;
     }
     busy.current = true;
+    tookOver.current = false;
+    USER_SCROLL.forEach((t) => window.addEventListener(t, yieldToUser.current, { passive: true }));
     // If the stamp would print below the window, first glide the page up just enough
     // to see it come out (with a little breathing room), then print.
     const device = root.current?.getBoundingClientRect();
@@ -542,11 +572,9 @@ export function PriceMeter() {
           <motion.div
             aria-hidden
             className="pointer-events-none fixed z-[60]"
-            style={{ left: flight.left, top: flight.top, width: STAMP_W, height: STAMP_H }}
-            initial={{ x: 0, y: 0, scale: 1, rotate: 0 }}
+            style={{ left: flight.left, top: flight.top, width: STAMP_W, height: STAMP_H, x: fx, y: fy }}
+            initial={{ scale: 1, rotate: 0 }}
             animate={{
-              x: flight.x,
-              y: flight.y,
               scale: [1, Math.max(1, flight.scale) * 1.1, flight.scale * 0.96, flight.scale],
               rotate: [0, -4, STAMP_TILT + 1, STAMP_TILT],
               filter: [
@@ -560,11 +588,7 @@ export function PriceMeter() {
               duration: flight.duration,
               times: [0, 0.45, 0.88, 1],
               ease: "easeInOut",
-              // The path follows the page's glide, so the two move as one.
-              x: { duration: flight.duration, ease: glide },
-              y: { duration: flight.duration, ease: glide },
             }}
-            onAnimationComplete={() => landRef.current()}
           >
             <PrintedStamp {...flight.stamp} />
           </motion.div>,
