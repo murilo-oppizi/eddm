@@ -297,7 +297,7 @@ export function PriceMeter() {
           ref={root}
           onPointerEnter={() => prepareSounds()}
           onFocus={() => prepareSounds()}
-          className="relative rounded-[30px] bg-[linear-gradient(180deg,color-mix(in_oklab,var(--primary)_86%,white),var(--primary)_55%)] p-6 shadow-[inset_0_1px_0_rgb(255_255_255/0.4),inset_0_-5px_0_rgb(0_0_0/0.14),0_30px_60px_-24px_color-mix(in_oklab,var(--primary)_70%,black)]"
+          className="relative rounded-[30px] bg-primary p-6 shadow-[inset_0_1px_0_rgb(255_255_255/0.4),inset_0_-5px_0_rgb(0_0_0/0.14),0_30px_60px_-24px_color-mix(in_oklab,var(--primary)_70%,black)]"
         >
           <Screw className="top-3.5 left-3.5" />
           <Screw className="top-3.5 right-3.5" />
