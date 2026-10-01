@@ -198,7 +198,9 @@ function Mural({ onOpen }: { onOpen: (i: number) => void }) {
           const tone = tones[item.tone];
           return (
             <motion.li
-              key={item.name}
+              // Keyed by icon, which never changes: a renamed business keeps its cell (a new
+              // one would mount hidden after the wall's one-time entrance).
+              key={item.icon}
               // Hairlines between cells: each cell's right and bottom border, except on the
               // last column and the last row (2 columns on phones, 4 on desktop).
               className={cn(
