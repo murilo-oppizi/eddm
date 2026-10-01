@@ -555,10 +555,8 @@ function RollingNumber({ value }: { value: string }) {
 }
 
 /**
- * The postcard's shape at its real proportions, all drawn on the same scale, as a tiny
- * pane of glass: a double edge (a bright outer line, a fainter one just inside it), a
- * brighter top edge and a sheen across it. On the chosen size's white pill, the pane is
- * tinted pink.
+ * The postcard's shape at its real proportions, all drawn on the same scale: a plain
+ * frosted shape, no outline (too small to carry detail), pink on the chosen size.
  */
 function SizeGlyph({ size, active }: { size: Size; active: boolean }) {
   const largest = 15; // inches, the Oversized card's width
@@ -566,10 +564,8 @@ function SizeGlyph({ size, active }: { size: Size; active: boolean }) {
     <span aria-hidden className="flex h-6 items-end">
       <span
         className={cn(
-          "relative block rounded-[3px] transition-[background,box-shadow] duration-200",
-          active
-            ? "bg-[linear-gradient(135deg,color-mix(in_oklab,var(--primary)_32%,white),color-mix(in_oklab,var(--primary)_12%,white)_55%,color-mix(in_oklab,var(--primary)_22%,white))] shadow-[0_0_0_1px_var(--primary),inset_0_0_0_1.5px_rgb(255_255_255/0.85),inset_0_0_0_2.5px_color-mix(in_oklab,var(--primary)_35%,transparent),0_1px_3px_color-mix(in_oklab,var(--primary)_40%,transparent)]"
-            : "bg-[linear-gradient(135deg,rgb(255_255_255/0.4),rgb(255_255_255/0.06)_55%,rgb(255_255_255/0.16))] shadow-[0_0_0_1px_rgb(255_255_255/0.75),inset_0_0_0_1.5px_rgb(0_0_0/0.06),inset_0_0_0_2.5px_rgb(255_255_255/0.3),0_1px_2px_rgb(0_0_0/0.12)]"
+          "relative block rounded-[3px] transition-colors duration-200",
+          active ? "bg-primary" : "bg-white/45"
         )}
         style={{ width: `${(size.w / largest) * 30}px`, height: `${(size.h / largest) * 30}px` }}
       />
