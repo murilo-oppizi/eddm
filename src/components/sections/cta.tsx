@@ -1,11 +1,11 @@
 "use client";
 
 import { useSyncExternalStore } from "react";
+import { IconArrowRight } from "@tabler/icons-react";
 
 import { PrintedStamp } from "@/components/sections/printed-stamp";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { cta } from "@/content/site";
 import {
   getStamp,
   STAMP_SPOT_ID,
@@ -13,9 +13,8 @@ import {
   subscribeStamp,
 } from "@/lib/quote-stamp";
 
-// Front-end only: the form doesn't submit anywhere yet — backend devs will wire it up
-// in onSubmit. Until then it only validates, instead of reloading the page.
-// The card is also where the price meter's printed stamp lands: on its top-right corner,
+// The closing card: the title, one line on what happens, and one button straight into
+// making a campaign. The card is also where the price meter's printed stamp lands: on its top-right corner,
 // like a stamp on an envelope.
 export function Cta() {
   const stamp = useSyncExternalStore(subscribeStamp, getStamp, () => null);
@@ -46,43 +45,20 @@ export function Cta() {
             />
             <div className="relative grid items-center gap-8 lg:grid-cols-2">
               <div className="space-y-3">
-                <h2 className="text-3xl font-bold sm:text-4xl">
-                  Ready to reach every door?
-                </h2>
-                <p className="text-lg opacity-80">
-                  Enter a ZIP code to see how many homes you can reach and what
-                  it would cost.
-                </p>
+                <h2 className="text-3xl font-bold sm:text-4xl">{cta.title}</h2>
+                <p className="text-lg opacity-80">{cta.body}</p>
               </div>
-              <form
-                className="flex flex-col gap-3 sm:flex-row sm:items-end"
-                onSubmit={(e) => e.preventDefault()}
-              >
-                <div className="flex-1 space-y-2">
-                  <Label htmlFor="zip" className="text-brand-foreground">
-                    ZIP code
-                  </Label>
-                  <Input
-                    id="zip"
-                    name="zip"
-                    required
-                    inputMode="numeric"
-                    autoComplete="postal-code"
-                    maxLength={5}
-                    pattern="[0-9]{5}"
-                    title="A 5-digit US ZIP code"
-                    placeholder="e.g. 90210"
-                    className="h-11 border-transparent bg-background text-base text-foreground"
-                  />
-                </div>
+              <div className="lg:justify-self-end">
                 <Button
-                  type="submit"
                   size="xl"
-                  className="bg-background text-foreground hover:bg-background/90"
+                  render={<a href={cta.button.href} />}
+                  nativeButton={false}
+                  className="group w-full bg-background text-foreground hover:bg-background/90 sm:w-auto"
                 >
-                  Check my area
+                  {cta.button.label}
+                  <IconArrowRight className="transition-transform duration-200 group-hover:translate-x-1" aria-hidden />
                 </Button>
-              </form>
+              </div>
             </div>
           </div>
           {/* The stamp's spot, half over the card's top edge (smaller on phones). Always

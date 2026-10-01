@@ -19,6 +19,14 @@ export const site = {
   login: { label: "Log in", href: "https://app.oppizi.com/login?oppizi_source=eddm" },
 }
 
+// The closing card. Its button opens the Oppizi app, where a campaign is made (the same
+// app login eddm.com uses, for now: confirm the sign-up link before launch).
+export const cta = {
+  title: "Ready to reach every door?",
+  body: "Pick routes on a map, design your postcard, and we handle printing and USPS delivery.",
+  button: { label: "Create a campaign", href: "https://app.oppizi.com/login?oppizi_source=eddm" },
+}
+
 export const hero = {
   eyebrow: "USPS Every Door Direct Mail®",
   title: "Put your business in every mailbox on the block.",
