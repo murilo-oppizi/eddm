@@ -25,7 +25,7 @@ export const site = {
 export const cta = {
   title: "Ready to reach every door?",
   body: "Reach every household in your target area, launch in minutes, and track delivery and performance in one place.",
-  button: { label: "Create a campaign", href: "https://app.oppizi.com/login?oppizi_source=eddm" },
+  button: { label: "Launch a campaign", href: "https://app.oppizi.com/login?oppizi_source=eddm" },
 }
 
 export const hero = {
