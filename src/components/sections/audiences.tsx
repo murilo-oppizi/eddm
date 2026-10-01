@@ -291,13 +291,23 @@ function Mural({ onOpen }: { onOpen: (i: number) => void }) {
           <motion.span
             key="ring"
             aria-hidden
-            className="pointer-events-none absolute top-0 left-0 z-10 -mt-1.5 -ml-1.5 size-3 rounded-full border border-foreground/35 bg-card/60 backdrop-blur-[2px]"
+            className="pointer-events-none absolute top-0 left-0 z-10 -mt-1.5 -ml-1.5 size-3"
             style={{ x: rx, y: ry }}
             initial={{ opacity: 0, scale: 0.5 }}
             animate={{ opacity: 1, scale: pressed ? 0.7 : 1 }}
             exit={{ opacity: 0, scale: 0.5, transition: { duration: 0.15 } }}
             transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
-          />
+          >
+            {/* A gentle bounce each time the flyer changes to another business (remounts
+                per business, so the bounce replays) */}
+            <motion.span
+              key={hover?.i}
+              className="block size-full rounded-full border border-foreground/35 bg-card/60 backdrop-blur-[2px]"
+              initial={{ scale: 1 }}
+              animate={{ scale: [1, 1.45, 0.9, 1] }}
+              transition={{ duration: 0.5, times: [0, 0.3, 0.65, 1], ease: "easeOut" }}
+            />
+          </motion.span>
         )}
       </AnimatePresence>
 
