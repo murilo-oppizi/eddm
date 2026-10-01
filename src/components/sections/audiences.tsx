@@ -304,7 +304,7 @@ function Mural({ onOpen }: { onOpen: (i: number) => void }) {
               key={hover?.i}
               className="block size-full rounded-full border border-foreground/35 bg-white/60"
               initial={{ scale: 1 }}
-              animate={{ scale: [1, 1.2, 0.96, 1] }}
+              animate={{ scale: [1, 1.1, 0.98, 1] }}
               transition={{ duration: 0.45, times: [0, 0.35, 0.7, 1], ease: "easeOut" }}
             />
           </motion.span>
