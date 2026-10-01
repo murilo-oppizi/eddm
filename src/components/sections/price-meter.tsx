@@ -61,7 +61,7 @@ const TAKE_OFF = 1050; // ms after printing starts
 const MAKE_ROOM = 0.45; // s to glide the page up when the stamp would print off screen
 const glide = [0.65, 0, 0.35, 1] as const;
 
-const TILT = 6; // degrees, the most the meter leans each way
+const TILT = 1.5; // degrees, the most the meter leans each way
 
 /** The browser's tilt events, with iPhone Safari's permission prompt when it has one. */
 const orientation = () =>
