@@ -93,7 +93,6 @@ type Finish = {
   dots: [on: string, off: string];
   slot: string;
   track: string;
-  range: string;
   thumb: string;
   notches: [filled: string, empty: string];
   screw: string;
@@ -110,7 +109,6 @@ const finishes = {
     dots: ["bg-white/60", "bg-white/20"],
     slot: "bg-black/60 shadow-[inset_0_-2px_2px_rgb(0_0_0/0.6)]",
     track: "[&_[data-slot=slider-track]]:bg-black/40 [&_[data-slot=slider-track]]:shadow-[inset_0_1px_2px_rgb(0_0_0/0.5)]",
-    range: "[&_[data-slot=slider-range]]:bg-primary",
     thumb: "[&_[data-slot=slider-thumb]]:shadow-[0_3px_0_rgb(0_0_0/0.45)]",
     notches: ["bg-white/50", "bg-white/20"],
     screw: "bg-black/40 shadow-[inset_0_1px_1px_rgb(0_0_0/0.6)] after:bg-white/20",
@@ -127,7 +125,6 @@ const finishes = {
     dots: ["bg-foreground/50", "bg-foreground/20"],
     slot: "bg-black/30 shadow-[inset_0_-2px_2px_rgb(0_0_0/0.35)]",
     track: "[&_[data-slot=slider-track]]:bg-black/[0.12] [&_[data-slot=slider-track]]:shadow-[inset_0_1px_2px_rgb(0_0_0/0.25)]",
-    range: "[&_[data-slot=slider-range]]:bg-primary",
     thumb: "[&_[data-slot=slider-thumb]]:shadow-[0_0_0_1px_rgb(0_0_0/0.08),0_3px_0_rgb(0_0_0/0.22)]",
     notches: ["bg-white/50", "bg-black/20"],
     screw: "bg-black/20 shadow-[inset_0_1px_1px_rgb(0_0_0/0.35)] after:bg-white/50",
@@ -143,7 +140,6 @@ const finishes = {
     dots: ["bg-primary/60", "bg-primary/20"],
     slot: "bg-primary/25 shadow-[inset_0_-2px_2px_color-mix(in_oklab,var(--primary)_40%,transparent)]",
     track: "[&_[data-slot=slider-track]]:bg-primary/[0.12] [&_[data-slot=slider-track]]:shadow-[inset_0_1px_2px_color-mix(in_oklab,var(--primary)_30%,transparent)]",
-    range: "[&_[data-slot=slider-range]]:bg-primary",
     thumb: "[&_[data-slot=slider-thumb]]:shadow-[0_0_0_1px_rgb(0_0_0/0.06),0_3px_0_color-mix(in_oklab,var(--primary)_30%,transparent)]",
     notches: ["bg-white/50", "bg-primary/25"],
     screw: "bg-primary/20 shadow-[inset_0_1px_1px_color-mix(in_oklab,var(--primary)_40%,transparent)] after:bg-white/60",
@@ -153,6 +149,60 @@ const finishes = {
 const FINISH: keyof typeof finishes = "aluminum";
 const finish: Finish = finishes[FINISH];
 const plate = cn(plateBase, finish.plate);
+
+/**
+ * Where the brand red shows. "everywhere": the level meter, the fader and the chosen
+ * size too. "key": only the quote key; the rest in dark ink, like the Braun ET66's one
+ * colored key. "signal": as "key", plus the meter's tallest segment, a small red light.
+ */
+type Accent = { bar: string | null; head: string | null; range: string; glyph: string; label: string };
+// A null bar or head is drawn in the screen's ink (dark on the light screen, light on the dark one).
+const accents = {
+  everywhere: {
+    bar: "bg-primary",
+    head: "bg-primary",
+    range: "[&_[data-slot=slider-range]]:bg-primary",
+    glyph: "border-primary bg-primary/15",
+    label: "text-primary",
+  },
+  key: {
+    bar: null,
+    head: null,
+    range: "[&_[data-slot=slider-range]]:bg-foreground/70",
+    glyph: "border-foreground bg-foreground/15",
+    label: "text-foreground",
+  },
+  signal: {
+    bar: null,
+    head: "bg-primary",
+    range: "[&_[data-slot=slider-range]]:bg-foreground/70",
+    glyph: "border-foreground bg-foreground/15",
+    label: "text-foreground",
+  },
+} satisfies Record<string, Accent>;
+const ACCENT: keyof typeof accents = "signal";
+const accent: Accent = accents[ACCENT];
+
+/** The screen: "light" (white, like paper) or "dark" (a black display, light figures). */
+type Screen = { root: string; label: string; off: string; rule: string; ink: string };
+const screens = {
+  light: {
+    root: "bg-card shadow-[inset_0_2px_8px_rgb(0_0_0/0.14)] ring-1 ring-black/10",
+    label: "text-muted-foreground",
+    off: "bg-muted-foreground/15",
+    rule: "",
+    ink: "bg-foreground/80",
+  },
+  dark: {
+    root: "bg-[linear-gradient(180deg,#1b1d21,#25282d)] text-white shadow-[inset_0_2px_10px_rgb(0_0_0/0.6)] ring-1 ring-black/40",
+    label: "text-white/50",
+    off: "bg-white/10",
+    rule: "border-white/15",
+    ink: "bg-white/85",
+  },
+} satisfies Record<string, Screen>;
+const SCREEN: keyof typeof screens = "light";
+const screen: Screen = screens[SCREEN];
 
 // The sound switch, shared by every meter on the page and remembered in the browser.
 const soundListeners = new Set<() => void>();
@@ -424,15 +474,15 @@ export function PriceMeter() {
           </div>
 
           {/* The screen */}
-          <div className="rounded-2xl bg-card p-5 shadow-[inset_0_2px_8px_rgb(0_0_0/0.14)] ring-1 ring-black/10">
+          <div className={cn("rounded-2xl p-5", screen.root)}>
             {/* The two figures: what it costs, and how many homes it reaches */}
             <p className="sr-only" aria-live="polite">
               {usd(total)} for {fmt(homes)} homes with a {size.name} postcard, {perPiece} per piece.
             </p>
             {/* Labels share a line, and so do the figures (bottoms aligned) */}
             <div aria-hidden className="grid grid-cols-[1fr_auto] items-end gap-x-4 gap-y-1">
-              <p className="text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">Estimate</p>
-              <p className="text-right text-[11px] font-semibold tracking-wider text-muted-foreground uppercase">Homes</p>
+              <p className={cn("text-[11px] font-semibold tracking-wider uppercase", screen.label)}>Estimate</p>
+              <p className={cn("text-right text-[11px] font-semibold tracking-wider uppercase", screen.label)}>Homes</p>
               {/* Same size and weight, so the two read as a pair */}
               <p className="font-heading text-3xl font-bold tracking-tight sm:text-4xl">
                 <RollingNumber value={usd(total)} />
@@ -452,24 +502,24 @@ export function PriceMeter() {
                     key={i}
                     className={cn(
                       "flex-1 rounded-[2px] transition-[background-color,height] duration-200",
-                      on ? "bg-primary" : "bg-muted-foreground/15",
+                      on ? ((head ? accent.head : accent.bar) ?? screen.ink) : screen.off,
                       head ? "h-4" : "h-2.5"
                     )}
                   />
                 );
               })}
             </div>
-            <div aria-hidden className="mt-2 flex justify-between text-[11px] text-muted-foreground tabular-nums">
+            <div aria-hidden className={cn("mt-2 flex justify-between text-[11px] tabular-nums", screen.label)}>
               <span>{fmt(min)}</span>
               <span>{fmt(max)}</span>
             </div>
             {/* The details behind the estimate */}
-            <div aria-hidden className="mt-4 flex justify-between gap-4 border-t border-dashed pt-3 text-sm">
+            <div aria-hidden className={cn("mt-4 flex justify-between gap-4 border-t border-dashed pt-3 text-sm", screen.rule)}>
               <span>
                 <span className="font-semibold tabular-nums">{perPiece}</span>
-                <span className="text-muted-foreground"> each, all-in</span>
+                <span className={screen.label}> each, all-in</span>
               </span>
-              <span className="text-muted-foreground">
+              <span className={screen.label}>
                 {size.name}
                 <span className="hidden sm:inline"> · {size.dims} in</span>
               </span>
@@ -523,7 +573,7 @@ export function PriceMeter() {
                 className={cn(
                   "[&_[data-slot=slider-track]]:h-2.5",
                   finish.track,
-                  finish.range,
+                  accent.range,
                   "[&_[data-slot=slider-thumb]]:h-7 [&_[data-slot=slider-thumb]]:w-10 [&_[data-slot=slider-thumb]]:rounded-lg [&_[data-slot=slider-thumb]]:border-0 [&_[data-slot=slider-thumb]]:ring-white/50",
                   finish.thumb,
                   // Grip lines on the fader cap
@@ -583,7 +633,7 @@ export function PriceMeter() {
                       )}
                     >
                       <SizeGlyph size={s} active={on} />
-                      <span className={cn("block text-[10px] leading-tight font-semibold tracking-tight transition-colors sm:text-[11px] sm:tracking-normal", on && "text-primary")}>
+                      <span className={cn("block text-[10px] leading-tight font-semibold tracking-tight transition-colors sm:text-[11px] sm:tracking-normal", on && accent.label)}>
                         {s.name}
                       </span>
                       <span className="hidden text-[10px] leading-tight whitespace-nowrap text-muted-foreground sm:block">
@@ -702,7 +752,7 @@ function SizeGlyph({ size, active }: { size: Size; active: boolean }) {
       <span
         className={cn(
           "block rounded-[2px] border-[1.5px] transition-colors",
-          active ? "border-primary bg-primary/15" : "border-muted-foreground/40 bg-muted"
+          active ? accent.glyph : "border-muted-foreground/40 bg-muted"
         )}
         style={{ width: `${(size.w / largest) * 30}px`, height: `${(size.h / largest) * 30}px` }}
       />
