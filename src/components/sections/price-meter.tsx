@@ -131,7 +131,8 @@ const finishes = {
     thumb: "[&_[data-slot=slider-thumb]]:shadow-[0_0_0_1px_rgb(0_0_0/0.08),0_3px_0_rgb(0_0_0/0.22)]",
     notches: ["bg-white/50", "bg-black/20"],
     screw: "bg-black/20 shadow-[inset_0_1px_1px_rgb(0_0_0/0.35)] after:bg-white/50",
-    quote: "text-primary",
+    quote:
+      "bg-primary text-primary-foreground shadow-[0_0_0_1px_rgb(0_0_0/0.2),0_1px_1px_rgb(0_0_0/0.2),0_3px_0_color-mix(in_oklab,var(--primary)_55%,black),inset_0_2px_0_rgb(255_255_255/0.3)] hover:shadow-[0_0_0_1px_rgb(0_0_0/0.2),0_2px_2px_rgb(0_0_0/0.2),0_4px_0_color-mix(in_oklab,var(--primary)_55%,black),inset_0_2px_0_rgb(255_255_255/0.3)] dark:bg-primary",
   },
   // Blush: the brand's pink, but barely there, a pale tinted body.
   blush: {
@@ -149,7 +150,7 @@ const finishes = {
     quote: "text-primary",
   },
 } satisfies Record<string, Finish>;
-const FINISH: keyof typeof finishes = "graphite";
+const FINISH: keyof typeof finishes = "aluminum";
 const finish: Finish = finishes[FINISH];
 const plate = cn(plateBase, finish.plate);
 
