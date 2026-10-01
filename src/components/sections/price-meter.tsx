@@ -6,6 +6,7 @@ import { createPortal } from "react-dom";
 import { IconArrowRight, IconMinus, IconPlus, IconVolume, IconVolumeOff } from "@tabler/icons-react";
 import {
   animate,
+  AnimatePresence,
   motion,
   useInView,
   useReducedMotion,
@@ -109,6 +110,7 @@ export function PriceMeter() {
   };
 
   const sound = useSyncExternalStore(subscribeSound, soundsOn, () => true);
+  const atMax = homes === max;
   const pillId = useId(); // the chosen size's pill, unique per meter on the page
 
   // Your own keyboard works the meter while it's mostly on screen: ← → or − + for the
@@ -311,19 +313,66 @@ export function PriceMeter() {
           <span aria-hidden className="absolute bottom-0 left-1/2 z-20 h-1 w-[196px] -translate-x-1/2 rounded-t-full bg-black/25" />
 
           {/* Top row: the name, printed straight on the body, and the speaker, a patch of
-              tiny holes (it turns the key sounds on and off) */}
-          <div className="flex h-7 items-center justify-between px-2 pb-4 box-content">
-            <span className="inline-flex items-center gap-2 text-xs font-medium tracking-wide text-white/85">
-              <OppiziSymbol cropped className="h-2.5 w-auto" />
-              EDDM Price Meter
-            </span>
+              tiny holes (it turns the key sounds on and off). At 30,000 homes, the most the
+              meter prices, the name grows into a black "Dynamic Island" that offers a talk
+              with sales, and shrinks back when you come down. */}
+          <div className="relative flex h-7 items-center justify-between px-2 pb-4 box-content">
+            <motion.div
+              layout
+              transition={{ type: "spring", bounce: 0.25, duration: 0.55 }}
+              style={{ borderRadius: 22 }}
+              animate={{ backgroundColor: atMax ? "rgb(10 10 10)" : "rgb(10 10 10 / 0)" }}
+              className={cn(
+                "absolute z-30 flex items-center overflow-hidden",
+                atMax ? "inset-x-0 -top-1.5 h-11 pr-1.5 pl-4 shadow-[0_8px_24px_-8px_rgb(0_0_0/0.45)]" : "top-0 left-2 h-7"
+              )}
+            >
+              <AnimatePresence mode="popLayout" initial={false}>
+                {atMax ? (
+                  <motion.div
+                    key="island"
+                    layout="position"
+                    initial={{ opacity: 0, filter: "blur(4px)" }}
+                    animate={{ opacity: 1, filter: "blur(0px)" }}
+                    exit={{ opacity: 0, filter: "blur(4px)" }}
+                    transition={{ duration: 0.25, delay: 0.1 }}
+                    className="flex w-full items-center justify-between gap-3"
+                  >
+                    <span className="truncate text-xs font-medium text-white sm:text-sm">{pricing.more}</span>
+                    <Link
+                      href="/contact"
+                      className="shrink-0 rounded-full bg-white px-3.5 py-2 text-xs font-semibold text-neutral-950 outline-none transition-[scale] active:scale-[0.96] focus-visible:ring-3 focus-visible:ring-white/60"
+                    >
+                      Talk to us
+                    </Link>
+                  </motion.div>
+                ) : (
+                  <motion.span
+                    key="name"
+                    layout="position"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.2 }}
+                    className="inline-flex items-center gap-2 text-xs font-medium tracking-wide whitespace-nowrap text-white/85"
+                  >
+                    <OppiziSymbol cropped className="h-2.5 w-auto" />
+                    EDDM Price Meter
+                  </motion.span>
+                )}
+              </AnimatePresence>
+            </motion.div>
+            <span aria-hidden />
             <button
               type="button"
               onClick={toggleSound}
               aria-pressed={sound}
               aria-label="Key sounds"
               title={sound ? "Key sounds on" : "Key sounds off"}
-              className="group inline-flex cursor-pointer items-center gap-2.5 rounded-full px-1.5 py-1 text-white/85 outline-none transition-colors hover:text-white focus-visible:ring-3 focus-visible:ring-white/60"
+              className={cn(
+                "group inline-flex cursor-pointer items-center gap-2.5 rounded-full px-1.5 py-1 text-white/85 outline-none transition-[color,opacity] hover:text-white focus-visible:ring-3 focus-visible:ring-white/60",
+                atMax && "invisible opacity-0" // under the island
+              )}
             >
               {sound ? <IconVolume className="size-3.5" /> : <IconVolumeOff className="size-3.5 opacity-60" />}
               <span aria-hidden className="grid grid-cols-8 gap-[3px]">
