@@ -233,12 +233,13 @@ function Mural({ onOpen }: { onOpen: (i: number) => void }) {
                 {/* The arrow follows the name's last word (and never wraps onto a line alone) */}
                 <span className="min-w-0 font-heading leading-snug font-semibold tracking-tight">
                   {item.name.split(" ").slice(0, -1).join(" ")}{" "}
-                  <span className="whitespace-nowrap">
+                  {/* inline-flex centres the arrow on the line, not on the text's baseline */}
+                  <span className="inline-flex items-center gap-1 whitespace-nowrap">
                     {item.name.split(" ").at(-1)}
                     <IconArrowUpRight
                       aria-hidden
                       className={cn(
-                        "ml-1 inline size-4 -translate-x-1 translate-y-0.5 align-baseline opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:-translate-y-px group-hover:opacity-100",
+                        "size-4 shrink-0 -translate-x-1 opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100",
                         tone.icon
                       )}
                     />
