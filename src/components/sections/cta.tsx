@@ -22,7 +22,7 @@ export function Cta() {
     <section id="get-started" className="scroll-mt-20 pb-20">
       <div className="container-page">
         <div className="relative">
-          <div className="relative overflow-hidden rounded-3xl bg-brand px-6 py-14 text-brand-foreground sm:px-12">
+          <div className="relative overflow-hidden rounded-3xl bg-brand px-6 py-14 text-brand-foreground sm:px-12 sm:py-20">
             {/* A soft light in the top-right corner: the same glow as a 256px circle at 20%
                 blurred by 40px, drawn as a gradient instead. iPhone Safari clips blurred
                 elements inside rounded, clipped boxes at hard edges, leaving bands of light. */}
@@ -43,12 +43,15 @@ export function Cta() {
               }}
               aria-hidden
             />
-            <div className="relative grid items-center gap-8 lg:grid-cols-2">
-              <div className="space-y-3">
+            {/* One centered column (title, line, button), so the line reads in two lines
+                and nothing floats alone at the far edge; the top-right stays clear for the
+                stamp */}
+            <div className="relative mx-auto flex max-w-2xl flex-col items-center gap-8 text-center">
+              <div className="space-y-4">
                 <h2 className="text-3xl font-bold sm:text-4xl">{cta.title}</h2>
-                <p className="text-lg text-pretty opacity-80">{cta.body}</p>
+                <p className="text-lg text-balance opacity-80">{cta.body}</p>
               </div>
-              <div className="lg:justify-self-end">
+              <div className="w-full sm:w-auto">
                 <Button
                   size="xl"
                   render={<a href={cta.button.href} />}
