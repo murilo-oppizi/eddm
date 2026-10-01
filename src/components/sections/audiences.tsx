@@ -272,7 +272,7 @@ function Mural({ onOpen }: { onOpen: (i: number) => void }) {
             key="pointer"
             aria-hidden
             className={cn(
-              "pointer-events-none absolute top-0 left-0 z-30 -mt-4 -ml-4 grid size-8 place-items-center rounded-full bg-card shadow-md ring-2 ring-current",
+              "pointer-events-none absolute top-0 left-0 z-30 -mt-4 -ml-4 grid size-8 place-items-center rounded-full bg-card shadow-md ring-1 ring-current",
               tones[hovered.tone].icon
             )}
             style={{ x: px, y: py }}
