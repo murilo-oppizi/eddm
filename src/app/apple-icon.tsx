@@ -6,6 +6,8 @@ import { OPPIZI_SYMBOL_PATHS } from "@/components/site/logo";
 // tile with the Oppizi symbol as icon.svg, rendered to a PNG at build time.
 export const size = { width: 180, height: 180 };
 export const contentType = "image/png";
+// Rendered once at build time (also what lets the static GitHub Pages export include it).
+export const dynamic = "force-static";
 
 export default function AppleIcon() {
   return new ImageResponse(

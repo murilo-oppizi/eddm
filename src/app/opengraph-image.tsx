@@ -8,6 +8,8 @@ import { hero, site } from "@/content/site";
 export const alt = `${site.name}, powered by Oppizi: ${hero.title}`;
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
+// Rendered once at build time (also what lets the static GitHub Pages export include it).
+export const dynamic = "force-static";
 
 const PINK = "#ef2b55";
 
