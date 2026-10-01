@@ -208,10 +208,17 @@ function Mural({ onOpen }: { onOpen: (i: number) => void }) {
   const hovered = hover ? industries[hover.i] : null;
 
   return (
-    <div ref={wrap} onPointerMove={(e) => e.pointerType === "mouse" && follow(e)} className="relative">
+    // The flyer stays until the pointer leaves the whole grid: crossing the hairline
+    // between two cells (part of neither) used to drop it for a frame.
+    <div
+      ref={wrap}
+      onPointerMove={(e) => e.pointerType === "mouse" && follow(e)}
+      onPointerLeave={() => setHover(null)}
+      className="relative"
+    >
       <motion.ul
         aria-label="Kinds of business"
-        className="grid grid-cols-2 overflow-hidden rounded-3xl border bg-card lg:grid-cols-4"
+        className="grid grid-cols-2 overflow-hidden rounded-3xl border bg-card lg:grid-cols-4 pointer-fine:cursor-none"
         initial="hidden"
         whileInView="shown"
         viewport={{ once: true, amount: 0.25 }}
@@ -241,7 +248,6 @@ function Mural({ onOpen }: { onOpen: (i: number) => void }) {
                 type="button"
                 onClick={() => onOpen(i)}
                 onPointerEnter={(e) => enter(i, e)}
-                onPointerLeave={() => setHover((h) => (h?.i === i ? null : h))}
                 className={cn(
                   "group relative flex h-full w-full cursor-pointer flex-col items-start gap-4 p-4 text-left outline-none transition-colors duration-300 focus-visible:ring-3 focus-visible:ring-ring/50 focus-visible:ring-inset sm:p-6 pointer-fine:cursor-none",
                   hover?.i === i && tone.panel
