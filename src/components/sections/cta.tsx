@@ -43,12 +43,14 @@ export function Cta() {
               }}
               aria-hidden
             />
-            <div className="relative grid items-center gap-8 lg:grid-cols-2">
+            {/* Text across most of the card (the line in two lines on desktop), the button
+                right under it; the top-right stays clear for the stamp */}
+            <div className="relative flex max-w-3xl flex-col items-start gap-8">
               <div className="space-y-3">
                 <h2 className="text-3xl font-bold sm:text-4xl">{cta.title}</h2>
                 <p className="text-lg text-pretty opacity-80">{cta.body}</p>
               </div>
-              <div className="lg:justify-self-end">
+              <div className="w-full sm:w-auto">
                 <Button
                   size="xl"
                   render={<a href={cta.button.href} />}
