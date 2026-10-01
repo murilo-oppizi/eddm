@@ -230,14 +230,17 @@ function Mural({ onOpen }: { onOpen: (i: number) => void }) {
                 >
                   <Icon className="size-5" aria-hidden />
                 </span>
-                <span className="min-w-0 font-heading leading-snug font-semibold tracking-tight">{item.name}</span>
-                <IconArrowUpRight
-                  aria-hidden
-                  className={cn(
-                    "absolute top-4 right-4 size-4 -translate-x-1 translate-y-1 opacity-0 transition-all duration-300 group-hover:translate-0 group-hover:opacity-100 sm:top-6 sm:right-6",
-                    tone.icon
-                  )}
-                />
+                {/* The name, with the arrow on its first line, at the cell's right edge */}
+                <span className="flex w-full items-start justify-between gap-3">
+                  <span className="min-w-0 font-heading leading-snug font-semibold tracking-tight">{item.name}</span>
+                  <IconArrowUpRight
+                    aria-hidden
+                    className={cn(
+                      "mt-[0.2em] size-4 shrink-0 -translate-x-1 translate-y-1 opacity-0 transition-all duration-300 group-hover:translate-0 group-hover:opacity-100",
+                      tone.icon
+                    )}
+                  />
+                </span>
               </button>
             </motion.li>
           );
@@ -251,8 +254,8 @@ function Mural({ onOpen }: { onOpen: (i: number) => void }) {
             key="flyer"
             aria-hidden
             className="pointer-events-none absolute top-0 left-0 z-20 w-44"
-            // Centred on the pointer: the flyer is the pointer.
-            style={{ x: fx, y: fy, translateX: "-50%", translateY: "-50%" }}
+            // Just above and right of the pointer, so the cell being pointed at stays visible.
+            style={{ x: fx, y: fy, translateX: "-12%", translateY: "-108%" }}
             initial={{ opacity: 0, scale: 0.6, rotate: (hover?.angle ?? -6) * 1.8 }}
             animate={{ opacity: 1, scale: 1, rotate: hover?.angle ?? -6 }}
             exit={{ opacity: 0, scale: 0.6, transition: { duration: 0.15 } }}
