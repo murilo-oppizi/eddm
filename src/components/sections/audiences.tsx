@@ -295,7 +295,7 @@ function Mural({ onOpen }: { onOpen: (i: number) => void }) {
         })}
       </motion.ul>
 
-      {/* The pointer itself: a small, quiet ring on the click point (the page's foreground
+      {/* The pointer itself (under the flyer): a small, quiet ring on the click point (the page's foreground
           at low strength over a frosted fill), easing in like the page's cards and giving a
           little when pressed */}
       <AnimatePresence>
@@ -303,7 +303,7 @@ function Mural({ onOpen }: { onOpen: (i: number) => void }) {
           <motion.span
             key="ring"
             aria-hidden
-            className="pointer-events-none absolute top-0 left-0 z-30 -mt-1.5 -ml-1.5 size-3 rounded-full border border-foreground/35 bg-card/60 backdrop-blur-[2px]"
+            className="pointer-events-none absolute top-0 left-0 z-10 -mt-1.5 -ml-1.5 size-3 rounded-full border border-foreground/35 bg-card/60 backdrop-blur-[2px]"
             style={{ x: rx, y: ry }}
             initial={{ opacity: 0, scale: 0.5 }}
             animate={{ opacity: 1, scale: pressed ? 0.7 : 1 }}
