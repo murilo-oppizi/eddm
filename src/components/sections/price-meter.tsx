@@ -9,8 +9,6 @@ import {
   motion,
   useInView,
   useReducedMotion,
-  useSpring,
-  useTransform,
 } from "motion/react";
 
 import { PrintedStamp } from "@/components/sections/printed-stamp";
@@ -61,25 +59,6 @@ const FEED_STEPS = [0, 0.21, 0.42];
 const TAKE_OFF = 1050; // ms after printing starts
 const MAKE_ROOM = 0.45; // s to glide the page up when the stamp would print off screen
 const glide = [0.65, 0, 0.35, 1] as const;
-
-// Where the light falls at rest (see LIGHT's use in PriceMeter): the top-left.
-const LIGHT = { x: -0.6, y: -0.8 };
-
-/** The browser's tilt events, with iPhone Safari's permission prompt when it has one. */
-const orientation = () =>
-  typeof DeviceOrientationEvent === "undefined"
-    ? undefined
-    : (DeviceOrientationEvent as unknown as { requestPermission?: () => Promise<string> });
-
-/** A glint on a white glass part, where the light falls (--gx / --gy, set on the meter). */
-function Glint() {
-  return (
-    <span
-      aria-hidden
-      className="pointer-events-none absolute inset-0 rounded-[inherit] bg-[radial-gradient(55%_110%_at_var(--gx)_var(--gy),rgb(255_255_255/0.95),transparent)] opacity-70"
-    />
-  );
-}
 
 type Flight = { stamp: Stamp; left: number; top: number; x: number; y: number; scale: number; duration: number };
 
@@ -136,50 +115,6 @@ export function PriceMeter() {
   // clicks. Ignored while typing in a field or with modifier keys.
   const [held, setHeld] = useState<string | null>(null);
   const mostlyOnScreen = useInView(root, { amount: 0.5 });
-
-  // Where the light falls on the glass, from −1 to 1 across and down; at rest, the top-left.
-  // It follows the mouse over the meter on desktops, and the phone's tilt on phones, on a
-  // soft spring. Only the light moves; the device stays still. Every glass part reads it
-  // (as --gx / --gy, in percent of the part), so they all catch the same light.
-  const lx = useSpring(LIGHT.x, { stiffness: 140, damping: 22 });
-  const ly = useSpring(LIGHT.y, { stiffness: 140, damping: 22 });
-  const gx = useTransform(lx, (v) => `${50 + v * 50}%`);
-  const gy = useTransform(ly, (v) => `${50 + v * 50}%`);
-  const followPointer = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (e.pointerType !== "mouse" || reduce) return;
-    const r = e.currentTarget.getBoundingClientRect();
-    lx.set(((e.clientX - r.left) / r.width) * 2 - 1);
-    ly.set(((e.clientY - r.top) / r.height) * 2 - 1);
-  };
-  const restLight = () => {
-    lx.set(LIGHT.x);
-    ly.set(LIGHT.y);
-  };
-  // The phone's tilt. iPhones ask once for motion access; we ask on the first tap on the
-  // meter (a tap is the only time Safari allows it). Listening only while it's on screen.
-  const [tiltGranted, setTiltGranted] = useState(false); // iPhones only; others don't ask
-  const askForTilt = () => {
-    const ask = orientation()?.requestPermission;
-    if (!ask || tiltGranted) return;
-    ask().then((state) => setTiltGranted(state === "granted"), () => {});
-  };
-  useEffect(() => {
-    const D = orientation();
-    if (!D || (D.requestPermission && !tiltGranted) || !mostlyOnScreen || reduce) return;
-    const onTilt = (e: DeviceOrientationEvent) => {
-      if (e.gamma == null || e.beta == null) return;
-      // Side to side; and forward / back around the way a phone is usually held (~40°).
-      lx.set(Math.max(-1, Math.min(1, e.gamma / 25)));
-      ly.set(Math.max(-1, Math.min(1, (e.beta - 40) / 25)));
-    };
-    window.addEventListener("deviceorientation", onTilt);
-    return () => {
-      window.removeEventListener("deviceorientation", onTilt);
-      restLight();
-    };
-    // restLight only sets the springs
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tiltGranted, mostlyOnScreen, reduce, lx, ly]);
   useEffect(() => {
     if (!mostlyOnScreen) return;
     const onDown = (e: KeyboardEvent) => {
@@ -350,19 +285,15 @@ export function PriceMeter() {
 
         <motion.div
           ref={root}
-          style={{ "--gx": gx, "--gy": gy } as unknown as React.CSSProperties}
-          onPointerMove={followPointer}
-          onPointerLeave={restLight}
-          onPointerDownCapture={askForTilt}
           onPointerEnter={() => prepareSounds()}
           onFocus={() => prepareSounds()}
           // Corners nest: the body's 36px radius minus its 20px padding is the screen's 16px.
           // Pink, lit like glass: a bright rim along the top edge, a fainter one along the
-          // bottom, a soft inner glow, and a sheen where the light falls.
+          // bottom, a soft inner glow, and a sheen across the top-left.
           className="relative rounded-[36px] bg-primary p-5 shadow-[inset_0_1.5px_0_rgb(255_255_255/0.55),inset_0_-1px_0_rgb(255_255_255/0.25),inset_0_0_0_1px_rgb(255_255_255/0.18),inset_0_0_36px_rgb(255_255_255/0.12),0_2px_4px_rgb(0_0_0/0.06),0_40px_80px_-32px_color-mix(in_oklab,var(--primary)_65%,black)]"
         >
-          {/* The sheen, where the light falls on the glass */}
-          <span aria-hidden className="pointer-events-none absolute inset-0 rounded-[inherit] bg-[radial-gradient(75%_60%_at_var(--gx)_var(--gy),rgb(255_255_255/0.3),transparent)]" />
+          {/* A sheen across the top-left, where the light hits the glass */}
+          <span aria-hidden className="pointer-events-none absolute inset-0 rounded-[inherit] bg-[linear-gradient(135deg,rgb(255_255_255/0.28),transparent_40%)]" />
 
           {/* The printer: a slot along the bottom edge, and the stamp that feeds out of it.
               The stamp sits behind the slot's lip, so it looks like it comes from inside. */}
@@ -407,12 +338,11 @@ export function PriceMeter() {
 
           {/* The screen: white, flush, one hero number (the price); the homes and the price
               per piece quietly under it */}
-          <div className="relative overflow-hidden rounded-2xl bg-white/90 px-5 pt-4 pb-5 text-neutral-950 backdrop-blur-xl shadow-[inset_0_1px_0_rgb(255_255_255/1),inset_0_0_0_1px_rgb(255_255_255/0.5),0_1px_2px_rgb(0_0_0/0.05),0_8px_20px_-10px_rgb(0_0_0/0.18)]">
+          <div className="relative rounded-2xl bg-white/90 px-5 pt-4 pb-5 text-neutral-950 backdrop-blur-xl shadow-[inset_0_1px_0_rgb(255_255_255/1),inset_0_0_0_1px_rgb(255_255_255/0.5),0_1px_2px_rgb(0_0_0/0.05),0_8px_20px_-10px_rgb(0_0_0/0.18)]">
             <p className="sr-only" aria-live="polite">
               {usd(total)} for {fmt(homes)} homes with a {size.name} postcard, {perPiece} per piece.
             </p>
-            <Glint />
-            <div aria-hidden className="relative">
+            <div aria-hidden>
               <p className="text-xs font-medium text-neutral-500">Estimate</p>
               <p className="mt-1 font-heading text-5xl font-semibold tracking-tighter sm:text-6xl">
                 <RollingNumber value={usd(total)} />
@@ -441,10 +371,9 @@ export function PriceMeter() {
                   if (e.detail === 0) playKey("space");
                   set(homes - step);
                 }}
-                className={cn(glassKey, held === "minus" && pressed, "relative grid size-10 shrink-0 place-items-center overflow-hidden rounded-full")}
+                className={cn(glassKey, held === "minus" && pressed, "grid size-10 shrink-0 place-items-center rounded-full")}
               >
-                <Glint />
-                <IconMinus className="relative size-4" />
+                <IconMinus className="size-4" />
               </button>
               <Slider
                 getAriaLabel={() => "Homes to reach"}
@@ -478,10 +407,9 @@ export function PriceMeter() {
                   if (e.detail === 0) playKey("space");
                   set(homes + step);
                 }}
-                className={cn(glassKey, held === "plus" && pressed, "relative grid size-10 shrink-0 place-items-center overflow-hidden rounded-full")}
+                className={cn(glassKey, held === "plus" && pressed, "grid size-10 shrink-0 place-items-center rounded-full")}
               >
-                <Glint />
-                <IconPlus className="relative size-4" />
+                <IconPlus className="size-4" />
               </button>
             </div>
           </div>
@@ -547,11 +475,10 @@ export function PriceMeter() {
             onClick={printQuote}
             // White frosted glass with a rim of light (no shadow under it), the pink text
             // the call to act
-            className="group relative mt-5 flex h-14 items-center overflow-hidden justify-center gap-2 rounded-2xl bg-white/90 font-semibold text-primary backdrop-blur-md shadow-[inset_0_1px_0_rgb(255_255_255/1),inset_0_-1px_0_rgb(255_255_255/0.5)] transition-[scale,background-color] duration-150 outline-none hover:bg-white focus-visible:ring-3 focus-visible:ring-white/60 active:scale-[0.98]"
+            className="group relative mt-5 flex h-14 items-center justify-center gap-2 rounded-2xl bg-white/90 font-semibold text-primary backdrop-blur-md shadow-[inset_0_1px_0_rgb(255_255_255/1),inset_0_-1px_0_rgb(255_255_255/0.5)] transition-[scale,background-color] duration-150 outline-none hover:bg-white focus-visible:ring-3 focus-visible:ring-white/60 active:scale-[0.98]"
           >
-            <Glint />
-            <span className="relative">{pricing.cta}</span>
-            <IconArrowRight className="relative size-4 transition-transform duration-200 group-hover:translate-x-1" aria-hidden />
+            {pricing.cta}{" "}
+            <IconArrowRight className="size-4 transition-transform duration-200 group-hover:translate-x-1" aria-hidden />
           </Link>
 
         </motion.div>
