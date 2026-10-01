@@ -397,7 +397,7 @@ export function PriceMeter() {
             </p>
             <div aria-hidden>
               <p className="text-xs font-medium text-neutral-500">Estimate</p>
-              <p className="mt-1 font-heading text-5xl font-semibold tracking-tighter sm:text-6xl">
+              <p className="mt-1 font-heading text-5xl font-semibold tracking-tight sm:text-6xl">
                 <RollingNumber value={usd(total)} />
               </p>
               <p className="mt-3 flex flex-wrap items-baseline gap-x-1.5 text-sm text-neutral-500">
