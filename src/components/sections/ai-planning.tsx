@@ -75,6 +75,8 @@ const PAUSE_MS = 525; // after the brief is typed
 const SUBMIT_MS = 450; // the button press
 const STEP_MS = 1100; // per agent step — slower than the rest so each step can be read
 const ROW_MS = 330; // between answer lines
+const READ_MS = 1900; // the options on screen before the demo picks one
+const PRESS_MS = 450; // the picked option pressed, before the answer
 const STEPS = 4; // every example has four agent steps…
 const ROWS = 4; // …and four answer lines (plan rows, or the map and its three routes)
 
@@ -98,6 +100,7 @@ export function AiPlanning() {
   const [stepCount, setStep] = useState(0);
   const [rowCount, setRows] = useState(0);
   const [picked, setPicked] = useState<number | null>(null);
+  const [pressing, setPressing] = useState<number | null>(null); // the demo's own pick
 
   const scenario = aiPlanning.scenarios[scenarioIndex];
   // What's on screen: the live demo when animating, otherwise the finished plan.
@@ -114,10 +117,12 @@ export function AiPlanning() {
     setStep(0);
     setRows(0);
     setPicked(null);
+    setPressing(null);
     setPhase("typing");
   };
 
   const choose = (index: number) => {
+    setPressing(null);
     setPicked(index);
     setRows(0);
     setPhase("answering");
@@ -136,14 +141,19 @@ export function AiPlanning() {
       next(() => setPhase("working"), SUBMIT_MS);
     } else if (state === "working") {
       if (stepCount < STEPS) next(() => setStep((n) => n + 1), STEP_MS);
-      // Examples with options wait for the visitor's pick (see choose).
       else next(() => setPhase(choice ? "choosing" : "answering"), 300);
+    } else if (state === "choosing" && choice) {
+      // Examples with options pick one by themselves (the recommended one) after a moment
+      // to read them: it lights up and presses, then the answer comes. Clicking an option
+      // first picks that one instead (see choose).
+      if (pressing === null) next(() => setPressing(recommendedOf(choice)), READ_MS);
+      else next(() => choose(pressing), PRESS_MS);
     } else if (state === "answering") {
       if (rowCount < ROWS) next(() => setRows((n) => n + 1), ROW_MS);
       else next(() => setPhase("done"), 0);
     }
     return () => clearTimeout(timer);
-  }, [animated, state, typedCount, stepCount, rowCount, scenario.brief.length, choice]);
+  }, [animated, state, typedCount, stepCount, rowCount, scenario.brief.length, choice, pressing]);
 
   // Once you're back above the section (it's entirely below the screen), rewind to the
   // empty prompt box, so coming down again replays the selected example. Scrolling on
@@ -278,6 +288,7 @@ export function AiPlanning() {
                         step={step}
                         rows={rows}
                         picked={pick}
+                        pressing={pressing}
                         onChoose={animated ? choose : undefined}
                       />
                     </motion.div>
@@ -334,6 +345,7 @@ function Response({
   step,
   rows,
   picked,
+  pressing = null,
   onChoose,
 }: {
   scenario: Scenario;
@@ -342,6 +354,8 @@ function Response({
   rows: number;
   /** The option the visitor picked, for examples that offer a choice. */
   picked: number | null;
+  /** The option the demo is pressing, just before it picks it. */
+  pressing?: number | null;
   onChoose?: (index: number) => void;
 }) {
   const working = phase === "working";
@@ -425,7 +439,10 @@ function Response({
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.12, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-              className="flex cursor-pointer flex-col items-start gap-1 rounded-xl border bg-card p-4 text-left transition-colors outline-none hover:border-primary/40 hover:bg-brand-subtle/40 focus-visible:ring-3 focus-visible:ring-ring/50"
+              className={cn(
+                "flex cursor-pointer flex-col items-start gap-1 rounded-xl border bg-card p-4 text-left transition-[color,background-color,border-color,scale] duration-200 outline-none hover:border-primary/40 hover:bg-brand-subtle/40 focus-visible:ring-3 focus-visible:ring-ring/50",
+                pressing === i && "scale-[0.98] border-primary bg-brand-subtle/60"
+              )}
             >
               <span className="flex w-full items-center justify-between gap-2">
                 <span className="text-sm font-semibold">{option.title}</span>
