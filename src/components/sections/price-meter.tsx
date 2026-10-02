@@ -226,6 +226,7 @@ export function PriceMeter() {
   const busy = useRef(false); // from the press until the stamp lands
   const landRef = useRef<() => void>(() => {});
   const flightAnim = useRef<ReturnType<typeof animate> | null>(null);
+  const startFlight = useRef<() => void>(() => {});
   const fx = useMotionValue(0); // the stamp's flight, from where it printed
   const fy = useMotionValue(0);
   const tookOver = useRef(false); // the visitor scrolled during the show
@@ -296,27 +297,31 @@ export function PriceMeter() {
     // (where it is now, less the scroll still to come): one smooth path that keeps pace
     // with the page. If you scroll yourself, from then on it eases from where it is to
     // where the card is now, every frame, so it still finds the card.
+    // It starts when the flying stamp appears (its first frame), with its lift and turn.
     let handover: { x: number; y: number; k: number } | null = null;
-    flightAnim.current = animate(0, 1, {
-      duration,
-      ease: "linear",
-      onUpdate: (p) => {
-        const t = spot.getBoundingClientRect();
-        const k = glideEase(p);
-        const tx = t.left + t.width / 2 - cx;
-        const ty = t.top + t.height / 2 - cy;
-        if (!tookOver.current) {
-          fx.set(tx * k);
-          fy.set((ty - (endScroll - window.scrollY)) * k);
-          return;
-        }
-        handover ??= { x: fx.get(), y: fy.get(), k };
-        const f = handover.k >= 1 ? 1 : (k - handover.k) / (1 - handover.k);
-        fx.set(handover.x + (tx - handover.x) * f);
-        fy.set(handover.y + (ty - handover.y) * f);
-      },
-      onComplete: land,
-    });
+    startFlight.current = () => {
+      startFlight.current = () => {}; // once
+      flightAnim.current = animate(0, 1, {
+        duration,
+        ease: "linear",
+        onUpdate: (p) => {
+          const t = spot.getBoundingClientRect();
+          const k = glideEase(p);
+          const tx = t.left + t.width / 2 - cx;
+          const ty = t.top + t.height / 2 - cy;
+          if (!tookOver.current) {
+            fx.set(tx * k);
+            fy.set((ty - (endScroll - window.scrollY)) * k);
+            return;
+          }
+          handover ??= { x: fx.get(), y: fy.get(), k };
+          const f = handover.k >= 1 ? 1 : (k - handover.k) / (1 - handover.k);
+          fx.set(handover.x + (tx - handover.x) * f);
+          fy.set(handover.y + (ty - handover.y) * f);
+        },
+        onComplete: land,
+      });
+    };
   };
 
   const printQuote = (e: React.MouseEvent<HTMLAnchorElement>) => {
@@ -586,6 +591,7 @@ export function PriceMeter() {
             className="pointer-events-none fixed z-[60]"
             style={{ left: flight.left, top: flight.top, width: STAMP_W, height: STAMP_H, x: fx, y: fy }}
             initial={{ scale: 1, rotate: 0 }}
+            onAnimationStart={() => startFlight.current()}
             animate={{
               scale: [1, Math.max(1, flight.scale) * 1.1, flight.scale * 0.96, flight.scale],
               rotate: [0, -4, STAMP_TILT + 1, STAMP_TILT],
