@@ -434,10 +434,11 @@ function BusinessDialog({
                     opacity: 1,
                     filter: "blur(0px)",
                     transition: {
-                      x: { type: "spring", stiffness: 150, damping: 13, mass: 0.9, delay: 0.32 },
-                      rotate: { type: "spring", stiffness: 140, damping: 9, delay: 0.32 },
-                      opacity: { duration: 0.2, delay: 0.32 },
-                      filter: { duration: 0.35, delay: 0.38 },
+                      // Quick, with one small bounce on landing
+                      x: { type: "spring", stiffness: 380, damping: 25, mass: 0.8, delay: 0.16 },
+                      rotate: { type: "spring", stiffness: 340, damping: 17, delay: 0.16 },
+                      opacity: { duration: 0.14, delay: 0.16 },
+                      filter: { duration: 0.22, delay: 0.2 },
                     },
                   }}
                   exit={{
@@ -448,7 +449,7 @@ function BusinessDialog({
                     scale: [1, 1.03, 0.94],
                     opacity: [1, 1, 0],
                     filter: ["blur(0px)", "blur(0px)", "blur(6px)"],
-                    transition: { duration: 0.62, times: [0, 0.32, 1], ease: ["easeOut", [0.6, 0, 0.9, 0.4]] },
+                    transition: { duration: 0.36, times: [0, 0.3, 1], ease: ["easeOut", [0.6, 0, 0.9, 0.4]] },
                   }}
                 >
                   <Postcard industry={industry} copy={moment} />
