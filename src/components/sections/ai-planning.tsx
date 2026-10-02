@@ -162,6 +162,19 @@ export function AiPlanning() {
   const composing =
     phase === "composing" || phase === "typing" || phase === "submitting";
 
+  // The card is as tall as what it shows, and eases to each new size: the prompt box
+  // grows a line at a time as the brief is typed, then the card grows for the agent's
+  // steps, then for the plan (and shrinks back for the next example).
+  const live = useRef<HTMLDivElement>(null);
+  const [height, setHeight] = useState<number | null>(null);
+  useEffect(() => {
+    const el = live.current;
+    if (!el) return;
+    const measure = new ResizeObserver(() => setHeight(el.offsetHeight));
+    measure.observe(el);
+    return () => measure.disconnect();
+  }, []);
+
   return (
     <section ref={section} id="ai" className="scroll-mt-20 py-20">
       <div className="container-page space-y-12">
@@ -223,10 +236,6 @@ export function AiPlanning() {
           </div>
 
           <motion.div
-            layout
-            transition={{
-              layout: { duration: 0.35, ease: [0.22, 1, 0.36, 1] },
-            }}
             // Plays the selected example when the card is mostly on screen — the first
             // time, and again after you've scrolled back above the section (see above).
             onViewportEnter={() =>
@@ -235,24 +244,16 @@ export function AiPlanning() {
             viewport={{ amount: 0.5 }}
             className="overflow-hidden rounded-2xl border bg-card shadow-lg"
           >
-            {/* The card is exactly as tall as the finished plan: an invisible copy of it sits in
-                the same grid cell as the live view, whatever the screen size or example. */}
-            <div className="grid">
-              <div aria-hidden className="invisible [grid-area:1/1]">
-                <Response
-                  scenario={scenario}
-                  phase="done"
-                  step={STEPS}
-                  rows={ROWS}
-                  picked={pick ?? (choice ? recommendedOf(choice) : null)}
-                />
-              </div>
-              <div className="[grid-area:1/1]">
+            <motion.div
+              initial={false}
+              animate={{ height: height ?? "auto" }}
+              transition={{ duration: 0.45, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <div ref={live}>
                 <AnimatePresence mode="wait" initial={false}>
                   {composing ? (
                     <motion.div
                       key="composer"
-                      className="h-full"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0, scale: 0.98 }}
@@ -266,7 +267,6 @@ export function AiPlanning() {
                   ) : (
                     <motion.div
                       key="response"
-                      className="h-full"
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0 }}
@@ -284,7 +284,7 @@ export function AiPlanning() {
                   )}
                 </AnimatePresence>
               </div>
-            </div>
+            </motion.div>
           </motion.div>
         </div>
       </div>
