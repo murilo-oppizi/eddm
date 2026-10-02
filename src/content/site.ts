@@ -125,37 +125,14 @@ export const aiPlanning = {
       icon: "trending",
       area: "Astoria",
       brief: "My Astoria mailing got 212 scans. What should I change for the next one?",
-      steps: ["Reading your results", "Comparing routes in Astoria", "Spotting what worked", "Weighing your options"],
+      steps: ["Reading your results", "Comparing routes in Astoria", "Spotting what worked", "Planning your next mailing"],
       summary: "Next mailing optimized",
-      choice: {
-        prompt: "Two ways to improve it. Which do you prefer?",
-        options: [
-          {
-            title: "Double down",
-            detail: "Mail your 3 best routes again, plus 4 similar ones.",
-            meta: "7 routes · 5,120 homes · $1,587",
-            recommended: true,
-            plan: [
-              { icon: "trending", label: "What worked", value: "3 routes drove 70% of scans" },
-              { icon: "ban", label: "Drop", value: "2 routes with no scans" },
-              { icon: "route", label: "Next mailing", value: "Your 3 best + 4 similar routes" },
-              { icon: "receipt", label: "Estimated cost", value: "5,120 homes · $1,587" },
-            ],
-          },
-          {
-            title: "Try a new area",
-            detail: "Test Long Island City, next door, with the same audience.",
-            meta: "6 routes · 4,700 homes · $1,457",
-            recommended: false,
-            plan: [
-              { icon: "trending", label: "What worked", value: "Bigger households scanned most" },
-              { icon: "route", label: "Next mailing", value: "6 routes in Long Island City" },
-              { icon: "flask", label: "Keep testing", value: "Same postcard, a new QR code" },
-              { icon: "receipt", label: "Estimated cost", value: "4,700 homes · $1,457" },
-            ],
-          },
-        ],
-      },
+      plan: [
+        { icon: "trending", label: "What worked", value: "3 routes drove 70% of scans" },
+        { icon: "ban", label: "Drop", value: "2 routes with no scans" },
+        { icon: "route", label: "Next mailing", value: "Your 3 best + 4 similar routes" },
+        { icon: "receipt", label: "Estimated cost", value: "5,120 homes · $1,587" },
+      ],
     },
   ],
 } as const

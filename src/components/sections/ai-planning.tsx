@@ -39,33 +39,22 @@ const icons: Record<string, TablerIcon> = {
 };
 
 type Scenario = (typeof aiPlanning.scenarios)[number];
-type Choice = Extract<Scenario, { choice: unknown }>["choice"];
-
-/** The options the agent offers, for examples that stop for the visitor to pick. */
-const choiceOf = (s: Scenario): Choice | undefined => ("choice" in s ? s.choice : undefined);
-const recommendedOf = (c: Choice) => Math.max(0, c.options.findIndex((o) => o.recommended));
 type RouteMap = Extract<Scenario, { map: unknown }>["map"];
 /** Examples answered on a map (ranked routes) instead of a plan list. */
 const mapOf = (s: Scenario): RouteMap | undefined => ("map" in s ? s.map : undefined);
 
-/** The plan to show: the example's own, or the one for the option picked. */
-const planOf = (s: Scenario, picked: number | null) => {
-  const c = choiceOf(s);
-  if (c) return c.options[picked ?? recommendedOf(c)].plan;
-  return "plan" in s ? s.plan : [];
-};
+/** The example's plan (none for the ones answered on a map). */
+const planOf = (s: Scenario) => ("plan" in s ? s.plan : []);
 
 // One card that changes in place, like an AI composer: the brief types itself into the
 // prompt box, gets submitted, the agent works through its steps, and the box becomes
-// the agent's plan. Some examples stop halfway for the visitor to pick between the
-// options the agent offers; their pick shows as their reply, then the plan follows. Until the page has hydrated (and for visitors who prefer reduced
+// the agent's plan. Until the page has hydrated (and for visitors who prefer reduced
 // motion) the card shows the finished plan, so the full text is always in the page.
 type Phase =
   | "composing"
   | "typing"
   | "submitting"
   | "working"
-  | "choosing"
   | "answering"
   | "done";
 
@@ -97,7 +86,6 @@ export function AiPlanning() {
   const [typedCount, setTyped] = useState(0);
   const [stepCount, setStep] = useState(0);
   const [rowCount, setRows] = useState(0);
-  const [picked, setPicked] = useState<number | null>(null);
 
   const scenario = aiPlanning.scenarios[scenarioIndex];
   // What's on screen: the live demo when animating, otherwise the finished plan.
@@ -105,22 +93,13 @@ export function AiPlanning() {
   const typed = animated ? typedCount : scenario.brief.length;
   const step = animated ? stepCount : STEPS;
   const rows = animated ? rowCount : ROWS;
-  const choice = choiceOf(scenario);
-  const pick = animated ? picked : choice ? recommendedOf(choice) : null;
 
   const play = (index: number) => {
     setScenario(index);
     setTyped(0);
     setStep(0);
     setRows(0);
-    setPicked(null);
     setPhase("typing");
-  };
-
-  const choose = (index: number) => {
-    setPicked(index);
-    setRows(0);
-    setPhase("answering");
   };
 
   // Drive the timeline (all state changes happen in timer callbacks).
@@ -136,14 +115,13 @@ export function AiPlanning() {
       next(() => setPhase("working"), SUBMIT_MS);
     } else if (state === "working") {
       if (stepCount < STEPS) next(() => setStep((n) => n + 1), STEP_MS);
-      // Examples with options wait for the visitor's pick (see choose).
-      else next(() => setPhase(choice ? "choosing" : "answering"), 300);
+      else next(() => setPhase("answering"), 300);
     } else if (state === "answering") {
       if (rowCount < ROWS) next(() => setRows((n) => n + 1), ROW_MS);
       else next(() => setPhase("done"), 0);
     }
     return () => clearTimeout(timer);
-  }, [animated, state, typedCount, stepCount, rowCount, scenario.brief.length, choice]);
+  }, [animated, state, typedCount, stepCount, rowCount, scenario.brief.length]);
 
   // Once you're back above the section (it's entirely below the screen), rewind to the
   // empty prompt box, so coming down again replays the selected example. Scrolling on
@@ -155,7 +133,6 @@ export function AiPlanning() {
     setTyped(0);
     setStep(0);
     setRows(0);
-    setPicked(null);
     setPhase("composing");
   });
 
@@ -226,10 +203,9 @@ export function AiPlanning() {
           <div className="sr-only" aria-live="polite">
             <p>Example brief: {scenario.brief}</p>
             <p>
-              {choice && pick !== null && `${choice.prompt} Picked: ${choice.options[pick].title}. `}
               {mapOf(scenario)
                 ? `${scenario.summary}, ${mapOf(scenario)?.homes}. ${mapOf(scenario)?.caption}: ${mapOf(scenario)?.matches.join(", ")}.`
-                : `Suggested plan: ${planOf(scenario, pick)
+                : `Suggested plan: ${planOf(scenario)
                     .map((row) => `${row.label}: ${row.value}`)
                     .join(". ")}.`}
             </p>
@@ -277,8 +253,6 @@ export function AiPlanning() {
                         phase={phase}
                         step={step}
                         rows={rows}
-                        picked={pick}
-                        onChoose={animated ? choose : undefined}
                       />
                     </motion.div>
                   )}
@@ -333,24 +307,17 @@ function Response({
   phase,
   step,
   rows,
-  picked,
-  onChoose,
 }: {
   scenario: Scenario;
   phase: Phase;
   step: number;
   rows: number;
-  /** The option the visitor picked, for examples that offer a choice. */
-  picked: number | null;
-  onChoose?: (index: number) => void;
 }) {
   const working = phase === "working";
-  const choosing = phase === "choosing";
   const visible = (i: number) =>
     phase === "done" || (phase === "answering" && i < rows);
   const steps = scenario.steps;
-  const choice = choiceOf(scenario);
-  const plan = planOf(scenario, picked);
+  const plan = planOf(scenario);
   const map = mapOf(scenario);
 
   return (
@@ -363,17 +330,7 @@ function Response({
         </p>
       </div>
 
-      {/* The visitor's pick, as their reply */}
-      {choice && picked !== null && !working && !choosing && (
-        <div aria-hidden className="mt-3 flex justify-end">
-          <p className="flex items-center gap-1.5 rounded-xl bg-brand-subtle px-4 py-2 text-sm font-medium text-brand-subtle-foreground">
-            <IconCheck className="size-4" /> {choice.options[picked].title}
-          </p>
-        </div>
-      )}
-
-      {/* Agent status: the current step while working, the question while it waits for a
-          pick, then a one-line summary */}
+      {/* Agent status: the current step while working, then a one-line summary */}
       <div aria-hidden className="mt-5 flex items-center gap-2.5">
         <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-primary text-primary-foreground">
           <IconSparkles className="size-3.5" />
@@ -382,8 +339,6 @@ function Response({
           <span className="animate-shimmer text-sm font-medium text-shimmer motion-reduce:animate-none">
             {steps[Math.min(step, steps.length - 1)]}…
           </span>
-        ) : choosing && choice ? (
-          <span className="text-sm font-medium">{choice.prompt}</span>
         ) : (
           <span className="text-sm font-medium">
             {scenario.summary}{" "}
@@ -415,31 +370,6 @@ function Response({
             </li>
           ))}
         </ul>
-      ) : choosing && choice ? (
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 sm:pl-9.5">
-          {choice.options.map((option, i) => (
-            <motion.button
-              key={option.title}
-              type="button"
-              onClick={() => onChoose?.(i)}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.12, duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
-              className="flex cursor-pointer flex-col items-start gap-1 rounded-xl border bg-card p-4 text-left transition-colors outline-none hover:border-primary/40 hover:bg-brand-subtle/40 focus-visible:ring-3 focus-visible:ring-ring/50"
-            >
-              <span className="flex w-full items-center justify-between gap-2">
-                <span className="text-sm font-semibold">{option.title}</span>
-                {option.recommended && (
-                  <span className="rounded-md bg-brand-subtle px-1.5 py-0.5 text-[11px] leading-none font-medium text-brand">
-                    Recommended
-                  </span>
-                )}
-              </span>
-              <span className="text-sm text-muted-foreground">{option.detail}</span>
-              <span className="mt-1 text-xs font-medium text-foreground/80 tabular-nums">{option.meta}</span>
-            </motion.button>
-          ))}
-        </div>
       ) : (
         <>
           {map ? (
