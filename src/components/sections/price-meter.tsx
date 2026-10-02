@@ -292,16 +292,28 @@ export function PriceMeter() {
         onUpdate: (v) => window.scrollTo({ top: v, behavior: "instant" }),
       });
     }
-    // The path aims at the card where it is right now, every frame: with the page gliding
-    // it moves along with it; if you scroll yourself, it still finds the card.
+    // While the page glides, the stamp aims at where the card will be when the glide ends
+    // (where it is now, less the scroll still to come): one smooth path that keeps pace
+    // with the page. If you scroll yourself, from then on it eases from where it is to
+    // where the card is now, every frame, so it still finds the card.
+    let handover: { x: number; y: number; k: number } | null = null;
     flightAnim.current = animate(0, 1, {
       duration,
       ease: "linear",
       onUpdate: (p) => {
         const t = spot.getBoundingClientRect();
         const k = glideEase(p);
-        fx.set((t.left + t.width / 2 - cx) * k);
-        fy.set((t.top + t.height / 2 - cy) * k);
+        const tx = t.left + t.width / 2 - cx;
+        const ty = t.top + t.height / 2 - cy;
+        if (!tookOver.current) {
+          fx.set(tx * k);
+          fy.set((ty - (endScroll - window.scrollY)) * k);
+          return;
+        }
+        handover ??= { x: fx.get(), y: fy.get(), k };
+        const f = handover.k >= 1 ? 1 : (k - handover.k) / (1 - handover.k);
+        fx.set(handover.x + (tx - handover.x) * f);
+        fy.set(handover.y + (ty - handover.y) * f);
       },
       onComplete: land,
     });
