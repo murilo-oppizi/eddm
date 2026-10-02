@@ -266,21 +266,25 @@ export function AiPlanning() {
   );
 }
 
+const LONGEST_BRIEF = aiPlanning.scenarios.reduce((a, s) => (s.brief.length > a.length ? s.brief : a), "" as string);
+
 /** The prompt box: text on top, toolbar with an attach button and submit below. */
 function Composer({ phase, text }: { phase: Phase; text: string }) {
   const empty = text.length === 0;
   return (
     <div aria-hidden className="flex h-full flex-col gap-4 p-5 sm:p-6">
-      <p
-        className={cn(
-          "flex-1 text-lg leading-relaxed",
-          empty && "text-muted-foreground",
-        )}
-      >
-        {empty && phase === "composing" ? aiPlanning.placeholder : text}
-        {phase === "typing" && (
-          <span className="ml-0.5 inline-block h-[1.1em] w-0.5 translate-y-[0.2em] animate-pulse bg-primary" />
-        )}
+      {/* Room for the longest brief from the start (an invisible copy under the text), so
+          the box doesn't grow line by line as it types, or change size between examples */}
+      <p className="grid flex-1 text-lg leading-relaxed">
+        <span aria-hidden className="invisible [grid-area:1/1]">
+          {LONGEST_BRIEF}
+        </span>
+        <span className={cn("[grid-area:1/1]", empty && "text-muted-foreground")}>
+          {empty && phase === "composing" ? aiPlanning.placeholder : text}
+          {phase === "typing" && (
+            <span className="ml-0.5 inline-block h-[1.1em] w-0.5 translate-y-[0.2em] animate-pulse bg-primary" />
+          )}
+        </span>
       </p>
 
       <div className="flex items-center justify-between gap-3">
