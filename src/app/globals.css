@@ -84,6 +84,18 @@
 
 /* The hero cards' gentle bob (see hero-composition.tsx). Animating `translate` in CSS
    keeps it on the compositor: no main-thread work per frame. */
+/* The Hairline drawings (hairline-art.tsx): white plates, three greys mixed from the ink,
+   and the one bright line in the brand pink. Hairline reads these; its own defaults are
+   zero-specificity, so these win, in light and dark. */
+[data-hairline] {
+  --hairline-plate: var(--card);
+  --hairline-hi: var(--primary);
+  --hairline-edge: color-mix(in oklab, var(--foreground) 42%, var(--card));
+  --hairline-mid: color-mix(in oklab, var(--foreground) 28%, var(--card));
+  --hairline-lo: color-mix(in oklab, var(--foreground) 13%, var(--card));
+  --hairline-stroke: 1;
+}
+
 /* Marching dashes (the story scenes' moving bases: a belt, a route, an orbit). The
    dash pattern is 4 + 6, so moving it by 10 loops seamlessly. */
 @keyframes march {
