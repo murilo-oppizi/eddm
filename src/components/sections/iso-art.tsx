@@ -435,11 +435,12 @@ function RubberStamp() {
 
 /** Quality at any scale: one cube, a 2×2×2 block, a 3×3×3 block, all of the same unit. */
 function Units() {
-  const u = 12;
+  // A little bigger than the first draft, so it holds its own beside the other three
+  const u = 15;
   const groups: { n: number; at: P; pink?: boolean }[] = [
-    { n: 1, at: onScreen(0, 0, -78, 4), pink: true },
-    { n: 2, at: onScreen(0, 0, -34, 2) },
-    { n: 3, at: onScreen(0, 0, 30, 0) },
+    { n: 1, at: onScreen(0, 0, -86, 10), pink: true },
+    { n: 2, at: onScreen(0, 0, -42, 6) },
+    { n: 3, at: onScreen(0, 0, 32, 2) },
   ];
   const cubes: { x: number; y: number; z: number; pink?: boolean }[] = [];
   for (const { n, at, pink } of groups)

@@ -505,7 +505,7 @@ export const about = {
       body: "Marketing in the physical world should be held to the same standards as digital: every campaign tracks scans and results by route.",
     },
     {
-      art: "quality-stamp",
+      art: "quality-units",
       title: "Scale should not break quality",
       body: "One neighborhood or a whole city, every campaign gets the same USPS checks, local printing and delivery you can follow.",
     },
