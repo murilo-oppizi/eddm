@@ -165,7 +165,10 @@ export type IsoArtName =
   | "quality-stamp"
   | "quality-units"
   | "quality-pallet"
-  | "quality-level";
+  | "quality-level"
+  // after the icons on oppizi.com's About page
+  | "attention-eye"
+  | "quality-network";
 
 /** One picture: the object (which lifts on hover of a `group` around it) over a soft shadow. */
 export function IsoArt({ name, className }: { name: IsoArtName; className?: string }) {
@@ -206,6 +209,8 @@ export function IsoArt({ name, className }: { name: IsoArtName; className?: stri
         {name === "quality-units" && <Units />}
         {name === "quality-pallet" && <Pallet />}
         {name === "quality-level" && <Level />}
+        {name === "attention-eye" && <Eye />}
+        {name === "quality-network" && <Network />}
       </g>
     </motion.svg>
   );
@@ -502,6 +507,70 @@ function Level() {
       {/* Two small windows near the ends */}
       <Flat z={16} pts={closed(roundRect(-62, 0, 16, 10, 4))} />
       <Flat z={16} pts={closed(roundRect(62, 0, 16, 10, 4))} />
+    </g>
+  );
+}
+
+/** Attention (oppizi.com's eye icon): an eye floating above a plate, its iris rising
+ *  from it and the pupil in pink. The eye is laid out along the screen, so it reads as
+ *  an eye. */
+function Eye() {
+  const W = 50;
+  const H = 36;
+  const lift = 26;
+  const almond: P[] = [
+    ...Array.from({ length: 25 }, (_, i) => {
+      const r = -W + (i / 24) * 2 * W;
+      return onScreen(0, 0, r, H * (1 - (r / W) ** 2));
+    }),
+    ...Array.from({ length: 23 }, (_, i) => {
+      const r = W - ((i + 1) / 24) * 2 * W;
+      return onScreen(0, 0, r, -H * (1 - (r / W) ** 2));
+    }),
+  ];
+  return (
+    <g>
+      <Block pts={roundRect(0, 0, 120, 120, 14)} h={6} />
+      {/* Where the eye would rest, faintly, on the plate */}
+      <Flat z={6} pts={closed(almond.map(([x, y]) => [x * 0.8, y * 0.8] as P))} />
+      <Block pts={almond} h={7} z={lift} />
+      <Block pts={circle(0, 0, 18)} h={6} z={lift + 7} />
+      <Flat z={lift + 13} pink width={1.8} pts={closed(circle(0, 0, 8))} />
+    </g>
+  );
+}
+
+/** Quality at scale (oppizi.com's network icon): a pink hub cube and four cubes around
+ *  it, each joined to the hub by a beam. No base. */
+function Network() {
+  const nodes = [onScreen(0, 0, -50, 30), onScreen(0, 0, 50, 30), onScreen(0, 0, -50, -30), onScreen(0, 0, 50, -30)];
+  const hub = 30;
+  const cube = 22;
+  // A beam from the hub's face to the node's, at mid height
+  const beam = ([x, y]: P) => {
+    const len = Math.hypot(x, y);
+    const a = Math.atan2(y, x);
+    const from = hub / 2;
+    const to = len - cube / 2;
+    const mid = (from + to) / 2;
+    return { at: [Math.cos(a) * mid, Math.sin(a) * mid] as P, pts: rect(Math.cos(a) * mid, Math.sin(a) * mid, to - from + 4, 7, a) };
+  };
+  type Piece = { at: P; el: React.ReactNode };
+  const pieces: Piece[] = [
+    { at: [0, 0], el: <Block pts={rect(0, 0, hub, hub)} h={hub} pink /> },
+    ...nodes.map((p) => ({ at: p, el: <Block pts={rect(p[0], p[1], cube, cube)} h={cube} /> })),
+    ...nodes.map((p) => {
+      const b = beam(p);
+      return { at: b.at, el: <Block pts={b.pts} h={7} z={8} /> };
+    }),
+  ];
+  // Far to near, so nearer pieces cover farther ones
+  pieces.sort((a, b) => a.at[0] + a.at[1] - (b.at[0] + b.at[1]));
+  return (
+    <g>
+      {pieces.map((p, i) => (
+        <g key={i}>{p.el}</g>
+      ))}
     </g>
   );
 }
