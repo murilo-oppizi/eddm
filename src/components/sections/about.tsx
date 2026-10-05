@@ -394,9 +394,9 @@ const countryNames: Record<string, string> = Object.fromEntries(
 );
 
 /**
- * Where Oppizi works, as a bento grid: a big tile with a dotted world map, the
- * headquarters, the markets (pointing at one moves the map's pin to it), and the network
- * in three small tiles. Stacked on phones.
+ * Where Oppizi works, as a bento grid: a big tile with a dotted world map and the
+ * network's numbers along its foot, beside the headquarters and the markets (pointing at
+ * one moves the map's flag to it). Stacked on phones.
  */
 export function AboutWorld() {
   const { world } = about;
@@ -418,6 +418,22 @@ export function AboutWorld() {
               <div className="my-auto py-6 sm:px-4">
                 <WorldMap order={places.map((p) => p.id)} hub={hub.id} focus={focus} names={countryNames} />
               </div>
+
+              {/* The network, as a strip along the foot of the card */}
+              <dl className="-mx-6 -mb-6 grid grid-cols-3 divide-x border-t sm:-mx-7 sm:-mb-7">
+                {world.network.map((n) => {
+                  const Icon = networkIcons[n.icon];
+                  return (
+                    <div key={n.label} className="flex flex-col gap-1 px-4 py-4 sm:flex-row sm:items-center sm:gap-3 sm:px-6 sm:py-5">
+                      <Icon className="size-5 shrink-0 text-brand" aria-hidden />
+                      <div className="flex flex-col-reverse">
+                        <dt className="text-xs leading-snug text-muted-foreground sm:text-sm">{n.label}</dt>
+                        <dd className="font-heading text-xl font-bold tracking-tight tabular-nums sm:text-2xl">{n.value}</dd>
+                      </div>
+                    </div>
+                  );
+                })}
+              </dl>
             </Tile>
 
             {/* The headquarters, as an address label */}
@@ -475,20 +491,6 @@ export function AboutWorld() {
               </p>
             </Tile>
 
-            {/* The network */}
-            {world.network.map((n, i) => {
-              const Icon = networkIcons[n.icon];
-              return (
-                <Tile key={n.label} delay={0.08 * i}>
-                  <span className="grid size-10 place-items-center rounded-xl bg-brand-subtle text-brand">
-                    <Icon className="size-5" aria-hidden />
-                  </span>
-                  <p className="mt-6 font-heading text-4xl font-bold tracking-tight tabular-nums">{n.value}</p>
-                  <p className="mt-1 font-semibold">{n.label}</p>
-                  <p className="mt-1 text-sm text-muted-foreground text-pretty">{n.body}</p>
-                </Tile>
-              );
-            })}
           </div>
         </div>
       </section>

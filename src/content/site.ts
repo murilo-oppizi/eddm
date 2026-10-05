@@ -526,9 +526,9 @@ export const about = {
     ],
     hq: { label: "Headquarters", place: "Brooklyn, New York", address: "426 Union Ave, Brooklyn, NY 11211" },
     network: [
-      { icon: "walk", value: "77+", label: "Cities with flyering", body: "Brand ambassadors hand flyers out on the street." },
-      { icon: "store", value: "400+", label: "Retail partners", body: "Package inserts reach customers in their orders." },
-      { icon: "printer", value: "700+", label: "Print partners in the US", body: "Postcards print close to the homes they reach." },
+      { icon: "walk", value: "77+", label: "Cities with flyering" },
+      { icon: "store", value: "400+", label: "Retail partners" },
+      { icon: "printer", value: "700+", label: "US print partners" },
     ],
   },
   team: {

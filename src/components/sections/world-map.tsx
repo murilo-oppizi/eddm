@@ -26,7 +26,7 @@ export function WorldMap({
 }: {
   /** The countries, in the order the pin tours them */
   order: string[];
-  /** The headquarters: where the tour starts (its name says HQ) */
+  /** The headquarters: where the tour starts */
   hub: string;
   focus: string | null;
   names: Record<string, string>;
@@ -100,7 +100,7 @@ export function WorldMap({
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3, delay: 0.1 }}
           >
-            {shown === hub ? `${names[shown]} · HQ` : names[shown]}
+            {names[shown]}
           </motion.span>
         </motion.div>
       </AnimatePresence>
