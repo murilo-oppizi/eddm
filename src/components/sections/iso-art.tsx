@@ -173,7 +173,10 @@ export type IsoArtName =
   | "attention-mat"
   | "attention-door"
   | "quality-printer"
-  | "quality-mailboxes";
+  | "quality-mailboxes"
+  // round 5
+  | "attention-slot"
+  | "quality-street";
 
 /** One picture: the object (which lifts on hover of a `group` around it) over a soft shadow. */
 export function IsoArt({ name, className }: { name: IsoArtName; className?: string }) {
@@ -220,6 +223,8 @@ export function IsoArt({ name, className }: { name: IsoArtName; className?: stri
         {name === "attention-door" && <Door />}
         {name === "quality-printer" && <Printer />}
         {name === "quality-mailboxes" && <Mailboxes />}
+        {name === "attention-slot" && <MailSlot />}
+        {name === "quality-street" && <Street />}
       </g>
     </motion.svg>
   );
@@ -688,6 +693,143 @@ function Mailboxes() {
           <Block pts={rect(x + 9.5, -9, 2, 8)} h={7} z={51} pink />
         </g>
       ))}
+    </g>
+  );
+}
+
+/* -------------------------------- Round 5 -------------------------------- */
+
+type YZ = [number, number];
+
+/**
+ * A shape drawn upright, as (y, z), pushed out along x from x0 to x1: for things whose
+ * outline is in a wall, not the ground, like a mailbox's rounded top. The end at x1 faces
+ * you; of its long sides, only those that face you are drawn.
+ */
+function SideBlock({ profile, x0, x1, pink }: { profile: YZ[]; x0: number; x1: number; pink?: boolean }) {
+  const n = profile.length;
+  let area = 0;
+  for (let i = 0; i < n; i++) {
+    const [a1, b1] = profile[i];
+    const [a2, b2] = profile[(i + 1) % n];
+    area += a1 * b2 - a2 * b1;
+  }
+  const sign = area > 0 ? 1 : -1;
+  // A long side faces you when its outward normal points toward you: (+y) + (+z) > 0
+  const faces = profile.map((a, i) => {
+    const b = profile[(i + 1) % n];
+    const ny = (b[1] - a[1]) * sign;
+    const nz = -(b[0] - a[0]) * sign;
+    return ny + nz > 1e-6;
+  });
+  const turn = (i: number) => {
+    const a = profile[(i - 1 + n) % n];
+    const b = profile[i];
+    const c = profile[(i + 1) % n];
+    const t1 = Math.atan2(b[1] - a[1], b[0] - a[0]);
+    const t2 = Math.atan2(c[1] - b[1], c[0] - b[0]);
+    return Math.abs(((t2 - t1 + 3 * Math.PI) % (2 * Math.PI)) - Math.PI);
+  };
+  const edge = (i: number) => {
+    const before = faces[(i - 1 + n) % n];
+    const after = faces[i];
+    return before !== after || (before && after && turn(i) > 0.45);
+  };
+  const at = (x: number, [y, z]: YZ) => iso([x, y], z);
+  const sides = profile
+    .map((a, i) => ({ a, b: profile[(i + 1) % n], i }))
+    .filter(({ i }) => faces[i])
+    .sort((p, q) => p.a[0] + p.a[1] + p.b[0] + p.b[1] - (q.a[0] + q.a[1] + q.b[0] + q.b[1]));
+  return (
+    <g>
+      {sides.map(({ a, b, i }) => (
+        <g key={i}>
+          <Face path={d([at(x0, a), at(x0, b), at(x1, b), at(x1, a)], true)} />
+          <Stroke path={d([at(x0, a), at(x0, b)])} pink={pink} />
+          {edge(i) && <Stroke path={d([at(x0, a), at(x1, a)])} pink={pink} />}
+          {edge((i + 1) % n) && <Stroke path={d([at(x0, b), at(x1, b)])} pink={pink} />}
+        </g>
+      ))}
+      <Face path={d(profile.map((p) => at(x1, p)), true)} />
+      <Stroke path={d(profile.map((p) => at(x1, p)), true)} pink={pink} />
+    </g>
+  );
+}
+
+/** Lines drawn on an upright face that looks down-right (a fixed x): points as (y, z). */
+function WallX({ pts, x, pink, width }: { pts: YZ[]; x: number; pink?: boolean; width?: number }) {
+  return <Stroke path={d(pts.map(([y, z]) => iso([x, y], z)))} pink={pink} width={width} />;
+}
+
+/** A mailbox's outline, seen from its door: a flat bottom, straight sides, a round top. */
+const mailboxProfile = (w: number, h: number, steps = 14): YZ[] => {
+  const r = w / 2;
+  return [
+    [-r, 0],
+    [r, 0],
+    [r, h],
+    ...Array.from({ length: steps - 1 }, (_, i) => {
+      const t = ((i + 1) / steps) * Math.PI;
+      return [r * Math.cos(t), h + r * Math.sin(t)] as YZ;
+    }),
+    [-r, h],
+  ];
+};
+
+/** Attention: one postcard, pushed halfway through a door's mail slot; its stamp in pink. */
+function MailSlot() {
+  const face = 4; // the door's front face (it looks down-left)
+  const plate = face + 3;
+  const knob = Array.from({ length: 17 }, (_, i) => {
+    const t = (i / 16) * Math.PI * 2;
+    return [52 + 4 * Math.cos(t), -6 + 4 * Math.sin(t)] as [number, number];
+  });
+  return (
+    <g transform="translate(0 4)">
+      {/* The door, close up: its boards, and the knob below the slot */}
+      <Block pts={rect(0, 0, 150, 8)} h={92} z={-32} />
+      {[-25, 25].map((x) => (
+        <Wall key={x} y={face} pts={[[x, -32], [x, 6]]} />
+      ))}
+      <Wall y={face} pts={knob} />
+      {/* The letter plate, raised off the door, with its opening */}
+      <Block pts={rect(0, face + 1.5, 72, 3)} h={20} z={12} />
+      <Wall y={plate} pts={wallRect(-27, 27, 18, 25)} />
+      {/* One postcard, halfway out of the opening */}
+      <Block pts={[[-22, plate], [22, plate], [22, plate + 38], [-22, plate + 38]]} h={2} z={20} />
+      <Block pts={rect(13, plate + 29, 9, 11)} h={0.8} z={22} pink />
+      <Flat z={22} pts={[[-16, plate + 18], [2, plate + 18]]} />
+      <Flat z={22} pts={[[-16, plate + 26], [-4, plate + 26]]} />
+      <Flat z={22} pts={[[-16, plate + 33], [-8, plate + 33]]} />
+    </g>
+  );
+}
+
+/** Quality at scale: a street of identical rural mailboxes on a sidewalk, every flag up
+ *  in pink. Each has a rounded top, a door facing you and a post. */
+function Street() {
+  const ys = [-66, -22, 22, 66];
+  const L = 34; // a mailbox's length, along x
+  const W = 18;
+  const base = 30; // the post's height
+  return (
+    <g transform="translate(0 24)">
+      <Block pts={rect(0, 0, 44, 190)} h={3} />
+      {ys.map((y) => {
+        const prof = mailboxProfile(W, 10).map(([py, pz]) => [y + py, base + 3 + pz] as YZ);
+        const door = mailboxProfile(W - 6, 10).map(([py, pz]) => [y + py, base + 6 + pz] as YZ);
+        return (
+          <g key={y}>
+            <Block pts={rect(0, y, 6, 6)} h={base} z={3} />
+            <Block pts={rect(0, y, 12, 14)} h={2} z={base + 1} />
+            <SideBlock profile={prof} x0={-L / 2} x1={L / 2} />
+            <WallX x={L / 2} pts={[...door, door[0]]} />
+            {/* The flag, up, on the side that faces you */}
+            <Block pts={rect(-L / 2 + 8, y + W / 2 + 1, 2.4, 2)} h={22} z={base + 8} pink />
+            <Block pts={rect(-L / 2 + 13, y + W / 2 + 1, 10, 2)} h={7} z={base + 23} pink />
+          </g>
+        );
+      })}
     </g>
   );
 }
