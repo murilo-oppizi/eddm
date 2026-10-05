@@ -247,7 +247,16 @@ const CHECK_TURN = -0.38; // radians: along the card it reads as an "L"; turned 
 
 /* ------------------------------ The pictures ----------------------------- */
 
-export type IsoArtName = "agents" | "attention" | "scans" | "quality";
+export type IsoArtName =
+  | "agents"
+  | "attention"
+  | "scans"
+  | "quality"
+  // the story's scenes
+  | "story-flyers"
+  | "story-pins"
+  | "story-channels"
+  | "story-agent";
 
 /** One picture: the object (which lifts on hover of a `group` around it) over a soft shadow. */
 export function IsoArt({ name, className }: { name: IsoArtName; className?: string }) {
@@ -279,6 +288,10 @@ export function IsoArt({ name, className }: { name: IsoArtName; className?: stri
         {name === "attention" && <MailSlot />}
         {name === "scans" && <Bars />}
         {name === "quality" && <Pile />}
+        {name === "story-flyers" && <StoryFlyers />}
+        {name === "story-pins" && <StoryPins />}
+        {name === "story-channels" && <StoryChannels />}
+        {name === "story-agent" && <StoryAgent />}
       </g>
     </motion.svg>
   );
@@ -379,3 +392,161 @@ function Pile() {
     </g>
   );
 }
+
+/* ------------------------------ The story's scenes ------------------------------ */
+
+/** Drops its contents in from above, `delay` seconds after the picture comes into view. */
+function Drop({ delay, children }: { delay: number; children: React.ReactNode }) {
+  return (
+    <motion.g
+      variants={{
+        hidden: { y: -26, opacity: 0 },
+        shown: { y: 0, opacity: 1, transition: { delay, type: "spring", stiffness: 260, damping: 18 } },
+      }}
+    >
+      {children}
+    </motion.g>
+  );
+}
+
+/** A gentle, endless bob (CSS, so it doesn't interrupt the drawing-in). */
+function Bob({ children, distance = 6 }: { children: React.ReactNode; distance?: number }) {
+  return (
+    <g
+      className="animate-[float-y_3.6s_ease-in-out_infinite] motion-reduce:animate-none"
+      style={{ "--float-distance": `${distance}px` } as React.CSSProperties}
+    >
+      {children}
+    </g>
+  );
+}
+
+/** 2014, flyering: a stack of flyers on the street, the top one lifting off in pink. */
+function StoryFlyers() {
+  const t = 2.4;
+  const tilts = [0.05, -0.04, 0.03, -0.02, 0];
+  return (
+    <g transform="translate(0 18)">
+      {tilts.map((a, i) => (
+        <Block key={i} pts={roundRect(-22, 8, 62, 88, 5, a + 0.35)} h={t} z={i * t} />
+      ))}
+      <Flat z={tilts.length * t} width={2} pts={[[-38, -24], [-14, -16]]} />
+      <Flat z={tilts.length * t} pts={[[-40, -14], [-24, -9]]} />
+      <Drop delay={0.4}>
+        <Bob>
+          <Block pts={roundRect(34, -18, 62, 88, 5, -0.2)} h={t} z={42} pink />
+          <Flat z={42 + t} pink width={2} pts={[[14, -46], [40, -50]]} />
+          <Flat z={42 + t} pink pts={[[16, -36], [32, -38]]} />
+        </Bob>
+      </Drop>
+    </g>
+  );
+}
+
+/** A map marker standing at x, y: a round pink-or-grey head on a slim post, its foot a
+ *  small ring on the ground (drawn as one solid: a head disc raised on a stem). */
+function Pin({ x, y, pink }: { x: number; y: number; pink?: boolean }) {
+  return (
+    <g>
+      <Flat pts={closed(circle(x, y, 6, 24))} />
+      <Block pts={circle(x, y, 1.8, 12)} h={26} pink={pink} />
+      <Block pts={circle(x, y, 10, 32)} h={5} z={26} pink={pink} />
+      <Flat z={31} pts={closed(circle(x, y, 4, 16))} pink={pink} />
+    </g>
+  );
+}
+
+/** Growing, 12+ countries: markers dropping onto a plate, one after another, a dashed
+ *  route linking them drawn first. */
+function StoryPins() {
+  const pins: [number, number][] = [
+    [-54, 10],
+    [-10, 40],
+    [-2, -36],
+    [48, -6],
+  ];
+  // Far to near, so nearer markers cover farther ones
+  const order = pins.map((p, i) => ({ p, i })).sort((a, b) => a.p[0] + a.p[1] - (b.p[0] + b.p[1]));
+  const dash = (a: P, b: P) =>
+    Array.from({ length: 6 }, (_, k) => {
+      const t0 = k / 6;
+      const t1 = t0 + 0.55 / 6;
+      return [
+        [a[0] + (b[0] - a[0]) * t0, a[1] + (b[1] - a[1]) * t0],
+        [a[0] + (b[0] - a[0]) * t1, a[1] + (b[1] - a[1]) * t1],
+      ] as P[];
+    });
+  return (
+    <g transform="translate(0 20)">
+      <Block pts={roundRect(0, 0, 168, 128, 14)} h={6} />
+      {pins.slice(1).flatMap((b, i) => dash(pins[i], b).map((seg, k) => <Flat key={`${i}-${k}`} z={6} pts={seg} />))}
+      {order.map(({ p: [x, y], i }) => (
+        <Drop key={i} delay={0.3 + i * 0.22}>
+          <g transform="translate(0 0)">
+            <g transform={`translate(0 ${-6})`}>
+              <Pin x={x} y={y} pink={i === pins.length - 1} />
+            </g>
+          </g>
+        </Drop>
+      ))}
+    </g>
+  );
+}
+
+/** More channels, one platform: a flyer, an envelope and a parcel, side by side on one
+ *  plate, landing one after another; the parcel's tape in pink. */
+function StoryChannels() {
+  return (
+    <g transform="translate(0 22)">
+      <Block pts={roundRect(0, 0, 196, 84, 14)} h={6} />
+      {/* The flyer, standing, at the back left */}
+      <Drop delay={0.3}>
+        <Block pts={roundRect(-58, -6, 40, 4, 2)} h={52} z={6} />
+      </Drop>
+      {/* The envelope, lying flat, its flap folded */}
+      <Drop delay={0.5}>
+        <Block pts={roundRect(-4, 10, 50, 34, 4)} h={3} z={6} />
+        <Flat z={9} pts={[[-29, -7], [-4, 10], [21, -7]]} />
+      </Drop>
+      {/* The parcel, taped in pink */}
+      <Drop delay={0.7}>
+        <Block pts={roundRect(56, 2, 40, 40, 4)} h={30} z={6} />
+        <Flat z={36} pink width={2.4} pts={[[56, -18], [56, 22]]} />
+      </Drop>
+    </g>
+  );
+}
+
+/** Today, agents: a tablet with a route drawing itself in pink, an agent's sparkle above. */
+function StoryAgent() {
+  const stops: P[] = [
+    [-50, 22],
+    [-18, -4],
+    [12, 18],
+    [44, -14],
+  ];
+  return (
+    <g transform="translate(0 18)">
+      <Block pts={roundRect(0, 0, 176, 116, 16)} h={6} />
+      <Flat z={6} pts={closed(roundRect(0, 0, 160, 100, 10))} />
+      {/* A street grid on the screen */}
+      {[-30, 0, 30].map((y) => (
+        <Flat key={`h${y}`} z={6} pts={[[-72, y], [72, y]]} />
+      ))}
+      {[-40, 0, 40].map((x) => (
+        <Flat key={`v${x}`} z={6} pts={[[x, -44], [x, 44]]} />
+      ))}
+      {/* The route the agent planned, and its stops */}
+      <Flat z={6} pink width={2.6} pts={stops} />
+      {stops.map(([x, y], i) => (
+        <Block key={i} pts={circle(x, y, 4.5, 20)} h={3} z={6} pink={i === stops.length - 1} />
+      ))}
+      <Drop delay={0.5}>
+        <Bob distance={5}>
+          <Block pts={sparkle(36, -60, 20)} h={4} z={30} pink />
+        </Bob>
+      </Drop>
+    </g>
+  );
+}
+
