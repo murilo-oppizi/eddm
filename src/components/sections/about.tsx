@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import {
   IconArrowRight,
@@ -19,6 +19,7 @@ import { MotionConfig, motion } from "motion/react";
 
 import { type Place } from "@/components/sections/globe";
 import { IsoArt } from "@/components/sections/iso-art";
+import { Postmark } from "@/components/sections/postmark";
 import { Flag, WorldMap } from "@/components/sections/world-map";
 import { Button } from "@/components/ui/button";
 import { about } from "@/content/site";
@@ -93,76 +94,6 @@ export function AboutHero() {
         </div>
       </section>
     </MotionConfig>
-  );
-}
-
-/**
- * A round postmark, the kind a post office stamps on every piece: Oppizi's story around
- * the ring (turning slowly), what it adds up to in the middle, and wavy cancellation
- * lines running off to one side. A soft card of light behind it.
- */
-function Postmark() {
-  const { hero } = about;
-  const id = useId();
-  const ring = `${id}-ring`;
-  return (
-    <div className="relative aspect-square">
-      {/* A soft pool of brand light behind (a gradient, not a blur: iPhone Safari) */}
-      <div
-        aria-hidden
-        className="absolute inset-[-12%] rounded-full bg-[radial-gradient(closest-side,color-mix(in_oklab,var(--primary)_16%,transparent),transparent)]"
-      />
-      {/* The cancellation waves, behind the stamp, running a little way off to the left */}
-      <svg aria-hidden viewBox="0 0 400 400" className="absolute inset-0 size-full overflow-visible text-brand/25">
-        {[0, 1, 2, 3, 4].map((i) => (
-          <motion.path
-            key={i}
-            d={`M -50 ${150 + i * 24} q 22 -12 44 0 t 44 0 t 44 0 t 44 0`}
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={3}
-            strokeLinecap="round"
-            initial={{ pathLength: 0 }}
-            whileInView={{ pathLength: 1 }}
-            viewport={{ once: true }}
-            transition={{ duration: 1.1, delay: 0.4 + i * 0.08, ease }}
-          />
-        ))}
-      </svg>
-
-      {/* The stamp itself */}
-      <div className="absolute inset-[8%] rounded-full bg-card shadow-[0_1px_2px_rgb(0_0_0/0.06),0_30px_60px_-30px_color-mix(in_oklab,var(--primary)_45%,black)] ring-1 ring-border">
-        <svg viewBox="0 0 320 320" className="size-full text-brand" role="img" aria-label={`${hero.postmarkValue} ${hero.postmarkLabel}, since 2014`}>
-          <defs>
-            <path id={ring} d="M 160 160 m -128 0 a 128 128 0 1 1 256 0 a 128 128 0 1 1 -256 0" />
-          </defs>
-          {/* Two rings, like the edge of an ink stamp */}
-          <circle cx="160" cy="160" r="150" fill="none" stroke="currentColor" strokeWidth="3" />
-          <circle cx="160" cy="160" r="108" fill="none" stroke="currentColor" strokeWidth="1.5" strokeDasharray="2 5" opacity="0.6" />
-          <motion.g
-            animate={{ rotate: 360 }}
-            transition={{ duration: 60, ease: "linear", repeat: Infinity }}
-            style={{ transformOrigin: "160px 160px" }}
-          >
-            <text className="fill-current text-[15px] font-semibold tracking-[0.2em]">
-              {/* Once round, spaced to meet itself exactly (2πr) */}
-              <textPath href={`#${ring}`} startOffset="0" textLength={2 * Math.PI * 128 - 4} lengthAdjust="spacing">
-                {hero.postmark}
-              </textPath>
-            </text>
-          </motion.g>
-          <text x="160" y="160" textAnchor="middle" className="fill-foreground font-heading text-[54px] font-bold tracking-tight">
-            {hero.postmarkValue}
-          </text>
-          <text x="160" y="190" textAnchor="middle" className="fill-muted-foreground text-[14px] font-medium">
-            {hero.postmarkLabel}
-          </text>
-          <text x="160" y="226" textAnchor="middle" className="fill-current text-[11px] font-semibold tracking-[0.3em]">
-            2014 — TODAY
-          </text>
-        </svg>
-      </div>
-    </div>
   );
 }
 
