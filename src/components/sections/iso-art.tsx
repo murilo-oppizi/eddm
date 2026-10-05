@@ -332,8 +332,17 @@ function Bars() {
   return (
     <g>
       <Block pts={roundRect(0, 0, 150, 56, 10)} h={6} />
+      {/* An inset edge around the plate, and a tick under each bar (like an axis) */}
+      <Flat z={6} pts={closed(roundRect(0, 0, 138, 44, 6))} />
+      {bars.map(([x]) => (
+        <Flat key={x} z={6} pts={[[x - 6, 19], [x + 6, 19]]} />
+      ))}
       {bars.map(([x, h], i) => (
-        <Block key={x} pts={roundRect(x, 0, 28, 28, 6)} h={h} z={6} pink={i === bars.length - 1} />
+        <g key={x}>
+          <Block pts={roundRect(x, 0, 28, 28, 6)} h={h} z={6} pink={i === bars.length - 1} />
+          {/* An inset on each bar's top, like the keycap's */}
+          <Flat z={6 + h} pts={closed(roundRect(x, 0, 16, 16, 4))} />
+        </g>
       ))}
     </g>
   );
