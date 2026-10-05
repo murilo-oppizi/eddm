@@ -54,8 +54,3 @@ export function BlurText({
   );
 }
 
-/** The same reveal for a whole block (a card, a paragraph, a photo): blurred to sharp. */
-export const blurIn = {
-  initial: { opacity: 0, filter: "blur(8px)", y: 14 },
-  whileInView: { opacity: 1, filter: "blur(0px)", y: 0 },
-};

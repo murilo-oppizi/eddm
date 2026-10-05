@@ -20,7 +20,7 @@ import { MotionConfig, motion } from "motion/react";
 import { type Place } from "@/components/sections/globe";
 import { IsoArt } from "@/components/sections/iso-art";
 import { Flag, WorldMap } from "@/components/sections/world-map";
-import { BlurText, blurIn, blurTextDuration } from "@/components/ui/blur-text";
+import { BlurText, blurTextDuration } from "@/components/ui/blur-text";
 import { Button } from "@/components/ui/button";
 import { about } from "@/content/site";
 import { asset } from "@/lib/asset";
@@ -28,9 +28,9 @@ import { cn } from "@/lib/utils";
 
 // The About page's sections. One visual language with the rest of the site: white cards
 // with hairline borders, the brand pink used sparingly, and the postal motifs (stamps,
-// postmarks, routes) that run through EDDM. Everything comes into view once, blurred to
-// sharp (titles word by word); nothing is tied to the scroll position. Reduced motion:
-// no movement.
+// postmarks, routes) that run through EDDM. Titles come in word by word, blurred to
+// sharp; everything else fades up. Once each, on coming into view; nothing is tied to
+// the scroll position. Reduced motion: no movement.
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -46,8 +46,8 @@ function Reveal({
 }) {
   return (
     <motion.div
-      initial={blurIn.initial}
-      whileInView={blurIn.whileInView}
+      initial={{ opacity: 0, y: 18 }}
+      whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.3 }}
       transition={{ duration: 0.7, delay, ease }}
       className={className}
@@ -204,8 +204,8 @@ export function AboutStory() {
               return (
                 <motion.li
                   key={stop.title}
-                  initial={blurIn.initial}
-                  whileInView={blurIn.whileInView}
+                  initial={{ opacity: 0, y: 18 }}
+                  whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, amount: 0.5 }}
                   transition={{ duration: 0.6, delay: 0.2 + i * 0.35, ease }}
                   className="relative flex gap-5 lg:flex-col lg:gap-6"
@@ -294,8 +294,8 @@ export function AboutValues() {
             {about.values.map((value, i) => (
               <motion.li
                 key={value.title}
-                initial={blurIn.initial}
-                whileInView={blurIn.whileInView}
+                initial={{ opacity: 0, y: 14 }}
+                whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, amount: 0.3 }}
                 transition={{ duration: 0.6, delay: i * 0.08, ease }}
                 className="group flex flex-col rounded-3xl border bg-card p-6 transition-shadow duration-500 hover:shadow-[0_20px_40px_-28px_rgb(0_0_0/0.3)]"
@@ -436,8 +436,8 @@ const networkIcons = { walk: IconWalk, store: IconBuildingStore, printer: IconPr
 function Tile({ children, className, delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
   return (
     <motion.div
-      initial={blurIn.initial}
-      whileInView={blurIn.whileInView}
+      initial={{ opacity: 0, y: 18 }}
+      whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, amount: 0.3 }}
       transition={{ duration: 0.6, delay, ease }}
       className={cn("flex flex-col rounded-3xl border bg-card p-6 sm:p-7", className)}
@@ -520,8 +520,8 @@ export function AboutTeam() {
           {team.people.map((person, i) => (
             <motion.li
               key={person.name}
-              initial={{ opacity: 0, filter: "blur(8px)", x: 24 }}
-              whileInView={{ opacity: 1, filter: "blur(0px)", x: 0 }}
+              initial={{ opacity: 0, x: 24 }}
+              whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true, amount: 0.3 }}
               transition={{ duration: 0.6, delay: Math.min(i, 4) * 0.08, ease }}
               className="group relative aspect-[4/5] w-60 shrink-0 snap-start overflow-hidden rounded-3xl bg-card shadow-[0_1px_2px_rgb(0_0_0/0.06),0_20px_40px_-24px_rgb(0_0_0/0.35)] ring-1 ring-black/5 sm:w-72"
