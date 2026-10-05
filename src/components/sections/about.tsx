@@ -15,7 +15,7 @@ import {
   IconWalk,
   IconWorld,
 } from "@tabler/icons-react";
-import { MotionConfig, motion } from "motion/react";
+import { AnimatePresence, MotionConfig, motion, useInView, useReducedMotion } from "motion/react";
 
 import { type Place } from "@/components/sections/globe";
 import { IsoArt } from "@/components/sections/iso-art";
@@ -100,69 +100,131 @@ export function AboutHero() {
 /* --------------------------------- Story -------------------------------- */
 
 /**
- * The story as a mail route: four stops on a dashed line, each a card. Across on
- * desktops (the line draws itself from stop to stop), down on phones.
+ * The story as a rail of four moments, one in focus at a time, after the timelines on
+ * Dribbble and Aceternity: the rail along the top fills in pink toward the next stop
+ * and moves on by itself every few seconds while it's on screen (pointing at the card
+ * holds it; picking a stop jumps there and stops the tour). The moment in focus shows
+ * its big figure beside its title and line.
  */
+const STORY_MS = 5000;
+
 export function AboutStory() {
   const { story } = about;
+  const n = story.stops.length;
+  const [active, setActive] = useState(0);
+  const [touched, setTouched] = useState(false); // picked by hand: no more touring
+  const [held, setHeld] = useState(false); // pointer on the card: pause
+  const root = useRef<HTMLDivElement>(null);
+  const onScreen = useInView(root, { amount: 0.5 });
+  const reduce = useReducedMotion();
+  const touring = onScreen && !touched && !held && !reduce;
+
+  useEffect(() => {
+    if (!touring) return;
+    const t = setTimeout(() => setActive((i) => (i + 1) % n), STORY_MS);
+    return () => clearTimeout(t);
+  }, [touring, active, n]);
+
+  const stop = story.stops[active];
+  const pick = (i: number) => {
+    setTouched(true);
+    setActive(i);
+  };
+
   return (
     <MotionConfig reducedMotion="user">
       <section className="py-20 lg:py-28">
-        <div className="container-page space-y-14">
+        <div className="container-page space-y-12">
           <Reveal className="mx-auto max-w-2xl space-y-3 text-center">
             <Eyebrow>{story.eyebrow}</Eyebrow>
             <h2 className="text-3xl font-bold text-balance sm:text-4xl">{story.title}</h2>
           </Reveal>
 
-          <ol className="relative grid gap-10 lg:grid-cols-4 lg:gap-6">
-            {/* The route: a dashed line from the first stop to the last, which fills in pink
-                from stop to stop (across on desktops; on phones, a dashed line down). The last
-                stop's center is 3/4 of the row plus 3/4 of a 24px gap from the first's. */}
-            <div aria-hidden className="absolute top-[21px] left-[22px] hidden h-0.5 w-[calc(75%+18px)] bg-[repeating-linear-gradient(90deg,var(--border)_0_6px,transparent_6px_12px)] lg:block">
-              <motion.div
-                initial={{ scaleX: 0 }}
-                whileInView={{ scaleX: 1 }}
-                viewport={{ once: true, amount: 1 }}
-                transition={{ duration: 1.6, delay: 0.2, ease: "easeInOut" }}
-                className="h-full origin-left bg-primary"
-              />
-            </div>
+          <Reveal>
+            <div
+              ref={root}
+              onPointerEnter={() => setHeld(true)}
+              onPointerLeave={() => setHeld(false)}
+              className="overflow-hidden rounded-3xl border bg-card"
+            >
+              {/* The rail: a stop per moment, the line filling toward the next one */}
+              <div className="border-b px-2 sm:px-6">
+              <div role="tablist" aria-label={story.title} className="relative grid grid-cols-4">
+                <div aria-hidden className="absolute inset-x-[12.5%] top-[27px] h-0.5 bg-border sm:top-[31px]">
+                  <motion.div
+                    className="h-full origin-left bg-primary"
+                    initial={false}
+                    // While touring it creeps toward the next stop over the stop's time
+                    animate={{ scaleX: (active + (touring && active < n - 1 ? 1 : 0)) / (n - 1) }}
+                    transition={
+                      touring && active < n - 1
+                        ? { duration: STORY_MS / 1000, ease: "linear" }
+                        : { duration: 0.5, ease }
+                    }
+                  />
+                </div>
+                {story.stops.map((s, i) => {
+                  const done = i <= active;
+                  return (
+                    <button
+                      key={s.title}
+                      type="button"
+                      role="tab"
+                      aria-selected={i === active}
+                      onClick={() => pick(i)}
+                      className="group relative flex cursor-pointer flex-col items-center gap-2 pt-5 pb-4 outline-none sm:pt-6"
+                    >
+                      <span
+                        className={cn(
+                          "relative z-10 grid size-4 place-items-center rounded-full border-2 bg-card transition-colors duration-300 group-focus-visible:ring-3 group-focus-visible:ring-ring/50",
+                          done ? "border-primary" : "border-border group-hover:border-primary/50"
+                        )}
+                      >
+                        <span className={cn("size-1.5 rounded-full transition-colors duration-300", i === active ? "bg-primary" : done ? "bg-primary/40" : "bg-transparent")} />
+                      </span>
+                      <span
+                        className={cn(
+                          "text-center text-[11px] font-semibold tracking-wider uppercase transition-colors sm:text-xs",
+                          i === active ? "text-brand" : "text-muted-foreground group-hover:text-foreground"
+                        )}
+                      >
+                        {s.when}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              </div>
 
-            {story.stops.map((stop, i) => {
-              const last = i === story.stops.length - 1;
-              return (
-                <motion.li
-                  key={stop.title}
-                  initial={{ opacity: 0, y: 18 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.5 }}
-                  transition={{ duration: 0.6, delay: 0.2 + i * 0.35, ease }}
-                  className="relative flex gap-5 lg:flex-col lg:gap-6"
-                >
-                  {/* On phones, a dashed line down to the next stop (the 40px gap between them) */}
-                  {!last && (
-                    <span aria-hidden className="absolute top-11 -bottom-10 left-[21px] w-0.5 bg-[repeating-linear-gradient(180deg,var(--border)_0_6px,transparent_6px_12px)] lg:hidden" />
-                  )}
-                  {/* The stop: a ring on the route, filled at the last (where we are now) */}
-                  <span
-                    className={cn(
-                      "relative z-10 grid size-11 shrink-0 place-items-center rounded-full border-2 bg-background text-xs font-bold tabular-nums",
-                      last ? "border-primary bg-primary text-primary-foreground" : "border-primary text-brand"
-                    )}
+              {/* The moment in focus */}
+              <div role="tabpanel" aria-live="polite" className="relative min-h-[260px] p-6 sm:min-h-[220px] sm:p-10">
+                <AnimatePresence mode="wait" initial={false}>
+                  <motion.div
+                    key={active}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.35, ease }}
+                    className="grid items-center gap-6 sm:grid-cols-[0.9fr_1.1fr] sm:gap-12"
                   >
-                    {last ? <IconMapPin className="size-4" aria-hidden /> : String(i + 1).padStart(2, "0")}
-                  </span>
-                  <div className="space-y-2">
-                    <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">
-                      <span className="text-brand">{stop.when}</span> · {stop.where}
-                    </p>
-                    <h3 className="text-lg font-semibold">{stop.title}</h3>
-                    <p className="text-muted-foreground text-pretty">{stop.body}</p>
-                  </div>
-                </motion.li>
-              );
-            })}
-          </ol>
+                    <div>
+                      <p className="font-heading text-7xl leading-none font-bold tracking-tight text-brand tabular-nums sm:text-8xl">
+                        {stop.value}
+                      </p>
+                      <p className="mt-3 text-sm font-semibold tracking-wider text-muted-foreground uppercase">{stop.unit}</p>
+                    </div>
+                    <div className="space-y-3 sm:border-l sm:pl-12">
+                      <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase tabular-nums">
+                        {String(active + 1).padStart(2, "0")} / {String(n).padStart(2, "0")}
+                      </p>
+                      <h3 className="text-2xl font-semibold text-balance">{stop.title}</h3>
+                      <p className="text-lg text-pretty text-muted-foreground">{stop.body}</p>
+                    </div>
+                  </motion.div>
+                </AnimatePresence>
+              </div>
+            </div>
+          </Reveal>
         </div>
       </section>
     </MotionConfig>

@@ -468,11 +468,12 @@ export const about = {
   story: {
     eyebrow: "Our story",
     title: "From flyers in Sydney to agents in Brooklyn",
+    // Each stop's big figure (value + unit) is shown large when it's in focus
     stops: [
-      { when: "2014", where: "Sydney", title: "A flyering company", body: "Oppizi starts out on the street, putting flyers into hands for brands that want local customers." },
-      { when: "Growing", where: "12+ countries", title: "Across three continents", body: "Teams on the ground in Europe, the Americas and Asia-Pacific, in 77+ cities and counting." },
-      { when: "More channels", where: "One platform", title: "Mail, inserts and flyers", body: "Direct mail, Every Door Direct Mail and package inserts join flyering, planned and measured in one place." },
-      { when: "Today", where: "Brooklyn, NY", title: "An agentic platform", body: "Oppizi OS uses AI agents to plan, launch and measure offline campaigns, with the precision of a digital channel." },
+      { when: "2014", value: "2014", unit: "Founded in Sydney", title: "A flyering company", body: "Oppizi starts out on the street, putting flyers into hands for brands that want local customers." },
+      { when: "Growing", value: "12+", unit: "Countries", title: "Across three continents", body: "Teams on the ground in Europe, the Americas and Asia-Pacific, in 77+ cities and counting." },
+      { when: "More channels", value: "3", unit: "Channels, one platform", title: "Mail, inserts and flyers", body: "Direct mail, Every Door Direct Mail and package inserts join flyering, planned and measured in one place." },
+      { when: "Today", value: "Now", unit: "Brooklyn, NY", title: "An agentic platform", body: "Oppizi OS uses AI agents to plan, launch and measure offline campaigns, with the precision of a digital channel." },
     ],
   },
   mission: {
