@@ -3,15 +3,16 @@
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion, useInView, useReducedMotion } from "motion/react";
 
-import { OppiziSymbol } from "@/components/site/logo";
+import { flags } from "@/components/sections/flags";
 import map from "@/content/world-map.json";
 import { cn } from "@/lib/utils";
 
 // A flat dotted world map (the dots drawn ahead of time by scripts/generate-world-map.mjs)
-// with a small pink dot in every country Oppizi works in. One big pin stands over a
-// country at a time: the one in `focus` (pointed at in the list beside it), otherwise it
-// tours them all on its own, every couple of seconds, starting at the Brooklyn
-// headquarters. Reduced motion: the pin stays on the headquarters unless one is pointed at.
+// with a small pink dot in every country Oppizi works in. One dot at a time grows into a
+// round flag, right where the dot is, with the country's name under it: the one in
+// `focus` (pointed at in the list beside it), otherwise it tours them all on its own,
+// every couple of seconds, starting at the Brooklyn headquarters. Reduced motion: it
+// stays on the headquarters unless one is pointed at.
 
 const PINS: Record<string, number[]> = map.pins;
 const TOUR_MS = 2200;
@@ -25,7 +26,7 @@ export function WorldMap({
 }: {
   /** The countries, in the order the pin tours them */
   order: string[];
-  /** The headquarters: where the tour starts, and its pin shows the Oppizi mark */
+  /** The headquarters: where the tour starts (its name says HQ) */
   hub: string;
   focus: string | null;
   names: Record<string, string>;
@@ -62,48 +63,59 @@ export function WorldMap({
         </g>
       </svg>
 
-      {/* Every market: a small pink dot (the one with the pin over it, a ring) */}
+      {/* Every market: a small pink dot */}
       {order.map((id) => (
         <span
           key={id}
           aria-hidden
           style={at(id)}
-          className={cn(
-            "absolute size-2 -translate-1/2 rounded-full bg-primary ring-2 ring-card transition-transform duration-300",
-            id === shown && "scale-150"
-          )}
+          className="absolute size-2 -translate-1/2 rounded-full bg-primary ring-2 ring-card"
         />
       ))}
 
-      {/* The big pin: drops onto the country, its name under it */}
-      <AnimatePresence>
+      {/* The one in view: its dot grows into a round flag, centered on the same spot, with
+          a soft pink ring pulsing out of it and the name under it */}
+      <AnimatePresence mode="wait">
         <motion.div
           key={shown}
           aria-hidden
           style={at(shown)}
           className="absolute"
-          initial={{ opacity: 0, y: -14, scale: 0.6 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.15 } }}
-          transition={{ type: "spring", stiffness: 420, damping: 22 }}
+          exit={{ opacity: 0, scale: 0.6, transition: { duration: 0.18 } }}
         >
-          {/* The teardrop's point sits on the country */}
-          <div className="absolute bottom-1 left-0 -translate-x-1/2">
-            <div className="relative grid size-11 place-items-center rounded-full rounded-br-none bg-card shadow-[0_6px_16px_-4px_rgb(0_0_0/0.3),0_0_0_1px_rgb(0_0_0/0.05)] [rotate:45deg]">
-              <span className="grid size-9 place-items-center rounded-full bg-primary text-primary-foreground [rotate:-45deg]">
-                {shown === hub ? (
-                  <OppiziSymbol cropped className="h-2.5 w-auto" />
-                ) : (
-                  <span className="text-[11px] font-bold tracking-wide">{shown}</span>
-                )}
-              </span>
-            </div>
-          </div>
-          <span className={cn("absolute top-2 left-0 rounded-full", nameAlign, "bg-card/90 px-2 py-0.5 text-xs font-semibold whitespace-nowrap shadow-sm ring-1 ring-border backdrop-blur-sm")}>
+          <motion.span
+            className="absolute -translate-1/2 rounded-full bg-primary/25"
+            initial={{ width: 8, height: 8, opacity: 0 }}
+            animate={{ width: [8, 56], height: [8, 56], opacity: [0.8, 0] }}
+            transition={{ duration: 1.6, repeat: Infinity, ease: "easeOut", delay: 0.3 }}
+          />
+          <motion.span
+            className="absolute grid size-8 -translate-1/2 place-items-center overflow-hidden rounded-full bg-card shadow-[0_4px_12px_-2px_rgb(0_0_0/0.3)] ring-2 ring-card"
+            initial={{ scale: 0.25 }}
+            animate={{ scale: 1 }}
+            transition={{ type: "spring", stiffness: 420, damping: 20 }}
+          >
+            <Flag id={shown} className="size-full" />
+          </motion.span>
+          <motion.span
+            className={cn(
+              "absolute top-5 left-0 rounded-full bg-card/90 px-2 py-0.5 text-xs font-semibold whitespace-nowrap shadow-sm ring-1 ring-border backdrop-blur-sm",
+              nameAlign
+            )}
+            initial={{ opacity: 0, y: -4 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3, delay: 0.1 }}
+          >
             {shown === hub ? `${names[shown]} · HQ` : names[shown]}
-          </span>
+          </motion.span>
         </motion.div>
       </AnimatePresence>
     </div>
   );
+}
+
+/** A country's flag, square (crop it round with its container). */
+export function Flag({ id, className }: { id: string; className?: string }) {
+  const Svg = flags[id];
+  return Svg ? <Svg aria-hidden className={className} /> : null;
 }

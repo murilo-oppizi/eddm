@@ -17,7 +17,7 @@ import { MotionConfig, motion } from "motion/react";
 
 import { DotOrb } from "@/components/sections/dot-orb";
 import { type Place } from "@/components/sections/globe";
-import { WorldMap } from "@/components/sections/world-map";
+import { Flag, WorldMap } from "@/components/sections/world-map";
 import { Button } from "@/components/ui/button";
 import { about } from "@/content/site";
 import { cn } from "@/lib/utils";
@@ -448,14 +448,15 @@ export function AboutWorld() {
                             onBlur={() => setFocus(null)}
                             onClick={() => setFocus(code)}
                             className={cn(
-                              "h-7 cursor-pointer rounded-lg border bg-card px-2 text-xs font-bold tracking-wide transition-colors outline-none hover:border-primary/40 focus-visible:ring-3 focus-visible:ring-ring/50",
+                              "inline-flex h-7 cursor-pointer items-center gap-1.5 rounded-lg border bg-card pr-2 pl-1.5 text-xs font-bold tracking-wide transition-colors outline-none hover:border-primary/40 focus-visible:ring-3 focus-visible:ring-ring/50",
                               focus === code
-                                ? "border-primary bg-primary text-primary-foreground"
-                                : code === hub.id
-                                  ? "border-primary/40 bg-brand-subtle/60 text-brand"
-                                  : "text-muted-foreground"
+                                ? "border-primary bg-brand-subtle text-brand"
+                                : "text-muted-foreground"
                             )}
                           >
+                            <span className="size-3.5 shrink-0 overflow-hidden rounded-full ring-1 ring-black/10">
+                              <Flag id={code} className="size-full" />
+                            </span>
                             {code}
                           </button>
                         </li>
@@ -464,8 +465,8 @@ export function AboutWorld() {
                   </div>
                 ))}
               </div>
-              {/* Which one is in focus, spelled out */}
-              <p aria-live="polite" className="mt-3 h-5 text-sm font-medium text-brand">
+              {/* Which one is in focus, for screen readers (the map shows its name) */}
+              <p aria-live="polite" className="sr-only">
                 {focus && countryNames[focus]}
               </p>
             </Tile>
