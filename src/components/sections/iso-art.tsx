@@ -205,20 +205,38 @@ const sparkle = (cx: number, cy: number, r: number, k = 3.2, steps = 96): P[] =>
     return [cx + (a - b) / Math.SQRT2, cy + (a + b) / Math.SQRT2] as P;
   });
 
-/** A check mark lying on a card around `c`: drawn along the card (x across, -y up), then
- *  turned by `turn` radians on the card's surface. */
-const check = ([cx, cy]: P, turn: number): P[] => {
+/**
+ * A check mark as a solid shape (a thick tick, outlined, as isometric icon sets draw it)
+ * lying on a card around `c`: drawn along the card (x across, +y down the card), then
+ * turned by `turn` radians on the card's surface. Its two edges show the perspective.
+ */
+const checkShape = ([cx, cy]: P, turn: number, t = 1.9): P[] => {
+  const A: P = [-8, -1];
+  const B: P = [-2.5, 4.5];
+  const C: P = [9, -7];
+  const unit = ([x, y]: P): P => {
+    const l = Math.hypot(x, y);
+    return [x / l, y / l];
+  };
+  const left = ([x, y]: P): P => [y, -x];
+  const n1 = left(unit([B[0] - A[0], B[1] - A[1]]));
+  const n2 = left(unit([C[0] - B[0], C[1] - B[1]]));
+  // The joint at B, mitred, on both sides
+  const m = unit([n1[0] + n2[0], n1[1] + n2[1]]);
+  const k = t / (m[0] * n1[0] + m[1] * n1[1]);
+  const pts: P[] = [
+    [A[0] + n1[0] * t, A[1] + n1[1] * t],
+    [B[0] + m[0] * k, B[1] + m[1] * k],
+    [C[0] + n2[0] * t, C[1] + n2[1] * t],
+    [C[0] - n2[0] * t, C[1] - n2[1] * t],
+    [B[0] - m[0] * k, B[1] - m[1] * k],
+    [A[0] - n1[0] * t, A[1] - n1[1] * t],
+  ];
   const cs = Math.cos(turn);
   const sn = Math.sin(turn);
-  return (
-    [
-      [-7, 0],
-      [-2, 5],
-      [9, -7],
-    ] as P[]
-  ).map(([x, y]) => [cx + x * cs - y * sn, cy + x * sn + y * cs]);
+  return pts.map(([x, y]) => [cx + x * cs - y * sn, cy + x * sn + y * cs]);
 };
-const CHECK_TURN = -0.4; // radians: enough to read as a check, still lying on the card
+const CHECK_TURN = -0.25; // radians: along the card it reads as an "L"; a quarter-turn reads as a check
 
 /* ------------------------------ The pictures ----------------------------- */
 
@@ -337,12 +355,11 @@ function Pile() {
       <Flat z={top} pts={[[-44, 12], [-8, 12]]} />
       <Flat z={top} pts={[[-44, 20], [-16, 20]]} />
       <Flat z={top} pts={[[-44, 28], [-24, 28]]} />
-      {/* The seal: two rings and a check, printed on the card (in its plane, so it tilts
-          with the card like the address), the check turned a little on the paper the
-          way a stamp lands, so it still reads as a check from this angle */}
+      {/* The seal: two rings printed on the card, and a check lying on it as a small solid
+          tick, aligned to the card like the address (as isometric icon sets draw it) */}
       <Flat z={top} pink width={1.6} pts={ring(18)} />
       <Flat z={top} pink pts={ring(14)} />
-      <Flat z={top} pink width={2.4} pts={check(seal, CHECK_TURN)} />
+      <Block pts={checkShape(seal, CHECK_TURN)} h={1.4} z={top} pink />
     </g>
   );
 }
