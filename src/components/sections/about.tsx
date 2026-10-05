@@ -12,10 +12,11 @@ import {
   IconMapPin,
   IconMapPins,
   IconPrinter,
+  IconSparkles,
   IconWalk,
   IconWorld,
 } from "@tabler/icons-react";
-import { AnimatePresence, MotionConfig, motion, useInView, useReducedMotion } from "motion/react";
+import { MotionConfig, motion, useInView, useReducedMotion } from "motion/react";
 
 import { type Place } from "@/components/sections/globe";
 import { IsoArt } from "@/components/sections/iso-art";
@@ -100,20 +101,90 @@ export function AboutHero() {
 /* --------------------------------- Story -------------------------------- */
 
 /**
- * The story as a rail of four moments, one in focus at a time, after the timelines on
- * Dribbble and Aceternity: the rail along the top fills in pink toward the next stop
- * and moves on by itself every few seconds while it's on screen (pointing at the card
- * holds it; picking a stop jumps there and stops the tour). The moment in focus shows
- * its big figure beside its title and line.
+ * The story, after Tailark's workspace illustrations: on the left, the four moments as a
+ * time list, a highlight card gliding from row to row while the line fills in pink; on
+ * the right, a deck of event cards, the moment's card sliding in on top and pushing the
+ * earlier ones back into the stack. Each card ends with a small piece of the product
+ * (a chip, a stack of flags, channel tags, a live agent). It plays by itself while on
+ * screen; pointing at it holds it, picking a moment jumps there and ends the tour.
  */
-const STORY_MS = 5000;
+const STORY_MS = 3600;
+const STORY_FLAGS = ["US", "GB", "FR", "DE", "ES", "AU"];
+const STORY_CHANNELS = [
+  { name: "Flyering", bar: "bg-[var(--ds-tw-amber-500)]" },
+  { name: "Direct mail", bar: "bg-primary" },
+  { name: "EDDM", bar: "bg-[var(--ds-tw-indigo-500)]" },
+  { name: "Inserts", bar: "bg-[var(--ds-tw-teal-500)]" },
+];
+
+/** A "start date" style chip: a coloured bar, a label and a line under it. */
+function EventChip({ bar, label, sub }: { bar: string; label: string; sub?: string }) {
+  return (
+    <span className="inline-flex items-stretch gap-2 rounded-lg border bg-card py-1.5 pr-3 pl-1.5">
+      <span className={cn("w-[3px] rounded-full", bar)} />
+      <span className="leading-tight">
+        <span className="block text-xs font-semibold">{label}</span>
+        {sub && <span className="block text-[11px] text-muted-foreground">{sub}</span>}
+      </span>
+    </span>
+  );
+}
+
+function StoryFooter({ i }: { i: number }) {
+  if (i === 0)
+    return (
+      <div className="flex flex-wrap gap-2">
+        <EventChip bar="bg-primary" label="Founded" sub="Sydney, 2014" />
+        <EventChip bar="bg-[var(--ds-tw-amber-500)]" label="Hand-to-hand" sub="Flyering" />
+      </div>
+    );
+  if (i === 1)
+    return (
+      <div className="flex items-center gap-3">
+        <span className="flex -space-x-1.5">
+          {STORY_FLAGS.map((code) => (
+            <span
+              key={code}
+              className="relative size-7 overflow-hidden rounded-full ring-2 ring-card after:absolute after:inset-0 after:rounded-full after:ring-1 after:ring-black/10 after:ring-inset"
+            >
+              <Flag id={code} className="size-full" />
+            </span>
+          ))}
+        </span>
+        <span className="text-sm font-medium">
+          +8 more <span className="text-muted-foreground">countries</span>
+        </span>
+      </div>
+    );
+  if (i === 2)
+    return (
+      <div className="flex flex-wrap gap-2">
+        {STORY_CHANNELS.map((c) => (
+          <EventChip key={c.name} bar={c.bar} label={c.name} />
+        ))}
+      </div>
+    );
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-xl border bg-muted/40 px-3 py-2.5">
+      <span className="flex items-center gap-2 text-sm font-medium">
+        <span className="grid size-7 place-items-center rounded-lg bg-brand-subtle text-brand">
+          <IconSparkles className="size-4" aria-hidden />
+        </span>
+        AI agents · planning 6 routes
+      </span>
+      <span className="flex items-center gap-1.5 text-xs font-semibold text-[var(--ds-tw-emerald-600)]">
+        <span className="size-1.5 rounded-full bg-[var(--ds-tw-emerald-500)]" /> Live
+      </span>
+    </div>
+  );
+}
 
 export function AboutStory() {
   const { story } = about;
   const n = story.stops.length;
   const [active, setActive] = useState(0);
-  const [touched, setTouched] = useState(false); // picked by hand: no more touring
-  const [held, setHeld] = useState(false); // pointer on the card: pause
+  const [touched, setTouched] = useState(false);
+  const [held, setHeld] = useState(false);
   const root = useRef<HTMLDivElement>(null);
   const onScreen = useInView(root, { amount: 0.5 });
   const reduce = useReducedMotion();
@@ -125,7 +196,6 @@ export function AboutStory() {
     return () => clearTimeout(t);
   }, [touring, active, n]);
 
-  const stop = story.stops[active];
   const pick = (i: number) => {
     setTouched(true);
     setActive(i);
@@ -145,83 +215,92 @@ export function AboutStory() {
               ref={root}
               onPointerEnter={() => setHeld(true)}
               onPointerLeave={() => setHeld(false)}
-              className="overflow-hidden rounded-3xl border bg-card"
+              className="grid gap-8 rounded-3xl border bg-muted/40 p-4 sm:p-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-center lg:gap-12 lg:p-12"
             >
-              {/* The rail: a stop per moment, the line filling toward the next one */}
-              <div className="border-b px-2 sm:px-6">
-              <div role="tablist" aria-label={story.title} className="relative grid grid-cols-4">
-                <div aria-hidden className="absolute inset-x-[12.5%] top-[27px] h-0.5 bg-border sm:top-[31px]">
-                  <motion.div
-                    className="h-full origin-left bg-primary"
+              {/* The time list: a highlight card glides from row to row */}
+              <div role="tablist" aria-label={story.title} className="relative order-2 lg:order-1">
+                <span aria-hidden className="absolute top-4 bottom-4 left-[11px] w-px bg-border">
+                  <motion.span
+                    className="absolute inset-x-0 top-0 block bg-primary"
                     initial={false}
-                    // While touring it creeps toward the next stop over the stop's time
-                    animate={{ scaleX: (active + (touring && active < n - 1 ? 1 : 0)) / (n - 1) }}
-                    transition={
-                      touring && active < n - 1
-                        ? { duration: STORY_MS / 1000, ease: "linear" }
-                        : { duration: 0.5, ease }
-                    }
+                    animate={{ height: `${(active / (n - 1)) * 100}%` }}
+                    transition={{ duration: 0.6, ease }}
                   />
-                </div>
-                {story.stops.map((s, i) => {
-                  const done = i <= active;
-                  return (
-                    <button
-                      key={s.title}
-                      type="button"
-                      role="tab"
-                      aria-selected={i === active}
-                      onClick={() => pick(i)}
-                      className="group relative flex cursor-pointer flex-col items-center gap-2 pt-5 pb-4 outline-none sm:pt-6"
-                    >
-                      <span
-                        className={cn(
-                          "relative z-10 grid size-4 place-items-center rounded-full border-2 bg-card transition-colors duration-300 group-focus-visible:ring-3 group-focus-visible:ring-ring/50",
-                          done ? "border-primary" : "border-border group-hover:border-primary/50"
-                        )}
-                      >
-                        <span className={cn("size-1.5 rounded-full transition-colors duration-300", i === active ? "bg-primary" : done ? "bg-primary/40" : "bg-transparent")} />
-                      </span>
-                      <span
-                        className={cn(
-                          "text-center text-[11px] font-semibold tracking-wider uppercase transition-colors sm:text-xs",
-                          i === active ? "text-brand" : "text-muted-foreground group-hover:text-foreground"
-                        )}
-                      >
-                        {s.when}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
+                </span>
+                <ul className="space-y-1">
+                  {story.stops.map((s, i) => {
+                    const on = i === active;
+                    return (
+                      <li key={s.title}>
+                        <button
+                          type="button"
+                          role="tab"
+                          aria-selected={on}
+                          onClick={() => pick(i)}
+                          className="relative flex w-full cursor-pointer items-center gap-4 rounded-2xl py-3 pr-4 pl-0 text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                        >
+                          {on && (
+                            <motion.span
+                              layoutId="story-highlight"
+                              transition={{ type: "spring", stiffness: 380, damping: 32 }}
+                              className="absolute inset-y-0 right-0 left-7 rounded-2xl bg-card shadow-[0_1px_2px_rgb(0_0_0/0.05),0_10px_24px_-14px_rgb(0_0_0/0.25)] ring-1 ring-border"
+                            />
+                          )}
+                          <span
+                            className={cn(
+                              "relative z-10 grid size-[23px] shrink-0 place-items-center rounded-full border-2 bg-background transition-colors duration-300",
+                              i <= active ? "border-primary" : "border-border"
+                            )}
+                          >
+                            <span className={cn("size-2 rounded-full transition-colors duration-300", on ? "bg-primary" : i < active ? "bg-primary/40" : "bg-transparent")} />
+                          </span>
+                          <span className="relative z-10 pl-3">
+                            <span className={cn("block text-xs font-semibold tracking-wider uppercase transition-colors", on ? "text-brand" : "text-muted-foreground")}>
+                              {s.when}
+                            </span>
+                            <span className={cn("block font-medium transition-colors", on ? "text-foreground" : "text-muted-foreground")}>{s.title}</span>
+                          </span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
               </div>
 
-              {/* The moment in focus */}
-              <div role="tabpanel" aria-live="polite" className="relative min-h-[260px] p-6 sm:min-h-[220px] sm:p-10">
-                <AnimatePresence mode="wait" initial={false}>
-                  <motion.div
-                    key={active}
-                    initial={{ opacity: 0, y: 12 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    transition={{ duration: 0.35, ease }}
-                    className="grid items-center gap-6 sm:grid-cols-[0.9fr_1.1fr] sm:gap-12"
-                  >
-                    <div>
-                      <p className="font-heading text-7xl leading-none font-bold tracking-tight text-brand tabular-nums sm:text-8xl">
-                        {stop.value}
-                      </p>
-                      <p className="mt-3 text-sm font-semibold tracking-wider text-muted-foreground uppercase">{stop.unit}</p>
-                    </div>
-                    <div className="space-y-3 sm:border-l sm:pl-12">
-                      <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase tabular-nums">
-                        {String(active + 1).padStart(2, "0")} / {String(n).padStart(2, "0")}
-                      </p>
-                      <h3 className="text-2xl font-semibold text-balance">{stop.title}</h3>
-                      <p className="text-lg text-pretty text-muted-foreground">{stop.body}</p>
-                    </div>
-                  </motion.div>
-                </AnimatePresence>
+              {/* The deck: the moment's card on top, the earlier ones pushed back */}
+              <div className="relative order-1 h-[296px] sm:h-[300px] lg:order-2" aria-live="polite">
+                {story.stops.map((s, i) => {
+                  const depth = active - i; // 0 = on top; 1, 2 = behind; < 0 = not yet
+                  return (
+                    <motion.article
+                      key={s.title}
+                      aria-hidden={depth !== 0}
+                      initial={false}
+                      animate={
+                        depth < 0
+                          ? { opacity: 0, y: 40, scale: 1, rotate: 2 }
+                          : { opacity: depth > 2 ? 0 : 1 - depth * 0.25, y: -depth * 18, scale: 1 - depth * 0.05, rotate: 0 }
+                      }
+                      transition={{ type: "spring", stiffness: 260, damping: 28 }}
+                      style={{ zIndex: 10 - Math.abs(depth) }}
+                      className="absolute inset-x-0 bottom-0 flex h-[260px] flex-col rounded-3xl border bg-card p-6 shadow-[0_1px_2px_rgb(0_0_0/0.05),0_24px_48px_-28px_rgb(0_0_0/0.35)] sm:h-[248px] sm:p-7"
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase tabular-nums">
+                            {s.when} · {String(i + 1).padStart(2, "0")}/{String(n).padStart(2, "0")}
+                          </p>
+                          <h3 className="mt-2 text-2xl font-semibold text-balance">{s.title}</h3>
+                        </div>
+                        <p className="font-heading text-4xl leading-none font-bold tracking-tight text-brand tabular-nums">{s.value}</p>
+                      </div>
+                      <p className="mt-3 text-pretty text-muted-foreground">{s.body}</p>
+                      <div className="mt-auto pt-4">
+                        <StoryFooter i={i} />
+                      </div>
+                    </motion.article>
+                  );
+                })}
               </div>
             </div>
           </Reveal>
