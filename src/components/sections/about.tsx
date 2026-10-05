@@ -12,16 +12,13 @@ import {
   IconMapPin,
   IconMapPins,
   IconPrinter,
-  IconChartBar,
-  IconMailOpened,
-  IconShieldCheck,
-  IconSparkles,
   IconWalk,
   IconWorld,
 } from "@tabler/icons-react";
 import { MotionConfig, motion } from "motion/react";
 
 import { type Place } from "@/components/sections/globe";
+import { IsoArt } from "@/components/sections/iso-art";
 import { Flag, WorldMap } from "@/components/sections/world-map";
 import { Button } from "@/components/ui/button";
 import { about } from "@/content/site";
@@ -273,7 +270,10 @@ export function AboutMission() {
 
 /* -------------------------------- Values -------------------------------- */
 
-/** The four beliefs, simply: an icon and a title on one line, a sentence under it. */
+/**
+ * The four beliefs as cards, after Tailark's: a line drawing of a raised object in calm
+ * space (it traces itself in, and lifts on hover), then the title and a sentence.
+ */
 export function AboutValues() {
   return (
     <MotionConfig reducedMotion="user">
@@ -283,40 +283,29 @@ export function AboutValues() {
             <Eyebrow>{about.valuesEyebrow}</Eyebrow>
             <h2 className="text-3xl font-bold text-balance sm:text-4xl">{about.valuesTitle}</h2>
           </Reveal>
-          <ul className="grid gap-x-10 gap-y-10 border-t pt-12 sm:grid-cols-2 lg:grid-cols-4">
-            {about.values.map((value, i) => {
-              const Icon = valueIcons[value.icon];
-              return (
-                <motion.li
-                  key={value.title}
-                  initial={{ opacity: 0, y: 12 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true, amount: 0.5 }}
-                  transition={{ duration: 0.5, delay: i * 0.08, ease }}
-                  className="space-y-3"
-                >
-                  {/* The icon sits by the first line when a title wraps */}
-                  <h3 className="flex items-start gap-2.5 font-semibold text-balance">
-                    <Icon className="mt-0.5 size-5 shrink-0 text-brand" aria-hidden />
-                    {value.title}
-                  </h3>
-                  <p className="text-muted-foreground text-pretty">{value.body}</p>
-                </motion.li>
-              );
-            })}
+          <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {about.values.map((value, i) => (
+              <motion.li
+                key={value.title}
+                initial={{ opacity: 0, y: 14 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.3 }}
+                transition={{ duration: 0.6, delay: i * 0.08, ease }}
+                className="group flex flex-col rounded-3xl border bg-card p-6 transition-shadow duration-500 hover:shadow-[0_20px_40px_-28px_rgb(0_0_0/0.3)]"
+              >
+                <div className="grid h-44 place-items-center">
+                  <IsoArt name={value.art} className="w-full max-w-[240px]" />
+                </div>
+                <h3 className="mt-6 font-semibold text-balance">{value.title}</h3>
+                <p className="mt-2 text-sm text-muted-foreground text-pretty">{value.body}</p>
+              </motion.li>
+            ))}
           </ul>
         </div>
       </section>
     </MotionConfig>
   );
 }
-
-const valueIcons = {
-  sparkles: IconSparkles,
-  mail: IconMailOpened,
-  chart: IconChartBar,
-  shield: IconShieldCheck,
-} as const;
 
 /* --------------------------------- World -------------------------------- */
 
