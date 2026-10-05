@@ -341,7 +341,7 @@ function Bars() {
         <g key={x}>
           <Block pts={roundRect(x, 0, 28, 28, 6)} h={h} z={6} pink={i === bars.length - 1} />
           {/* An inset on each bar's top, like the keycap's */}
-          <Flat z={6 + h} pts={closed(roundRect(x, 0, 16, 16, 4))} />
+          <Flat z={6 + h} pink={i === bars.length - 1} pts={closed(roundRect(x, 0, 16, 16, 4))} />
         </g>
       ))}
     </g>
