@@ -210,10 +210,11 @@ const sparkle = (cx: number, cy: number, r: number, k = 3.2, steps = 96): P[] =>
  * lying on a card around `c`: drawn along the card (x across, +y down the card), then
  * turned by `turn` radians on the card's surface. Its two edges show the perspective.
  */
-const checkShape = ([cx, cy]: P, turn: number, t = 1.9): P[] => {
-  const A: P = [-9.5, -1];
-  const B: P = [-3, 5.5];
-  const C: P = [10.5, -8.5];
+const checkShape = ([cx, cy]: P, turn: number, scale = 0.85): P[] => {
+  const t = 1.9 * scale;
+  const A: P = [-9.5 * scale, -1 * scale];
+  const B: P = [-3 * scale, 5.5 * scale];
+  const C: P = [10.5 * scale, -8.5 * scale];
   const unit = ([x, y]: P): P => {
     const l = Math.hypot(x, y);
     return [x / l, y / l];
@@ -234,7 +235,13 @@ const checkShape = ([cx, cy]: P, turn: number, t = 1.9): P[] => {
   ];
   const cs = Math.cos(turn);
   const sn = Math.sin(turn);
-  return pts.map(([x, y]) => [cx + x * cs - y * sn, cy + x * sn + y * cs]);
+  const turned = pts.map(([x, y]) => [x * cs - y * sn, x * sn + y * cs] as P);
+  // Centered on c: the middle of its bounds, not the corner it was drawn from
+  const xs = turned.map((p) => p[0]);
+  const ys = turned.map((p) => p[1]);
+  const mx = (Math.min(...xs) + Math.max(...xs)) / 2;
+  const my = (Math.min(...ys) + Math.max(...ys)) / 2;
+  return turned.map(([x, y]) => [cx + x - mx, cy + y - my]);
 };
 const CHECK_TURN = -0.38; // radians: along the card it reads as an "L"; turned a little, as a check
 
