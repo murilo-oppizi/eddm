@@ -490,7 +490,7 @@ export const about = {
   valuesTitle: "Four ideas behind everything we build",
   values: [
     {
-      art: "agents",
+      art: "agents-key",
       title: "Agents should power execution",
       body: "Our AI agents do the legwork, from finding routes to matching your audience and estimating cost, so a mailing takes minutes to plan, not days.",
     },
@@ -505,7 +505,7 @@ export const about = {
       body: "Marketing in the physical world should be held to the same standards as digital: every campaign tracks scans and results by route.",
     },
     {
-      art: "shield",
+      art: "quality-homes",
       title: "Scale should not break quality",
       body: "One neighborhood or a whole city, every campaign gets the same USPS checks, local printing and delivery you can follow.",
     },

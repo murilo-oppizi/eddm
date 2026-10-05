@@ -151,7 +151,17 @@ const onScreen = (cx: number, cy: number, r: number, u: number): P => [
 
 /* ------------------------------ The pictures ----------------------------- */
 
-export type IsoArtName = "agents" | "postcard" | "scans" | "shield";
+export type IsoArtName =
+  | "agents"
+  | "postcard"
+  | "scans"
+  | "shield"
+  // v2 candidates
+  | "agents-chip"
+  | "agents-key"
+  | "agents-layers"
+  | "quality-homes"
+  | "quality-shield";
 
 /** One picture: the object (which lifts on hover of a `group` around it) over a soft shadow. */
 export function IsoArt({ name, className }: { name: IsoArtName; className?: string }) {
@@ -183,6 +193,11 @@ export function IsoArt({ name, className }: { name: IsoArtName; className?: stri
         {name === "postcard" && <Postcard />}
         {name === "scans" && <Scans />}
         {name === "shield" && <Shield />}
+        {name === "agents-chip" && <Chip />}
+        {name === "agents-key" && <Key />}
+        {name === "agents-layers" && <Layers />}
+        {name === "quality-homes" && <Homes />}
+        {name === "quality-shield" && <ShieldV2 />}
       </g>
     </motion.svg>
   );
@@ -248,3 +263,139 @@ function Shield() {
     </g>
   );
 }
+
+/* ----------------------------- v2 candidates ----------------------------- */
+
+const closed = (pts: P[]): P[] => [...pts, pts[0]];
+
+/** A rounded rectangle on the ground (corners sampled, so it raises cleanly). */
+const roundRect = (cx: number, cy: number, w: number, dd: number, r: number, steps = 6): P[] => {
+  const out: P[] = [];
+  const corners: [number, number, number][] = [
+    [cx + w / 2 - r, cy - dd / 2 + r, -Math.PI / 2],
+    [cx + w / 2 - r, cy + dd / 2 - r, 0],
+    [cx - w / 2 + r, cy + dd / 2 - r, Math.PI / 2],
+    [cx - w / 2 + r, cy - dd / 2 + r, Math.PI],
+  ];
+  for (const [x, y, a0] of corners)
+    for (let i = 0; i <= steps; i++) {
+      const a = a0 + (i / steps) * (Math.PI / 2);
+      out.push([x + r * Math.cos(a), y + r * Math.sin(a)]);
+    }
+  return out;
+};
+
+/** Agents, as a chip: a square body on pins, a pink sparkle printed on top. */
+function Chip() {
+  const S = 74;
+  const z = 4;
+  const h = 10;
+  const pins = [-24, -8, 8, 24];
+  // Pins on the far sides first (the body hides most of them), the near sides last
+  const far = [
+    ...pins.map((t) => rect(t, -S / 2 - 6, 6, 12)),
+    ...pins.map((t) => rect(-S / 2 - 6, t, 12, 6)),
+  ];
+  const near = [
+    ...pins.map((t) => rect(t, S / 2 + 6, 6, 12)),
+    ...pins.map((t) => rect(S / 2 + 6, t, 12, 6)),
+  ];
+  return (
+    <g>
+      {far.map((p, i) => (
+        <Block key={`f${i}`} pts={p} h={2} z={0} />
+      ))}
+      <Block pts={roundRect(0, 0, S, S, 6)} h={h} z={z} />
+      {/* An inset square on top, and the sparkle in it */}
+      <Flat z={z + h} pts={closed(roundRect(0, 0, S - 22, S - 22, 4))} />
+      <Flat z={z + h} pink width={1.6} pts={closed(sparkle(0, 0, 20))} />
+      {near.map((p, i) => (
+        <Block key={`n${i}`} pts={p} h={2} z={0} />
+      ))}
+    </g>
+  );
+}
+
+/** Agents, as a keycap: one big rounded key on a plate, a pink sparkle on its top. */
+function Key() {
+  return (
+    <g>
+      <Block pts={roundRect(0, 0, 128, 128, 14)} h={6} />
+      <Block pts={roundRect(0, 0, 84, 84, 14)} h={20} z={6} />
+      <Flat z={26} pts={closed(roundRect(0, 0, 66, 66, 10))} />
+      <Flat z={26} pink width={1.6} pts={closed(sparkle(0, 0, 22))} />
+    </g>
+  );
+}
+
+/** Agents, as a stack of layers (the agents' work, piled up): the top one sparkles. */
+function Layers() {
+  return (
+    <g>
+      {[0, 16, 32].map((z, i) => (
+        <g key={z}>
+          <Block pts={roundRect(0, 0, 92, 92, 10)} h={4} z={z} />
+          {i < 2 && <Flat z={z + 4} pts={[[-28, -14], [10, -14]]} />}
+        </g>
+      ))}
+      <Flat z={36} pink width={1.6} pts={closed(sparkle(0, 0, 22))} />
+    </g>
+  );
+}
+
+const iso3 = (x: number, y: number, z: number) => iso([x, y], z);
+
+/** A little house: a box with a pitched roof, its ridge running down-right. */
+function House({ cx, cy, z = 0, w = 24, dd = 18, h = 12, r = 8, pink }: { cx: number; cy: number; z?: number; w?: number; dd?: number; h?: number; r?: number; pink?: boolean }) {
+  const x0 = cx - w / 2;
+  const x1 = cx + w / 2;
+  const y0 = cy - dd / 2;
+  const y1 = cy + dd / 2;
+  const faces: P[][] = [
+    // the far roof slope, the end wall with its gable, the long wall, the near slope
+    [iso3(x0, y0, z + h), iso3(x1, y0, z + h), iso3(x1, cy, z + h + r), iso3(x0, cy, z + h + r)],
+    [iso3(x1, y0, z), iso3(x1, y1, z), iso3(x1, y1, z + h), iso3(x1, cy, z + h + r), iso3(x1, y0, z + h)],
+    [iso3(x0, y1, z), iso3(x1, y1, z), iso3(x1, y1, z + h), iso3(x0, y1, z + h)],
+    [iso3(x0, y1, z + h), iso3(x1, y1, z + h), iso3(x1, cy, z + h + r), iso3(x0, cy, z + h + r)],
+  ];
+  return (
+    <g>
+      {faces.map((f, i) => (
+        <g key={i}>
+          <Face path={d(f, true)} />
+          <Stroke path={d(f, true)} pink={pink} />
+        </g>
+      ))}
+    </g>
+  );
+}
+
+/** Quality at scale: a neighborhood of identical homes on a block, the nearest in pink. */
+function Homes() {
+  const step = 36;
+  const homes = [-1, 0, 1].flatMap((i) => [-1, 0, 1].map((j) => [i * step, j * step] as P));
+  homes.sort((a, b) => a[0] + a[1] - (b[0] + b[1]));
+  return (
+    <g>
+      <Block pts={roundRect(0, 0, 132, 132, 10)} h={5} />
+      {homes.map(([x, y], i) => (
+        <House key={`${x},${y}`} cx={x} cy={y} z={5} pink={i === homes.length - 1} />
+      ))}
+    </g>
+  );
+}
+
+/** Quality, a cleaner shield: a raised rim around a lower face, the check raised in pink. */
+function ShieldV2() {
+  const outline = shield();
+  const inner = outline.map(([x, y]) => [x * 0.78 + 3, y * 0.78] as P);
+  const check = [onScreen(4, 0, -16, 2), onScreen(4, 0, -5, -8), onScreen(4, 0, 17, 14)];
+  return (
+    <g>
+      <Block pts={outline} h={14} />
+      <Flat z={14} pts={closed(inner)} />
+      <Flat z={14} pink width={3} pts={check} />
+    </g>
+  );
+}
+
