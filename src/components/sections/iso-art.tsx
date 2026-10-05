@@ -1,5 +1,6 @@
 "use client";
 
+import { useId } from "react";
 import { motion, type Variants } from "motion/react";
 
 import { cn } from "@/lib/utils";
@@ -182,6 +183,11 @@ function Flat({ pts, z = 0, pink, width }: { pts: P[]; z?: number; pink?: boolea
 /** Lines drawn on an upright face that looks down-left (a fixed y): points as (x, z). */
 function Wall({ pts, y, pink, width }: { pts: [number, number][]; y: number; pink?: boolean; width?: number }) {
   return <Stroke path={d(pts.map(([x, z]) => iso([x, y], z)))} pink={pink} width={width} />;
+}
+
+/** Lines drawn on an upright face that looks down-right (a fixed x): points as (y, z). */
+function WallX({ pts, x, pink, width }: { pts: [number, number][]; x: number; pink?: boolean; width?: number }) {
+  return <Stroke path={d(pts.map(([y, z]) => iso([x, y], z)))} pink={pink} width={width} />;
 }
 
 /* ------------------------------- The shapes ------------------------------ */
@@ -493,17 +499,110 @@ function Paper({
 }
 
 /**
- * The stand every story scene stands on: a round base (round, so it can't read as a
- * phone), the scene a little smaller on top of it, so the four sit as one set.
+ * The stand a story scene stands on, a different one for each, in its shape and in what
+ * it does: a print shop's output tray the flyers sit in (the top one lifts out), a
+ * two-step octagonal plinth for the map (the newest pin sends out a ripple), a belt whose rails
+ * roll (the channels), a disc with an orbit circling it (the agent). The scene sits on
+ * top, a little smaller, so the four read as a set without being the same.
  */
-const STAND_R = 88;
-const STAND_H = 6;
-function Stand({ children, x = 0 }: { children: React.ReactNode; x?: number }) {
+type StandKind = "tray" | "steps" | "belt" | "orbit";
+
+/** Dashes that keep moving along a path (CSS, so it doesn't fight the draw-in). */
+function Marching({ path, speed = 1.2 }: { path: string; speed?: number }) {
+  return (
+    <motion.path
+      d={path}
+      variants={fadeIn}
+      className={line}
+      strokeWidth={0.85}
+      strokeDasharray="4 6"
+      style={{ animation: `march ${speed}s linear infinite` }}
+    />
+  );
+}
+
+/** A regular octagon on the ground, flat sides along the ground's axes. */
+const octagon = (r: number): P[] =>
+  Array.from({ length: 8 }, (_, i) => {
+    const t = (i / 8) * Math.PI * 2 + Math.PI / 8;
+    return [r * Math.cos(t), r * Math.sin(t)] as P;
+  });
+
+/** An open tray: walls round a sunken floor, seen into from above. */
+function Tray() {
+  const id = useId().replace(/:/g, "");
+  const W = 150;
+  const D = 112;
+  const H = 12; // the rim
+  const F = 3; // the floor
+  const i = 7; // the walls' thickness
+  const ix = W / 2 - i;
+  const iy = D / 2 - i;
+  const opening = d([iso([-ix, -iy], H), iso([ix, -iy], H), iso([ix, iy], H), iso([-ix, iy], H)], true);
+  const floor = d([iso([-ix, -iy], F), iso([ix, -iy], F), iso([ix, iy], F), iso([-ix, iy], F)], true);
+  // The two far walls' inner sides (they face you), and where they meet the floor
+  const back = d([iso([-ix, -iy], F), iso([ix, -iy], F), iso([ix, -iy], H), iso([-ix, -iy], H)], true);
+  const left = d([iso([-ix, -iy], F), iso([-ix, iy], F), iso([-ix, iy], H), iso([-ix, -iy], H)], true);
+  return (
+    <g>
+      <Block pts={roundRect(0, 0, W, D, 6)} h={H} />
+      <defs>
+        <clipPath id={`${id}-in`}>
+          <path d={opening} />
+        </clipPath>
+      </defs>
+      <g clipPath={`url(#${id}-in)`}>
+        <Face path={floor + back + left} />
+        <Stroke path={d([iso([ix, -iy], F), iso([-ix, -iy], F), iso([-ix, iy], F)])} />
+        <Stroke path={d([iso([-ix, -iy], F), iso([-ix, -iy], H)])} />
+      </g>
+      <Stroke path={opening} />
+    </g>
+  );
+}
+
+function Stand({ kind, children, x = 0 }: { kind: StandKind; children: React.ReactNode; x?: number }) {
+  let base: React.ReactNode = null;
+  let lift = 6; // the height the scene stands at
+  if (kind === "tray") {
+    base = <Tray />;
+    lift = 3;
+  } else if (kind === "steps") {
+    base = (
+      <g>
+        <Block pts={octagon(98)} h={5} />
+        <Block pts={octagon(84)} h={5} z={5} />
+      </g>
+    );
+    lift = 10;
+  } else if (kind === "belt") {
+    // A belt along the row of things on it, two rails rolling
+    const rot = -Math.PI / 4;
+    const u: P = [Math.cos(rot), Math.sin(rot)];
+    const v: P = [-u[1], u[0]];
+    const rail = (k: number) => d([-92, 92].map((t) => iso([u[0] * t + v[0] * k, u[1] * t + v[1] * k], 8)));
+    base = (
+      <g>
+        <Block pts={roundRect(0, 0, 210, 76, 30, rot, 16)} h={8} />
+        <Marching path={rail(-30)} speed={0.9} />
+        <Marching path={rail(30)} speed={0.9} />
+      </g>
+    );
+    lift = 8;
+  } else {
+    const orbit = closed(circle(0, 0, 96, 96));
+    base = (
+      <g>
+        <Marching path={d(orbit.map((p) => iso(p)))} speed={1.4} />
+        <Block pts={circle(0, 0, 84, 72)} h={6} />
+        <Flat z={6} pts={closed(circle(0, 0, 76, 72))} />
+      </g>
+    );
+  }
   return (
     <g transform="translate(0 4) scale(0.86)">
-      <Block pts={circle(0, 0, STAND_R, 72)} h={STAND_H} />
-      <Flat z={STAND_H} pts={closed(circle(0, 0, STAND_R - 9, 72))} />
-      <g transform={`translate(${x} ${-STAND_H})`}>{children}</g>
+      {base}
+      <g transform={`translate(${x} ${-lift})`}>{children}</g>
     </g>
   );
 }
@@ -513,11 +612,11 @@ function StoryFlyers() {
   const t = 1.4;
   const n = 7;
   return (
-    <Stand x={-6}>
+    <Stand kind="tray" x={-6}>
       {Array.from({ length: n - 1 }, (_, i) => (
-        <Block key={i} pts={roundRect(-18 + (i % 2) * 1.5, 6 - (i % 3), 60, 84, 1.5, 0.025 * ((i % 3) - 1))} h={t} z={i * t} />
+        <Block key={i} pts={roundRect(-14 + (i % 2) * 1.5, 4 - (i % 3), 60, 84, 1.5, 0.025 * ((i % 3) - 1))} h={t} z={i * t} />
       ))}
-      <Paper cx={-18} cy={6} z={(n - 1) * t} />
+      <Paper cx={-14} cy={4} z={(n - 1) * t} />
       <Drop delay={0.35}>
         <Bob>
           <Paper cx={30} cy={-34} z={44} rot={-0.18} pink />
@@ -563,9 +662,9 @@ function Pin({ x, y, z = 0, pink }: { x: number; y: number; z?: number; pink?: b
 /** Growing, 12+ countries: a folded paper map (four panels, zigzag), pins dropping onto
  *  it one after another along a dashed route; the newest in pink. */
 function StoryPins() {
-  const xs = [-62, -31, 0, 31, 62]; // the folds, across the map
+  const xs = [-56, -28, 0, 28, 56]; // the folds, across the map
   const zs = [0, 9, 0, 9, 0];
-  const Y = 42; // half the map's depth
+  const Y = 38; // half the map's depth
   const zAt = (x: number) => {
     const i = Math.max(0, Math.min(xs.length - 2, xs.findIndex((v, k) => x >= v && x <= xs[k + 1])));
     const f = (x - xs[i]) / (xs[i + 1] - xs[i]);
@@ -584,10 +683,10 @@ function StoryPins() {
     return out.sort((p, q) => p[0] - q[0]);
   };
   const pins: P[] = [
-    [-48, 15],
-    [-16, -22],
-    [18, 18],
-    [46, -12],
+    [-43, 13],
+    [-14, -20],
+    [16, 16],
+    [41, -11],
   ];
   const dashes = pins.slice(1).flatMap((b, i) => {
     const a = pins[i];
@@ -601,7 +700,7 @@ function StoryPins() {
     });
   });
   return (
-    <Stand>
+    <Stand kind="steps">
       {/* The panels, far to near */}
       {xs.slice(0, -1).map((x0, i) => {
         const x1 = xs[i + 1];
@@ -614,12 +713,27 @@ function StoryPins() {
         );
       })}
       {/* Roads and a river, printed on the map */}
-      <Stroke path={onMap(across([[-62, 28], [62, 25]]))} />
-      <Stroke path={onMap(across([[-62, -32], [-8, -7], [62, -30]]))} />
-      <Stroke path={onMap(across([[-62, -5], [-25, 3], [16, -3], [62, 7]]))} />
+      <Stroke path={onMap(across([[-56, 25], [56, 22]]))} />
+      <Stroke path={onMap(across([[-56, -29], [-7, -6], [56, -27]]))} />
+      <Stroke path={onMap(across([[-56, -5], [-22, 3], [14, -3], [56, 6]]))} />
       {dashes.map((seg, k) => (
         <Stroke key={k} path={onMap(seg)} />
       ))}
+      {/* The newest pin's signal: a ring spreading out over the map, again and again */}
+      {(() => {
+        const [px, py] = pins[pins.length - 1];
+        const ring = (r: number) => d(closed(circle(px, py, r, 36)).map((p) => iso(p, zAt(px))));
+        return (
+          <motion.path
+            className={accent}
+            fill="none"
+            strokeWidth={1}
+            initial={false}
+            animate={{ d: [ring(4), ring(26)], opacity: [0, 0.9, 0] }}
+            transition={{ duration: 2, delay: 1.3, repeat: Infinity, repeatDelay: 0.3, ease: "easeOut" }}
+          />
+        );
+      })()}
       {pins.map(([x, y], i) => (
         <Drop key={i} delay={0.3 + i * 0.22}>
           <Pin x={x} y={y} z={zAt(x)} pink={i === pins.length - 1} />
@@ -635,11 +749,11 @@ function StoryChannels() {
   // Their centers, placed in a row across the picture
   const flyer: P = [-42, 30];
   const env: P = [-2, 6];
-  const box = { cx: 28, cy: -28, w: 42, d: 42, h: 30 };
+  const box = { cx: 28, cy: -28, w: 40, d: 36, h: 32 };
   const ew = 44;
   const ed = 30;
   return (
-    <Stand>
+    <Stand kind="belt">
       <Drop delay={0.3}>
         <Paper cx={flyer[0]} cy={flyer[1]} z={0} w={34} l={48} rot={0.05} />
       </Drop>
@@ -655,11 +769,36 @@ function StoryChannels() {
           ]}
         />
       </Drop>
-      {/* The parcel: one band of pink tape over the top and down the near side */}
+      {/* The parcel: a shipping box, sharp-cornered; a band of pink tape over the top and
+          down the front, a shipping label with a barcode on its side */}
       <Drop delay={0.7}>
-        <Block pts={roundRect(box.cx, box.cy, box.w, box.d, 3)} h={box.h} />
-        <Flat z={box.h} pink width={3} pts={[[box.cx, box.cy - box.d / 2 + 1], [box.cx, box.cy + box.d / 2]]} />
-        <Wall y={box.cy + box.d / 2} pink width={3} pts={[[box.cx, box.h], [box.cx, 1]]} />
+        <Block pts={roundRect(box.cx, box.cy, box.w, box.d, 1.2)} h={box.h} />
+        <Block pts={roundRect(box.cx, box.cy, 8, box.d, 0.4)} h={0.6} z={box.h} pink />
+        <Wall
+          y={box.cy + box.d / 2}
+          pink
+          pts={[
+            [box.cx - 4, box.h],
+            [box.cx - 4, box.h - 13],
+            [box.cx + 4, box.h - 13],
+            [box.cx + 4, box.h],
+          ]}
+        />
+        {(() => {
+          const x = box.cx + box.w / 2;
+          const y0 = box.cy - 12;
+          const y1 = box.cy + 10;
+          return (
+            <g>
+              <WallX x={x} pts={[[y0, 7], [y1, 7], [y1, 22], [y0, 22], [y0, 7]]} />
+              <WallX x={x} width={1.6} pts={[[y0 + 4, 18.5], [y0 + 14, 18.5]]} />
+              <WallX x={x} pts={[[y0 + 4, 15], [y0 + 11, 15]]} />
+              {[0, 2, 3, 5, 7, 8, 10, 12, 13].map((k) => (
+                <WallX key={k} x={x} pts={[[y0 + 4 + k, 9.5], [y0 + 4 + k, 12.5]]} />
+              ))}
+            </g>
+          );
+        })()}
       </Drop>
     </Stand>
   );
@@ -685,7 +824,7 @@ function StoryAgent() {
     return { from, to };
   });
   return (
-    <Stand>
+    <Stand kind="orbit">
       {/* The dashed lines on the ground */}
       {lines.map(({ from, to }, i) =>
         Array.from({ length: 6 }, (_, k) => {

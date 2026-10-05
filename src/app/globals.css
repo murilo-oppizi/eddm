@@ -84,6 +84,14 @@
 
 /* The hero cards' gentle bob (see hero-composition.tsx). Animating `translate` in CSS
    keeps it on the compositor: no main-thread work per frame. */
+/* Marching dashes (the story scenes' moving bases: a belt, a route, an orbit). The
+   dash pattern is 4 + 6, so moving it by 10 loops seamlessly. */
+@keyframes march {
+  to {
+    stroke-dashoffset: -10;
+  }
+}
+
 @keyframes float-y {
   50% {
     translate: 0 calc(-1 * var(--float-distance));
