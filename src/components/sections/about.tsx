@@ -20,6 +20,7 @@ import { MotionConfig, motion } from "motion/react";
 import { type Place } from "@/components/sections/globe";
 import { IsoArt } from "@/components/sections/iso-art";
 import { Flag, WorldMap } from "@/components/sections/world-map";
+import { BlurText, blurIn, blurTextDuration } from "@/components/ui/blur-text";
 import { Button } from "@/components/ui/button";
 import { about } from "@/content/site";
 import { asset } from "@/lib/asset";
@@ -27,8 +28,9 @@ import { cn } from "@/lib/utils";
 
 // The About page's sections. One visual language with the rest of the site: white cards
 // with hairline borders, the brand pink used sparingly, and the postal motifs (stamps,
-// postmarks, routes) that run through EDDM. Everything fades up once as it comes into
-// view; nothing is tied to the scroll position. Reduced motion: no movement at all.
+// postmarks, routes) that run through EDDM. Everything comes into view once, blurred to
+// sharp (titles word by word); nothing is tied to the scroll position. Reduced motion:
+// no movement.
 
 const ease = [0.22, 1, 0.36, 1] as const;
 
@@ -44,8 +46,8 @@ function Reveal({
 }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 18 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={blurIn.initial}
+      whileInView={blurIn.whileInView}
       viewport={{ once: true, amount: 0.3 }}
       transition={{ duration: 0.7, delay, ease }}
       className={className}
@@ -72,9 +74,9 @@ export function AboutHero() {
         <div className="container-page grid items-center gap-14 lg:grid-cols-[1.15fr_1fr] lg:gap-10">
           <Reveal className="space-y-6">
             <Eyebrow>{hero.eyebrow}</Eyebrow>
-            <h1 className="text-4xl font-bold tracking-tight text-balance sm:text-6xl sm:leading-[1.05]">
+            <BlurText as="h1" className="text-4xl font-bold tracking-tight text-balance sm:text-6xl sm:leading-[1.05]">
               {hero.title}
-            </h1>
+            </BlurText>
             <p className="max-w-xl text-lg text-pretty text-muted-foreground">{hero.body}</p>
             <div className="flex flex-col gap-3 pt-2 sm:flex-row">
               <Button size="xl" render={<a href={hero.primary.href} />} nativeButton={false} className="group">
@@ -180,7 +182,7 @@ export function AboutStory() {
         <div className="container-page space-y-14">
           <Reveal className="mx-auto max-w-2xl space-y-3 text-center">
             <Eyebrow>{story.eyebrow}</Eyebrow>
-            <h2 className="text-3xl font-bold text-balance sm:text-4xl">{story.title}</h2>
+            <BlurText as="h2" className="text-3xl font-bold text-balance sm:text-4xl">{story.title}</BlurText>
           </Reveal>
 
           <ol className="relative grid gap-10 lg:grid-cols-4 lg:gap-6">
@@ -202,8 +204,8 @@ export function AboutStory() {
               return (
                 <motion.li
                   key={stop.title}
-                  initial={{ opacity: 0, y: 18 }}
-                  whileInView={{ opacity: 1, y: 0 }}
+                  initial={blurIn.initial}
+                  whileInView={blurIn.whileInView}
                   viewport={{ once: true, amount: 0.5 }}
                   transition={{ duration: 0.6, delay: 0.2 + i * 0.35, ease }}
                   className="relative flex gap-5 lg:flex-col lg:gap-6"
@@ -249,18 +251,23 @@ export function AboutMission() {
         <Reveal className="container-page max-w-4xl space-y-6 text-center">
           <Eyebrow>{mission.eyebrow}</Eyebrow>
           <p className="font-heading text-3xl leading-tight font-semibold tracking-tight text-balance sm:text-5xl sm:leading-[1.12]">
-            {mission.before}{" "}
+            <BlurText>{mission.before}</BlurText>{" "}
             {/* A marker stroke under the words, swept in once; it wraps with them on phones */}
             <motion.span
-              initial={{ backgroundSize: "0% 0.16em" }}
-              whileInView={{ backgroundSize: "100% 0.16em" }}
+              initial={{ backgroundSize: "0% 0.16em", opacity: 0, filter: "blur(10px)" }}
+              whileInView={{ backgroundSize: "100% 0.16em", opacity: 1, filter: "blur(0px)" }}
               viewport={{ once: true, amount: 1 }}
-              transition={{ duration: 0.9, delay: 0.4, ease }}
+              transition={{
+                duration: 0.6,
+                delay: blurTextDuration(mission.before),
+                ease,
+                backgroundSize: { duration: 0.9, delay: blurTextDuration(mission.before) + 0.3, ease },
+              }}
               className="bg-[linear-gradient(color-mix(in_oklab,var(--primary)_35%,transparent),color-mix(in_oklab,var(--primary)_35%,transparent))] bg-[position:0_92%] bg-no-repeat box-decoration-clone text-brand"
             >
               {mission.highlight}
             </motion.span>{" "}
-            {mission.after}
+            <BlurText delay={blurTextDuration(mission.before) + 0.15}>{mission.after}</BlurText>
           </p>
         </Reveal>
       </section>
@@ -281,14 +288,14 @@ export function AboutValues() {
         <div className="container-page space-y-12">
           <Reveal className="mx-auto max-w-2xl space-y-3 text-center">
             <Eyebrow>{about.valuesEyebrow}</Eyebrow>
-            <h2 className="text-3xl font-bold text-balance sm:text-4xl">{about.valuesTitle}</h2>
+            <BlurText as="h2" className="text-3xl font-bold text-balance sm:text-4xl">{about.valuesTitle}</BlurText>
           </Reveal>
           <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {about.values.map((value, i) => (
               <motion.li
                 key={value.title}
-                initial={{ opacity: 0, y: 14 }}
-                whileInView={{ opacity: 1, y: 0 }}
+                initial={blurIn.initial}
+                whileInView={blurIn.whileInView}
                 viewport={{ once: true, amount: 0.3 }}
                 transition={{ duration: 0.6, delay: i * 0.08, ease }}
                 className="group flex flex-col rounded-3xl border bg-card p-6 transition-shadow duration-500 hover:shadow-[0_20px_40px_-28px_rgb(0_0_0/0.3)]"
@@ -332,7 +339,7 @@ export function AboutWorld() {
         <div className="container-page space-y-12">
           <Reveal className="mx-auto max-w-2xl space-y-3 text-center">
             <Eyebrow>{world.eyebrow}</Eyebrow>
-            <h2 className="text-3xl font-bold text-balance sm:text-4xl">{world.title}</h2>
+            <BlurText as="h2" className="text-3xl font-bold text-balance sm:text-4xl">{world.title}</BlurText>
             <p className="text-lg text-pretty text-muted-foreground">{world.body}</p>
           </Reveal>
 
@@ -429,8 +436,8 @@ const networkIcons = { walk: IconWalk, store: IconBuildingStore, printer: IconPr
 function Tile({ children, className, delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
   return (
     <motion.div
-      initial={{ opacity: 0, y: 18 }}
-      whileInView={{ opacity: 1, y: 0 }}
+      initial={blurIn.initial}
+      whileInView={blurIn.whileInView}
       viewport={{ once: true, amount: 0.3 }}
       transition={{ duration: 0.6, delay, ease }}
       className={cn("flex flex-col rounded-3xl border bg-card p-6 sm:p-7", className)}
@@ -489,7 +496,7 @@ export function AboutTeam() {
         <div className="container-page flex items-end justify-between gap-6">
           <Reveal className="space-y-3">
             <Eyebrow>{team.eyebrow}</Eyebrow>
-            <h2 className="text-3xl font-bold text-balance sm:text-4xl">{team.title}</h2>
+            <BlurText as="h2" className="text-3xl font-bold text-balance sm:text-4xl">{team.title}</BlurText>
           </Reveal>
           <div className="hidden shrink-0 gap-2 sm:flex">
             <CarouselButton label="Previous" disabled={ends.start} onClick={() => step(-1)}>
@@ -513,8 +520,8 @@ export function AboutTeam() {
           {team.people.map((person, i) => (
             <motion.li
               key={person.name}
-              initial={{ opacity: 0, x: 24 }}
-              whileInView={{ opacity: 1, x: 0 }}
+              initial={{ opacity: 0, filter: "blur(8px)", x: 24 }}
+              whileInView={{ opacity: 1, filter: "blur(0px)", x: 0 }}
               viewport={{ once: true, amount: 0.3 }}
               transition={{ duration: 0.6, delay: Math.min(i, 4) * 0.08, ease }}
               className="group relative aspect-[4/5] w-60 shrink-0 snap-start overflow-hidden rounded-3xl bg-card shadow-[0_1px_2px_rgb(0_0_0/0.06),0_20px_40px_-24px_rgb(0_0_0/0.35)] ring-1 ring-black/5 sm:w-72"
@@ -582,7 +589,7 @@ export function AboutLife() {
             <div className="relative grid gap-10 lg:grid-cols-[1.3fr_1fr] lg:items-end">
               <div className="space-y-5">
                 <p className="text-sm font-semibold tracking-wider text-[var(--ds-tw-rose-300)] uppercase">{life.eyebrow}</p>
-                <h2 className="max-w-xl text-3xl font-bold text-balance sm:text-4xl">{life.title}</h2>
+                <BlurText as="h2" className="max-w-xl text-3xl font-bold text-balance sm:text-4xl">{life.title}</BlurText>
                 <ul className="space-y-1.5 text-lg text-background/70">
                   {life.lines.map((line) => (
                     <li key={line}>{line}</li>
