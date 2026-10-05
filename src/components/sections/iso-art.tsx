@@ -205,11 +205,20 @@ const sparkle = (cx: number, cy: number, r: number, k = 3.2, steps = 96): P[] =>
     return [cx + (a - b) / Math.SQRT2, cy + (a + b) / Math.SQRT2] as P;
   });
 
-/** A ground point `r` to the right of and `u` above (on screen) a ground point cx, cy. */
-const onScreen = (cx: number, cy: number, r: number, u: number): P => [
-  cx + (r - u) / Math.SQRT2,
-  cy + (-r - u) / Math.SQRT2,
-];
+/** A check mark lying on a card around `c`: drawn along the card (x across, -y up), then
+ *  turned by `turn` radians on the card's surface. */
+const check = ([cx, cy]: P, turn: number): P[] => {
+  const cs = Math.cos(turn);
+  const sn = Math.sin(turn);
+  return (
+    [
+      [-7, 0],
+      [-2, 5],
+      [9, -7],
+    ] as P[]
+  ).map(([x, y]) => [cx + x * cs - y * sn, cy + x * sn + y * cs]);
+};
+const CHECK_TURN = -0.4; // radians: enough to read as a check, still lying on the card
 
 /* ------------------------------ The pictures ----------------------------- */
 
@@ -328,15 +337,12 @@ function Pile() {
       <Flat z={top} pts={[[-44, 12], [-8, 12]]} />
       <Flat z={top} pts={[[-44, 20], [-16, 20]]} />
       <Flat z={top} pts={[[-44, 28], [-24, 28]]} />
-      {/* The seal: two rings and a check */}
+      {/* The seal: two rings and a check, printed on the card (in its plane, so it tilts
+          with the card like the address), the check turned a little on the paper the
+          way a stamp lands, so it still reads as a check from this angle */}
       <Flat z={top} pink width={1.6} pts={ring(18)} />
       <Flat z={top} pink pts={ring(14)} />
-      <Flat
-        z={top}
-        pink
-        width={2.4}
-        pts={[onScreen(seal[0], seal[1], -6, 0), onScreen(seal[0], seal[1], -1.5, -4.5), onScreen(seal[0], seal[1], 7, 4.5)]}
-      />
+      <Flat z={top} pink width={2.4} pts={check(seal, CHECK_TURN)} />
     </g>
   );
 }
