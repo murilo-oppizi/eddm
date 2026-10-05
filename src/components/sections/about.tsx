@@ -1,6 +1,6 @@
 "use client";
 
-import { useId } from "react";
+import { useId, useState } from "react";
 import {
   IconArrowRight,
   IconArrowUpRight,
@@ -10,6 +10,7 @@ import {
 import { MotionConfig, motion } from "motion/react";
 
 import { DotOrb } from "@/components/sections/dot-orb";
+import { Globe, type Place } from "@/components/sections/globe";
 import { Button } from "@/components/ui/button";
 import { about } from "@/content/site";
 import { cn } from "@/lib/utils";
@@ -372,13 +373,24 @@ function ValueArt({ art }: { art: (typeof about.values)[number]["art"] }) {
 
 /* --------------------------------- World -------------------------------- */
 
-/** Where Oppizi works: the countries by region, the headquarters, and the network. */
+// Every country's pin, and the headquarters the routes fly out from (Brooklyn: the US pin)
+const places: Place[] = about.world.regions.flatMap((r) =>
+  r.countries.map(([id, , lat, lng]) => ({ id, lat, lng }))
+);
+const hub = places.find((p) => p.id === "US") ?? places[0];
+
+/**
+ * Where Oppizi works: a globe with a pin in every country and routes from Brooklyn, the
+ * headquarters and network beside it, and the countries by region under it. Pointing at
+ * (or tabbing to) a country turns the globe to it.
+ */
 export function AboutWorld() {
   const { world } = about;
+  const [focus, setFocus] = useState<string | null>(null);
   return (
     <MotionConfig reducedMotion="user">
       <section className="py-20 lg:py-28">
-        <div className="container-page grid gap-12 lg:grid-cols-[1fr_1.35fr] lg:gap-16">
+        <div className="container-page grid gap-12 lg:grid-cols-[1fr_1.35fr] lg:items-center lg:gap-16">
           <Reveal className="space-y-6">
             <Eyebrow>{world.eyebrow}</Eyebrow>
             <h2 className="text-3xl font-bold text-balance sm:text-4xl">{world.title}</h2>
@@ -407,35 +419,54 @@ export function AboutWorld() {
           </Reveal>
 
           <div className="space-y-8">
-            {world.regions.map((region, r) => (
-              <Reveal key={region.name} delay={r * 0.1} className="space-y-3">
-                <h3 className="flex items-baseline justify-between border-b pb-2 text-sm font-semibold">
-                  {region.name}
-                  <span className="font-normal text-muted-foreground tabular-nums">{region.countries.length}</span>
-                </h3>
-                <ul className="flex flex-wrap gap-2">
-                  {region.countries.map(([code, name]) => (
-                    <li
-                      key={code}
-                      className={cn(
-                        "inline-flex items-center gap-2 rounded-full border bg-card py-1.5 pr-3.5 pl-1.5 text-sm transition-colors hover:border-primary/40",
-                        code === "US" && "border-primary/40 bg-brand-subtle/50"
-                      )}
-                    >
-                      <span
-                        className={cn(
-                          "grid h-6 min-w-6 place-items-center rounded-full px-1 text-[10px] font-bold tracking-wide",
-                          code === "US" ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
-                        )}
-                      >
-                        {code}
-                      </span>
-                      {name}
-                    </li>
-                  ))}
-                </ul>
-              </Reveal>
-            ))}
+            <Reveal className="relative mx-auto w-full max-w-[520px]">
+              {/* A soft pink halo behind the globe */}
+              <div
+                aria-hidden
+                className="absolute inset-[6%] rounded-full bg-[radial-gradient(closest-side,color-mix(in_oklab,var(--primary)_10%,transparent),transparent)]"
+              />
+              <Globe places={places} hub={hub} focus={focus} className="relative" />
+            </Reveal>
+
+            <div className="grid gap-6 sm:grid-cols-[1fr_1.6fr_1fr]">
+              {world.regions.map((region, r) => (
+                <Reveal key={region.name} delay={r * 0.08} className="space-y-3">
+                  <h3 className="flex items-baseline justify-between border-b pb-2 text-sm font-semibold">
+                    {region.name}
+                    <span className="font-normal text-muted-foreground tabular-nums">{region.countries.length}</span>
+                  </h3>
+                  <ul className="flex flex-wrap gap-1.5">
+                    {region.countries.map(([code, name]) => (
+                      <li key={code}>
+                        <button
+                          type="button"
+                          aria-label={`Show ${name} on the globe`}
+                          onPointerEnter={() => setFocus(code)}
+                          onPointerLeave={() => setFocus(null)}
+                          onFocus={() => setFocus(code)}
+                          onBlur={() => setFocus(null)}
+                          onClick={() => setFocus(code)}
+                          className={cn(
+                            "inline-flex cursor-pointer items-center gap-1.5 rounded-full border bg-card py-1 pr-3 pl-1 text-sm transition-colors outline-none hover:border-primary/40 focus-visible:ring-3 focus-visible:ring-ring/50",
+                            focus === code && "border-primary/50 bg-brand-subtle/60"
+                          )}
+                        >
+                          <span
+                            className={cn(
+                              "grid h-5 min-w-5 place-items-center rounded-full px-1 text-[9px] font-bold tracking-wide transition-colors",
+                              focus === code || code === hub.id ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                            )}
+                          >
+                            {code}
+                          </span>
+                          {name}
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </Reveal>
+              ))}
+            </div>
           </div>
         </div>
       </section>

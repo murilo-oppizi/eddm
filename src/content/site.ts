@@ -514,10 +514,11 @@ export const about = {
     eyebrow: "Where we work",
     title: "Global, and on the ground",
     body: "Oppizi runs campaigns across 14 countries from one platform, with local teams and partners in every market.",
+    // Each country's main city, for its pin on the globe: [code, name, latitude, longitude]
     regions: [
-      { name: "Americas", countries: [["US", "United States"], ["CA", "Canada"], ["BR", "Brazil"], ["AR", "Argentina"]] },
-      { name: "Europe", countries: [["GB", "United Kingdom"], ["FR", "France"], ["DE", "Germany"], ["ES", "Spain"], ["PT", "Portugal"], ["NL", "Netherlands"], ["BE", "Belgium"], ["PL", "Poland"]] },
-      { name: "Asia-Pacific", countries: [["AU", "Australia"], ["NZ", "New Zealand"]] },
+      { name: "Americas", countries: [["US", "United States", 40.68, -73.94], ["CA", "Canada", 43.65, -79.38], ["BR", "Brazil", -23.55, -46.63], ["AR", "Argentina", -34.6, -58.38]] },
+      { name: "Europe", countries: [["GB", "United Kingdom", 51.51, -0.13], ["FR", "France", 48.86, 2.35], ["DE", "Germany", 52.52, 13.4], ["ES", "Spain", 40.42, -3.7], ["PT", "Portugal", 38.72, -9.14], ["NL", "Netherlands", 52.37, 4.9], ["BE", "Belgium", 50.85, 4.35], ["PL", "Poland", 52.23, 21.01]] },
+      { name: "Asia-Pacific", countries: [["AU", "Australia", -33.87, 151.21], ["NZ", "New Zealand", -36.85, 174.76]] },
     ],
     hq: { label: "Headquarters", place: "Brooklyn, New York", address: "426 Union Ave, Brooklyn, NY 11211" },
     network: [
