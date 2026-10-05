@@ -161,7 +161,11 @@ export type IsoArtName =
   | "agents-key"
   | "agents-layers"
   | "quality-homes"
-  | "quality-shield";
+  | "quality-shield"
+  | "quality-stamp"
+  | "quality-units"
+  | "quality-pallet"
+  | "quality-level";
 
 /** One picture: the object (which lifts on hover of a `group` around it) over a soft shadow. */
 export function IsoArt({ name, className }: { name: IsoArtName; className?: string }) {
@@ -198,6 +202,10 @@ export function IsoArt({ name, className }: { name: IsoArtName; className?: stri
         {name === "agents-layers" && <Layers />}
         {name === "quality-homes" && <Homes />}
         {name === "quality-shield" && <ShieldV2 />}
+        {name === "quality-stamp" && <RubberStamp />}
+        {name === "quality-units" && <Units />}
+        {name === "quality-pallet" && <Pallet />}
+        {name === "quality-level" && <Level />}
       </g>
     </motion.svg>
   );
@@ -395,6 +403,104 @@ function ShieldV2() {
       <Block pts={outline} h={14} />
       <Flat z={14} pts={closed(inner)} />
       <Flat z={14} pink width={3} pts={check} />
+    </g>
+  );
+}
+
+const circle = (cx: number, cy: number, r: number, steps = 48): P[] =>
+  Array.from({ length: steps }, (_, i) => {
+    const t = (i / steps) * Math.PI * 2;
+    return [cx + r * Math.cos(t), cy + r * Math.sin(t)] as P;
+  });
+
+/** Quality: a rubber stamp, its handle up, beside the pink check it just printed. */
+function RubberStamp() {
+  // The stamp a little right of center, its print on the ground to its left
+  const [sx, sy] = onScreen(0, 0, 22, -4);
+  const [ix, iy] = onScreen(0, 0, -62, -22);
+  return (
+    <g>
+      {/* The print on the ground: a rounded square with a check in it */}
+      <Flat pink width={1.6} pts={closed(roundRect(ix, iy, 46, 46, 8))} />
+      <Flat pink width={2.6} pts={[onScreen(ix, iy, -11, 0), onScreen(ix, iy, -3, -7), onScreen(ix, iy, 12, 8)]} />
+      {/* The stamp: rubber, block, neck, handle and knob */}
+      <Block pts={roundRect(sx, sy, 58, 58, 6)} h={4} z={0} />
+      <Block pts={roundRect(sx, sy, 64, 64, 6)} h={12} z={4} />
+      <Block pts={roundRect(sx, sy, 30, 30, 4)} h={8} z={16} />
+      <Block pts={circle(sx, sy, 13)} h={30} z={24} />
+      <Block pts={circle(sx, sy, 18)} h={10} z={54} />
+    </g>
+  );
+}
+
+/** Quality at any scale: one cube, a 2×2×2 block, a 3×3×3 block, all of the same unit. */
+function Units() {
+  const u = 12;
+  const groups: { n: number; at: P; pink?: boolean }[] = [
+    { n: 1, at: onScreen(0, 0, -78, 4), pink: true },
+    { n: 2, at: onScreen(0, 0, -34, 2) },
+    { n: 3, at: onScreen(0, 0, 30, 0) },
+  ];
+  const cubes: { x: number; y: number; z: number; pink?: boolean }[] = [];
+  for (const { n, at, pink } of groups)
+    for (let k = 0; k < n; k++)
+      for (let i = 0; i < n; i++)
+        for (let j = 0; j < n; j++)
+          cubes.push({ x: at[0] + (i - (n - 1) / 2) * u, y: at[1] + (j - (n - 1) / 2) * u, z: k * u, pink });
+  // Far to near, bottom to top
+  cubes.sort((a, b) => a.x + a.y - (b.x + b.y) || a.z - b.z);
+  return (
+    <g>
+      {cubes.map((c, i) => (
+        <Block key={i} pts={rect(c.x, c.y, u, u)} h={u} z={c.z} pink={c.pink} />
+      ))}
+    </g>
+  );
+}
+
+/** Quality at scale: a pallet of identical boxes, one sealed with pink tape. */
+function Pallet() {
+  const b = 40;
+  const h = 26;
+  const boxes: { x: number; y: number; z: number }[] = [];
+  for (let k = 0; k < 2; k++)
+    for (const x of [-b / 2 - 1, b / 2 + 1]) for (const y of [-b / 2 - 1, b / 2 + 1]) boxes.push({ x, y, z: 10 + k * h });
+  boxes.sort((p, q) => p.x + p.y - (q.x + q.y) || p.z - q.z);
+  const last = boxes[boxes.length - 1];
+  return (
+    <g>
+      {/* The pallet: three runners under a deck */}
+      {[-30, 0, 30].map((y) => (
+        <Block key={y} pts={rect(0, y, 92, 12)} h={5} />
+      ))}
+      <Block pts={rect(0, 0, 92, 92)} h={5} z={5} />
+      {boxes.map((p, i) => (
+        <g key={i}>
+          <Block pts={rect(p.x, p.y, b, b)} h={h} z={p.z} />
+          {p === last ? (
+            <Flat z={p.z + h} pink width={2.4} pts={[[p.x - b / 2, p.y], [p.x + b / 2, p.y]]} />
+          ) : (
+            <Flat z={p.z + h} pts={[[p.x - b / 2, p.y], [p.x + b / 2, p.y]]} />
+          )}
+        </g>
+      ))}
+    </g>
+  );
+}
+
+/** Quality, measured: a spirit level, its bubble centered in pink. */
+function Level() {
+  return (
+    <g>
+      <Block pts={rect(0, 0, 170, 26)} h={16} />
+      {/* The vial window and its bubble */}
+      <Flat z={16} pts={closed(roundRect(0, 0, 44, 12, 6))} />
+      <Flat z={16} pts={[[-8, -6], [-8, 6]]} />
+      <Flat z={16} pts={[[8, -6], [8, 6]]} />
+      <Flat z={16} pink width={1.8} pts={closed(roundRect(0, 0, 12, 7, 3.5))} />
+      {/* Two small windows near the ends */}
+      <Flat z={16} pts={closed(roundRect(-62, 0, 16, 10, 4))} />
+      <Flat z={16} pts={closed(roundRect(62, 0, 16, 10, 4))} />
     </g>
   );
 }
