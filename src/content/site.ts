@@ -534,16 +534,17 @@ export const about = {
   team: {
     eyebrow: "Sourced from around the world",
     title: "Our leadership team",
+    // Portraits from oppizi.com, in public/team/ (resized to 800px, WebP)
     people: [
-      { name: "Arthur Favier", role: "Founder & CEO" },
-      { name: "Sami Andreani", role: "CFO" },
-      { name: "Nicolas de Resbecq", role: "CRO" },
-      { name: "Slava Tykhonchuk", role: "CTO" },
-      { name: "Erin Stuckert", role: "GM US" },
-      { name: "Raphael Vivant", role: "GM ANZ" },
-      { name: "Vincent Bonnet", role: "GM France" },
-      { name: "Gaëlle Walrave", role: "GM Germany" },
-      { name: "Silvana Sánchez", role: "GM Spain & Portugal" },
+      { name: "Arthur Favier", role: "Founder & CEO", photo: "arthur-favier" },
+      { name: "Sami Andreani", role: "CFO", photo: "sami-andreani" },
+      { name: "Nicolas de Resbecq", role: "CRO", photo: "nicolas-de-resbecq" },
+      { name: "Slava Tykhonchuk", role: "CTO", photo: "slava-tykhonchuk" },
+      { name: "Erin Stuckert", role: "GM US", photo: "erin-stuckert" },
+      { name: "Raphael Vivant", role: "GM ANZ", photo: "raphael-vivant" },
+      { name: "Vincent Bonnet", role: "GM France", photo: "vincent-bonnet" },
+      { name: "Gaëlle Walrave", role: "GM Germany", photo: "gaelle-walrave" },
+      { name: "Silvana Sánchez", role: "GM Spain & Portugal", photo: "silvana-sanchez" },
     ],
   },
   results: {

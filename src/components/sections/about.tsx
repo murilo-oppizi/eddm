@@ -1,11 +1,14 @@
 "use client";
 
-import { useId, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
+import Image from "next/image";
 import {
   IconArrowRight,
   IconArrowUpRight,
   IconBuildingSkyscraper,
   IconBuildingStore,
+  IconChevronLeft,
+  IconChevronRight,
   IconMapPin,
   IconMapPins,
   IconPrinter,
@@ -20,6 +23,7 @@ import { type Place } from "@/components/sections/globe";
 import { Flag, WorldMap } from "@/components/sections/world-map";
 import { Button } from "@/components/ui/button";
 import { about } from "@/content/site";
+import { asset } from "@/lib/asset";
 import { cn } from "@/lib/utils";
 
 // The About page's sections. One visual language with the rest of the site: white cards
@@ -524,61 +528,112 @@ function TileHead({ icon, title, body }: { icon: React.ReactNode; title: string;
 
 /* ---------------------------------- Team -------------------------------- */
 
-// Monogram colors, from the design system's palette, one per person in turn.
-const monograms = [
-  "bg-[var(--ds-tw-rose-100)] text-[var(--ds-tw-rose-700)]",
-  "bg-[var(--ds-tw-indigo-100)] text-[var(--ds-tw-indigo-700)]",
-  "bg-[var(--ds-tw-amber-100)] text-[var(--ds-tw-amber-700)]",
-  "bg-[var(--ds-tw-teal-100)] text-[var(--ds-tw-teal-700)]",
-  "bg-[var(--ds-tw-sky-100)] text-[var(--ds-tw-sky-700)]",
-  "bg-[var(--ds-tw-fuchsia-100)] text-[var(--ds-tw-fuchsia-700)]",
-];
-
-const initials = (name: string) =>
-  name
-    .split(" ")
-    .filter((w) => /^\p{Lu}/u.test(w))
-    .map((w) => w[0])
-    .slice(0, 2)
-    .join("");
-
-/** The leadership team: monograms (no photos yet), names and roles. */
+/**
+ * The leadership team as a row of tall portrait cards, after apple.com's product
+ * carousels: it runs off the right edge of the page and scrolls sideways (swipe, trackpad,
+ * or the arrows), snapping to each card. The name and role sit over the bottom of each
+ * photo; the photo eases in a little on hover.
+ */
 export function AboutTeam() {
   const { team } = about;
+  const row = useRef<HTMLUListElement>(null);
+  const [ends, setEnds] = useState({ start: true, end: false });
+  const update = () => {
+    const el = row.current;
+    if (!el) return;
+    setEnds({ start: el.scrollLeft < 8, end: el.scrollLeft + el.clientWidth > el.scrollWidth - 8 });
+  };
+  useEffect(() => {
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+  // One card (and its gap) per press
+  const step = (dir: 1 | -1) => {
+    const el = row.current;
+    const card = el?.querySelector("li");
+    if (!el || !card) return;
+    el.scrollBy({ left: dir * (card.getBoundingClientRect().width + 16), behavior: "smooth" });
+  };
+
   return (
     <MotionConfig reducedMotion="user">
-      <section className="border-y bg-muted/40 py-20 lg:py-28">
-        <div className="container-page space-y-12">
-          <Reveal className="mx-auto max-w-2xl space-y-3 text-center">
+      <section className="overflow-x-clip border-y bg-muted/40 py-20 lg:py-28">
+        <div className="container-page flex items-end justify-between gap-6">
+          <Reveal className="space-y-3">
             <Eyebrow>{team.eyebrow}</Eyebrow>
             <h2 className="text-3xl font-bold text-balance sm:text-4xl">{team.title}</h2>
           </Reveal>
-          <ul className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-3">
-            {team.people.map((person, i) => (
-              <motion.li
-                key={person.name}
-                initial={{ opacity: 0, y: 14 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.4 }}
-                transition={{ duration: 0.5, delay: (i % 3) * 0.08, ease }}
-                className="flex flex-col items-start gap-4 rounded-2xl border bg-card p-5 transition-[translate,box-shadow] duration-300 hover:-translate-y-0.5 hover:shadow-md sm:flex-row sm:items-center"
-              >
-                <span
-                  aria-hidden
-                  className={cn("grid size-12 shrink-0 place-items-center rounded-full font-heading text-base font-bold", monograms[i % monograms.length])}
-                >
-                  {initials(person.name)}
-                </span>
-                <div className="min-w-0">
-                  <p className="font-semibold">{person.name}</p>
-                  <p className="text-sm text-muted-foreground">{person.role}</p>
-                </div>
-              </motion.li>
-            ))}
-          </ul>
+          <div className="hidden shrink-0 gap-2 sm:flex">
+            <CarouselButton label="Previous" disabled={ends.start} onClick={() => step(-1)}>
+              <IconChevronLeft className="size-5" />
+            </CarouselButton>
+            <CarouselButton label="Next" disabled={ends.end} onClick={() => step(1)}>
+              <IconChevronRight className="size-5" />
+            </CarouselButton>
+          </div>
         </div>
+
+        {/* The row starts in line with the page's content and runs to the window's edge */}
+        <ul
+          ref={row}
+          onScroll={update}
+          aria-label={team.title}
+          // The inset matches container-page (1rem, 1.5rem from 640px; 72rem wide at most);
+          // a little room above and below so the cards' shadows aren't cut off
+          className="mt-8 flex snap-x snap-mandatory gap-4 overflow-x-auto overscroll-x-contain px-[var(--inset)] pt-2 pb-6 [--gutter:1rem] [--inset:max(var(--gutter),calc((100%-72rem)/2+var(--gutter)))] [scroll-padding-inline:var(--inset)] [scrollbar-width:none] sm:[--gutter:1.5rem] [&::-webkit-scrollbar]:hidden"
+        >
+          {team.people.map((person, i) => (
+            <motion.li
+              key={person.name}
+              initial={{ opacity: 0, x: 24 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, amount: 0.3 }}
+              transition={{ duration: 0.6, delay: Math.min(i, 4) * 0.08, ease }}
+              className="group relative aspect-[4/5] w-60 shrink-0 snap-start overflow-hidden rounded-3xl bg-card shadow-[0_1px_2px_rgb(0_0_0/0.06),0_20px_40px_-24px_rgb(0_0_0/0.35)] ring-1 ring-black/5 sm:w-72"
+            >
+              <Image
+                src={asset(`/team/${person.photo}.webp`)}
+                alt={person.name}
+                fill
+                sizes="(min-width: 640px) 288px, 240px"
+                className="object-cover object-top transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.04]"
+              />
+              {/* A dark wash at the foot of the photo, for the name */}
+              <div aria-hidden className="absolute inset-x-0 bottom-0 h-2/5 bg-gradient-to-t from-black/75 via-black/30 to-transparent" />
+              <div className="absolute inset-x-0 bottom-0 p-5 text-white">
+                <p className="text-xs font-semibold tracking-wider text-white/75 uppercase">{person.role}</p>
+                <p className="mt-1 font-heading text-xl font-semibold tracking-tight">{person.name}</p>
+              </div>
+            </motion.li>
+          ))}
+        </ul>
       </section>
     </MotionConfig>
+  );
+}
+
+function CarouselButton({
+  label,
+  disabled,
+  onClick,
+  children,
+}: {
+  label: string;
+  disabled: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      disabled={disabled}
+      onClick={onClick}
+      className="grid size-11 cursor-pointer place-items-center rounded-full border bg-card text-foreground shadow-sm transition-[background-color,opacity,scale] outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50 active:scale-95 disabled:cursor-default disabled:opacity-40 disabled:hover:bg-card"
+    >
+      {children}
+    </button>
   );
 }
 
