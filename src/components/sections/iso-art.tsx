@@ -211,9 +211,9 @@ const sparkle = (cx: number, cy: number, r: number, k = 3.2, steps = 96): P[] =>
  * turned by `turn` radians on the card's surface. Its two edges show the perspective.
  */
 const checkShape = ([cx, cy]: P, turn: number, t = 1.9): P[] => {
-  const A: P = [-8, -1];
-  const B: P = [-2.5, 4.5];
-  const C: P = [9, -7];
+  const A: P = [-9.5, -1];
+  const B: P = [-3, 5.5];
+  const C: P = [10.5, -8.5];
   const unit = ([x, y]: P): P => {
     const l = Math.hypot(x, y);
     return [x / l, y / l];
@@ -236,7 +236,7 @@ const checkShape = ([cx, cy]: P, turn: number, t = 1.9): P[] => {
   const sn = Math.sin(turn);
   return pts.map(([x, y]) => [cx + x * cs - y * sn, cy + x * sn + y * cs]);
 };
-const CHECK_TURN = -0.25; // radians: along the card it reads as an "L"; a quarter-turn reads as a check
+const CHECK_TURN = -0.38; // radians: along the card it reads as an "L"; turned a little, as a check
 
 /* ------------------------------ The pictures ----------------------------- */
 
