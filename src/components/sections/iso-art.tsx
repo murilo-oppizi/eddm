@@ -34,7 +34,11 @@ const line =
 const accent = "fill-none stroke-primary [stroke-linejoin:round] [stroke-linecap:round]";
 
 function Stroke({ path, pink, width = 1 }: { path: string; pink?: boolean; width?: number }) {
-  return <motion.path d={path} variants={drawIn} className={pink ? accent : line} strokeWidth={width} vectorEffect="non-scaling-stroke" />;
+  // Widths are in the drawing's own units, not screen pixels: the draw-in animation
+  // measures the line in those units, and a screen-pixel width (non-scaling-stroke)
+  // makes Chrome stop each line short of its end, leaving gaps when the drawing is
+  // shown larger than its viewBox.
+  return <motion.path d={path} variants={drawIn} className={pink ? accent : line} strokeWidth={width * 0.85} />;
 }
 function Face({ path }: { path: string }) {
   return <motion.path d={path} variants={fadeIn} className="fill-card" />;
@@ -75,23 +79,45 @@ function Block({ pts, h, z = 0, pink = false }: { pts: P[]; h: number; z?: numbe
     const after = faces[i];
     return before !== after || (before && after && turn(i) > 0.45);
   };
-  const sides = pts
+  // All the surfaces first (the sides that face you, then the top), as one white shape,
+  // so no surface paints over another's edge; then every line on top, each run of
+  // facing sides as one continuous line, so the outlines join up.
+  const sideFaces = pts
     .map((a, i) => ({ a, b: pts[(i + 1) % n], i }))
     .filter(({ i }) => faces[i])
-    .sort((p, q) => p.a[0] + p.a[1] + p.b[0] + p.b[1] - (q.a[0] + q.a[1] + q.b[0] + q.b[1]));
+    .map(({ a, b }) => d([iso(a, z), iso(b, z), iso(b, z + h), iso(a, z + h)], true))
+    .join("");
+  const runs: number[][] = [];
+  const start = faces.findIndex((f, i) => f && !faces[(i - 1 + n) % n]);
+  if (start >= 0) {
+    let run: number[] | null = null;
+    for (let k = 0; k < n; k++) {
+      const i = (start + k) % n;
+      if (faces[i]) {
+        if (!run) run = [i];
+        run.push((i + 1) % n);
+      } else if (run) {
+        runs.push(run);
+        run = null;
+      }
+    }
+    if (run) runs.push(run);
+  } else if (faces.every(Boolean)) {
+    runs.push([...pts.keys(), 0]);
+  }
+  const uprights = pts.map((_, i) => i).filter((i) => upright(i));
+  const top = d(pts.map((p) => iso(p, z + h)), true);
 
   return (
     <g>
-      {sides.map(({ a, b, i }) => (
-        <g key={i}>
-          <Face path={d([iso(a, z), iso(b, z), iso(b, z + h), iso(a, z + h)], true)} />
-          <Stroke path={d([iso(a, z), iso(b, z)])} pink={pink} />
-          {upright(i) && <Stroke path={d([iso(a, z), iso(a, z + h)])} pink={pink} />}
-          {upright((i + 1) % n) && <Stroke path={d([iso(b, z), iso(b, z + h)])} pink={pink} />}
-        </g>
+      <Face path={sideFaces + top} />
+      {runs.map((r, k) => (
+        <Stroke key={`r${k}`} path={d(r.map((i) => iso(pts[i], z)))} pink={pink} />
       ))}
-      <Face path={d(pts.map((p) => iso(p, z + h)), true)} />
-      <Stroke path={d(pts.map((p) => iso(p, z + h)), true)} pink={pink} />
+      {uprights.map((i) => (
+        <Stroke key={`u${i}`} path={d([iso(pts[i], z), iso(pts[i], z + h)])} pink={pink} />
+      ))}
+      <Stroke path={top} pink={pink} />
     </g>
   );
 }
@@ -132,22 +158,18 @@ function WallBlock({ profile, y0, y1, pink }: { profile: P[]; y0: number; y1: nu
     return before !== after || (before && after && turn(i) > 0.45);
   };
   const at = (y: number, [x, z]: P) => iso([x, y], z);
-  const sides = profile
+  const sideFaces = profile
     .map((a, i) => ({ a, b: profile[(i + 1) % n], i }))
     .filter(({ i }) => faces[i])
-    .sort((p, q) => p.a[0] + p.a[1] + p.b[0] + p.b[1] - (q.a[0] + q.a[1] + q.b[0] + q.b[1]));
+    .map(({ a, b }) => d([at(y0, a), at(y0, b), at(y1, b), at(y1, a)], true))
+    .join("");
+  const front = d(profile.map((p) => at(y1, p)), true);
   return (
     <g>
-      {sides.map(({ a, b, i }) => (
-        <g key={i}>
-          <Face path={d([at(y0, a), at(y0, b), at(y1, b), at(y1, a)], true)} />
-          <Stroke path={d([at(y0, a), at(y0, b)])} pink={pink} />
-          {edge(i) && <Stroke path={d([at(y0, a), at(y1, a)])} pink={pink} />}
-          {edge((i + 1) % n) && <Stroke path={d([at(y0, b), at(y1, b)])} pink={pink} />}
-        </g>
-      ))}
-      <Face path={d(profile.map((p) => at(y1, p)), true)} />
-      <Stroke path={d(profile.map((p) => at(y1, p)), true)} pink={pink} />
+      <Face path={sideFaces + front} />
+      {profile.map((a, i) => (faces[i] ? <Stroke key={`s${i}`} path={d([at(y0, a), at(y0, profile[(i + 1) % n])])} pink={pink} /> : null))}
+      {profile.map((a, i) => (edge(i) ? <Stroke key={`e${i}`} path={d([at(y0, a), at(y1, a)])} pink={pink} /> : null))}
+      <Stroke path={front} pink={pink} />
     </g>
   );
 }
@@ -421,129 +443,175 @@ function Bob({ children, distance = 6 }: { children: React.ReactNode; distance?:
   );
 }
 
-/** 2014, flyering: a stack of flyers on the street, the top one lifting off in pink. */
+/** A flyer lying at height z: rounded, with a headline, a picture block and an offer. */
+function Flyer({ cx, cy, z, rot = 0, pink, t = 2.4 }: { cx: number; cy: number; z: number; rot?: number; pink?: boolean; t?: number }) {
+  const c = Math.cos(rot);
+  const s = Math.sin(rot);
+  // A point on the flyer, from its center: a across (down-right), b down it (down-left)
+  const at = (a: number, b: number): P => [cx + a * c - b * s, cy + a * s + b * c];
+  const top = z + t;
+  return (
+    <g>
+      <Block pts={roundRect(cx, cy, 64, 90, 6, rot)} h={t} z={z} pink={pink} />
+      <Flat z={top} pink={pink} pts={closed([at(-24, -36), at(24, -36), at(24, -6), at(-24, -6)])} />
+      <Flat z={top} width={2} pink={pink} pts={[at(-24, 6), at(14, 6)]} />
+      <Flat z={top} pink={pink} pts={[at(-24, 16), at(4, 16)]} />
+      <Flat z={top} pink={pink} pts={[at(-24, 30), at(-6, 30)]} />
+    </g>
+  );
+}
+
+/** 2014, flyering: a neat stack of flyers, the top one lifting off in pink, floating. */
 function StoryFlyers() {
   const t = 2.4;
-  const tilts = [0.05, -0.04, 0.03, -0.02, 0];
+  const n = 6;
   return (
-    <g transform="translate(0 18)">
-      {tilts.map((a, i) => (
-        <Block key={i} pts={roundRect(-22, 8, 62, 88, 5, a + 0.35)} h={t} z={i * t} />
+    <g transform="translate(-6 30)">
+      {Array.from({ length: n }, (_, i) => (
+        <Block key={i} pts={roundRect(-18 + (i % 2) * 2, 6 - (i % 3), 64, 90, 6, 0.03 * ((i % 3) - 1))} h={t} z={i * t} />
       ))}
-      <Flat z={tilts.length * t} width={2} pts={[[-38, -24], [-14, -16]]} />
-      <Flat z={tilts.length * t} pts={[[-40, -14], [-24, -9]]} />
-      <Drop delay={0.4}>
+      <Flyer cx={-18} cy={6} z={(n - 1) * t} />
+      <Drop delay={0.35}>
         <Bob>
-          <Block pts={roundRect(34, -18, 62, 88, 5, -0.2)} h={t} z={42} pink />
-          <Flat z={42 + t} pink width={2} pts={[[14, -46], [40, -50]]} />
-          <Flat z={42 + t} pink pts={[[16, -36], [32, -38]]} />
+          <Flyer cx={30} cy={-34} z={44} rot={-0.18} pink />
         </Bob>
       </Drop>
     </g>
   );
 }
 
-/** A map marker standing at x, y: a round pink-or-grey head on a slim post, its foot a
- *  small ring on the ground (drawn as one solid: a head disc raised on a stem). */
-function Pin({ x, y, pink }: { x: number; y: number; pink?: boolean }) {
+/**
+ * A flat shape that faces you (not laid in the scene's perspective), standing on the
+ * ground point x, y at height z: how isometric illustrations draw markers and icons.
+ * `path` is in screen units, its anchor at 0,0.
+ */
+function Facing({ x, y, z = 0, path, details, pink }: { x: number; y: number; z?: number; path: string; details?: string; pink?: boolean }) {
+  const [sx, sy] = iso([x, y], z);
   return (
-    <g>
-      <Flat pts={closed(circle(x, y, 6, 24))} />
-      <Block pts={circle(x, y, 1.8, 12)} h={26} pink={pink} />
-      <Block pts={circle(x, y, 10, 32)} h={5} z={26} pink={pink} />
-      <Flat z={31} pts={closed(circle(x, y, 4, 16))} pink={pink} />
+    <g transform={`translate(${sx.toFixed(2)} ${sy.toFixed(2)})`}>
+      <Face path={path} />
+      <Stroke path={path} pink={pink} />
+      {details && <Stroke path={details} pink={pink} />}
     </g>
   );
 }
 
-/** Growing, 12+ countries: markers dropping onto a plate, one after another, a dashed
- *  route linking them drawn first. */
+const circlePath = (cx: number, cy: number, r: number) =>
+  `M${cx - r} ${cy}a${r} ${r} 0 1 0 ${2 * r} 0a${r} ${r} 0 1 0 ${-2 * r} 0`;
+
+/** A map pin, facing you: the classic teardrop, its tip on the ground, a ring in its head. */
+function Pin({ x, y, pink }: { x: number; y: number; pink?: boolean }) {
+  const r = 10;
+  const h = 30; // the head's center, above the tip
+  const path = `M0 0C${-r * 0.55} ${-h * 0.42} ${-r} ${-h * 0.62} ${-r} ${-h}A${r} ${r} 0 1 1 ${r} ${-h}C${r} ${-h * 0.62} ${r * 0.55} ${-h * 0.42} 0 0Z`;
+  return (
+    <g>
+      <Flat pts={closed(circle(x, y, 4, 20))} />
+      <Facing x={x} y={y} path={path} details={circlePath(0, -h, 4)} pink={pink} />
+    </g>
+  );
+}
+
+/** Growing, 12+ countries: pins dropping onto a plate one after another, along a dashed
+ *  route; the newest in pink. */
 function StoryPins() {
-  const pins: [number, number][] = [
-    [-54, 10],
-    [-10, 40],
-    [-2, -36],
-    [48, -6],
+  const pins: P[] = [
+    [-50, 12],
+    [-14, 44],
+    [-4, -34],
+    [46, -2],
   ];
-  // Far to near, so nearer markers cover farther ones
+  // Far to near, so nearer pins cover farther ones
   const order = pins.map((p, i) => ({ p, i })).sort((a, b) => a.p[0] + a.p[1] - (b.p[0] + b.p[1]));
   const dash = (a: P, b: P) =>
-    Array.from({ length: 6 }, (_, k) => {
-      const t0 = k / 6;
-      const t1 = t0 + 0.55 / 6;
+    Array.from({ length: 7 }, (_, k) => {
+      const t0 = k / 7;
+      const t1 = t0 + 0.5 / 7;
       return [
         [a[0] + (b[0] - a[0]) * t0, a[1] + (b[1] - a[1]) * t0],
         [a[0] + (b[0] - a[0]) * t1, a[1] + (b[1] - a[1]) * t1],
       ] as P[];
     });
   return (
-    <g transform="translate(0 20)">
-      <Block pts={roundRect(0, 0, 168, 128, 14)} h={6} />
-      {pins.slice(1).flatMap((b, i) => dash(pins[i], b).map((seg, k) => <Flat key={`${i}-${k}`} z={6} pts={seg} />))}
-      {order.map(({ p: [x, y], i }) => (
-        <Drop key={i} delay={0.3 + i * 0.22}>
-          <g transform="translate(0 0)">
-            <g transform={`translate(0 ${-6})`}>
-              <Pin x={x} y={y} pink={i === pins.length - 1} />
-            </g>
-          </g>
-        </Drop>
-      ))}
+    <g transform="translate(0 30)">
+      <Block pts={roundRect(0, 4, 170, 130, 16)} h={6} />
+      <g transform="translate(0 -6)">
+        {pins.slice(1).flatMap((b, i) => dash(pins[i], b).map((seg, k) => <Flat key={`${i}-${k}`} z={0} pts={seg} />))}
+        {order.map(({ p: [x, y], i }) => (
+          <Drop key={i} delay={0.3 + i * 0.22}>
+            <Pin x={x} y={y} pink={i === pins.length - 1} />
+          </Drop>
+        ))}
+      </g>
     </g>
   );
 }
 
-/** More channels, one platform: a flyer, an envelope and a parcel, side by side on one
- *  plate, landing one after another; the parcel's tape in pink. */
+/** More channels, one platform: a flyer, a letter and a parcel landing side by side on
+ *  one plate; the parcel's tape in pink. */
 function StoryChannels() {
   return (
-    <g transform="translate(0 22)">
-      <Block pts={roundRect(0, 0, 196, 84, 14)} h={6} />
-      {/* The flyer, standing, at the back left */}
+    <g transform="translate(0 26)">
+      <Block pts={roundRect(0, 0, 196, 92, 16)} h={6} />
+      {/* The flyer */}
       <Drop delay={0.3}>
-        <Block pts={roundRect(-58, -6, 40, 4, 2)} h={52} z={6} />
+        <g transform="translate(0 0)">
+          <Block pts={roundRect(-58, 2, 38, 54, 4)} h={2} z={6} />
+          <Flat z={8} pts={closed([[-72, -20], [-44, -20], [-44, -4], [-72, -4]] as P[])} />
+          <Flat z={8} pts={[[-72, 6], [-50, 6]]} />
+          <Flat z={8} pts={[[-72, 14], [-58, 14]]} />
+        </g>
       </Drop>
-      {/* The envelope, lying flat, its flap folded */}
+      {/* The letter: an envelope, its flap folded, a little stamp */}
       <Drop delay={0.5}>
-        <Block pts={roundRect(-4, 10, 50, 34, 4)} h={3} z={6} />
-        <Flat z={9} pts={[[-29, -7], [-4, 10], [21, -7]]} />
+        <Block pts={roundRect(-4, 4, 50, 36, 4)} h={3} z={6} />
+        <Flat z={9} pts={[[-29, -14], [-4, 6], [21, -14]]} />
+        <Block pts={roundRect(12, -6, 8, 9, 1.5)} h={0.8} z={9} />
       </Drop>
       {/* The parcel, taped in pink */}
       <Drop delay={0.7}>
-        <Block pts={roundRect(56, 2, 40, 40, 4)} h={30} z={6} />
-        <Flat z={36} pink width={2.4} pts={[[56, -18], [56, 22]]} />
+        <Block pts={roundRect(58, 2, 40, 40, 4)} h={30} z={6} />
+        <Flat z={36} pink width={2.4} pts={[[58, -18], [58, 22]]} />
+        <Flat z={36} pink width={2.4} pts={[[38, 2], [78, 2]]} />
       </Drop>
     </g>
   );
 }
 
-/** Today, agents: a tablet with a route drawing itself in pink, an agent's sparkle above. */
+/** Today, agents: a tablet showing a street grid and the route an agent planned, in
+ *  pink, its stops along it; the agent's sparkle floating upright above. */
 function StoryAgent() {
   const stops: P[] = [
-    [-50, 22],
-    [-18, -4],
-    [12, 18],
-    [44, -14],
+    [-48, 26],
+    [-48, -4],
+    [-8, -4],
+    [-8, 26],
+    [32, 26],
+    [32, -24],
   ];
+  // A four-pointed sparkle, facing you, with a little one beside it
+  const star = (cx: number, cy: number, r: number) =>
+    `M${cx} ${cy - r}Q${cx} ${cy} ${cx + r} ${cy}Q${cx} ${cy} ${cx} ${cy + r}Q${cx} ${cy} ${cx - r} ${cy}Q${cx} ${cy} ${cx} ${cy - r}Z`;
   return (
-    <g transform="translate(0 18)">
-      <Block pts={roundRect(0, 0, 176, 116, 16)} h={6} />
-      <Flat z={6} pts={closed(roundRect(0, 0, 160, 100, 10))} />
-      {/* A street grid on the screen */}
-      {[-30, 0, 30].map((y) => (
-        <Flat key={`h${y}`} z={6} pts={[[-72, y], [72, y]]} />
+    <g transform="translate(-4 24)">
+      <Block pts={roundRect(0, 0, 176, 120, 16)} h={7} />
+      <Flat z={7} pts={closed(roundRect(0, 0, 160, 104, 10))} />
+      {/* The street grid, following the route's streets */}
+      {[-34, -4, 26].map((y) => (
+        <Flat key={`h${y}`} z={7} pts={[[-72, y], [72, y]]} />
       ))}
-      {[-40, 0, 40].map((x) => (
-        <Flat key={`v${x}`} z={6} pts={[[x, -44], [x, 44]]} />
+      {[-48, -8, 32].map((x) => (
+        <Flat key={`v${x}`} z={7} pts={[[x, -46], [x, 46]]} />
       ))}
-      {/* The route the agent planned, and its stops */}
-      <Flat z={6} pink width={2.6} pts={stops} />
-      {stops.map(([x, y], i) => (
-        <Block key={i} pts={circle(x, y, 4.5, 20)} h={3} z={6} pink={i === stops.length - 1} />
+      {/* The route the agent planned, along the streets, and its stops */}
+      <Flat z={7} pink width={2.6} pts={stops} />
+      {[stops[0], stops[stops.length - 1]].map(([x, y], i) => (
+        <Block key={i} pts={circle(x, y, 5, 20)} h={3} z={7} pink />
       ))}
       <Drop delay={0.5}>
         <Bob distance={5}>
-          <Block pts={sparkle(36, -60, 20)} h={4} z={30} pink />
+          <Facing x={44} y={-30} z={46} path={star(0, 0, 16)} pink />
+          <Facing x={44} y={-30} z={46} path={star(-22, -14, 7)} pink />
         </Bob>
       </Drop>
     </g>

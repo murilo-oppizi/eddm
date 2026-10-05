@@ -146,7 +146,12 @@ export function AboutStory() {
           </Reveal>
 
           <Reveal>
-            <div ref={root} onPointerEnter={() => setHeld(true)} onPointerLeave={() => setHeld(false)} className="space-y-8">
+            <div
+              ref={root}
+              onPointerEnter={() => setHeld(true)}
+              onPointerLeave={() => setHeld(false)}
+              className="space-y-6 rounded-3xl bg-muted/50 px-4 pt-8 pb-6 sm:px-10 sm:pt-10 sm:pb-8 lg:px-14"
+            >
               {/* The stepper: an icon per moment on a line that fills toward the next */}
               <div role="tablist" aria-label={story.title} className="relative grid grid-cols-4">
                 <div aria-hidden className="absolute inset-x-[12.5%] top-[23px] h-0.5 bg-border sm:top-[27px]">
@@ -188,7 +193,7 @@ export function AboutStory() {
                         <span className={cn("block text-xs font-semibold tracking-wider uppercase transition-colors", on ? "text-brand" : "text-muted-foreground")}>
                           {s.when}
                         </span>
-                        <span className={cn("mt-0.5 hidden text-sm font-medium transition-colors sm:block", on ? "text-foreground" : "text-muted-foreground")}>
+                        <span className={cn("mt-0.5 hidden text-sm font-medium transition-colors lg:block", on ? "text-foreground" : "text-muted-foreground")}>
                           {s.title}
                         </span>
                       </span>
@@ -198,9 +203,9 @@ export function AboutStory() {
               </div>
 
               {/* The moment: its scene, drawn in, beside its words */}
-              <div role="tabpanel" aria-live="polite" className="grid overflow-hidden rounded-3xl border bg-card md:grid-cols-[1.1fr_1fr]">
-                <div className="grid h-60 place-items-center border-b bg-muted/40 px-6 md:h-72 md:border-r md:border-b-0">
-                  <IsoArt key={active} name={storyArt[active]} className="w-full max-w-[300px]" />
+              <div role="tabpanel" aria-live="polite" className="grid items-center md:grid-cols-[1.1fr_1fr] md:gap-10">
+                <div className="grid h-60 place-items-center md:h-80">
+                  <IsoArt key={active} name={storyArt[active]} className="w-full max-w-[320px]" />
                 </div>
                 <AnimatePresence mode="wait" initial={false}>
                   <motion.div
@@ -209,7 +214,7 @@ export function AboutStory() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -8 }}
                     transition={{ duration: 0.3, ease }}
-                    className="flex flex-col justify-center gap-3 p-6 sm:p-10"
+                    className="flex flex-col justify-center gap-3 px-2 pb-4 text-center md:px-0 md:pb-0 md:text-left"
                   >
                     <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase tabular-nums">
                       <span className="text-brand">{stop.when}</span> · {stop.unit}
