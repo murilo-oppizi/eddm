@@ -19,7 +19,7 @@ import { MotionConfig, motion } from "motion/react";
 
 import { type Place } from "@/components/sections/globe";
 import { IsoArt } from "@/components/sections/iso-art";
-import { Postmark } from "@/components/sections/postmark";
+import { AboutHeroArt } from "@/components/sections/about-hero-art";
 import { Flag, WorldMap } from "@/components/sections/world-map";
 import { Button } from "@/components/ui/button";
 import { about } from "@/content/site";
@@ -64,7 +64,7 @@ function Eyebrow({ children, className }: { children: React.ReactNode; className
 
 /* --------------------------------- Hero --------------------------------- */
 
-/** The page's opening: Oppizi's line, and a postmark with what a decade of mail adds up to. */
+/** The page's opening: Oppizi's line, and what it does: postcards, planned and tracked. */
 export function AboutHero() {
   const { hero } = about;
   return (
@@ -88,8 +88,8 @@ export function AboutHero() {
             </div>
           </Reveal>
 
-          <Reveal delay={0.15} className="mx-auto w-full max-w-[300px] sm:max-w-[440px]">
-            <Postmark />
+          <Reveal delay={0.15} className="mx-auto w-full max-w-[340px] sm:max-w-[480px]">
+            <AboutHeroArt />
           </Reveal>
         </div>
       </section>

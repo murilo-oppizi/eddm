@@ -467,7 +467,7 @@ function BusinessDialog({
 }
 
 /** A 9″ × 6.25″ EDDM postcard: the offer on the left, postage and addressing on the right. */
-function Postcard({ industry, copy }: { industry: Industry; copy?: { headline: string; offer: string } }) {
+export function Postcard({ industry, copy }: { industry: Industry; copy?: { headline: string; offer: string } }) {
   const Icon = icons[industry.icon];
   const tone = tones[industry.tone];
   const card = { ...industry.postcard, ...copy };

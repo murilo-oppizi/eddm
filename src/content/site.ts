@@ -464,11 +464,6 @@ export const about = {
     body: "Offline shouldn't be guesswork. We built Oppizi to bring agents to offline marketing, to help plan, create and track every campaign. EDDM is how we bring it to the businesses that serve a neighborhood.",
     primary: { label: "Launch a campaign", href: "https://app.oppizi.com/?oppizi_source=eddm" },
     secondary: { label: "Join the team", href: "https://oppizi.com/us/en/work-at-oppizi/corporate-roles/" },
-    // The stamp in the hero, and its postmark (dated today)
-    stampValue: "306M+",
-    stampLabel: "pieces delivered",
-    postmarkTop: "OPPIZI · BROOKLYN, NY",
-    postmarkBottom: "SINCE 2014",
   },
   story: {
     eyebrow: "Our story",
