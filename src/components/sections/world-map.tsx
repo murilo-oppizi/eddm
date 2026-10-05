@@ -74,7 +74,7 @@ export function WorldMap({
       ))}
 
       {/* The one in view: its dot grows into a round flag, centered on the same spot, with
-          a soft pink ring pulsing out of it and the name under it */}
+          the name under it */}
       <AnimatePresence mode="wait">
         <motion.div
           key={shown}
@@ -83,12 +83,6 @@ export function WorldMap({
           className="absolute"
           exit={{ opacity: 0, scale: 0.6, transition: { duration: 0.18 } }}
         >
-          <motion.span
-            className="absolute -translate-1/2 rounded-full bg-primary/25"
-            initial={{ width: 8, height: 8, opacity: 0 }}
-            animate={{ width: [8, 56], height: [8, 56], opacity: [0.8, 0] }}
-            transition={{ duration: 1.6, repeat: Infinity, ease: "easeOut", delay: 0.3 }}
-          />
           <motion.span
             className="absolute grid size-8 -translate-1/2 place-items-center overflow-hidden rounded-full bg-card shadow-[0_4px_12px_-2px_rgb(0_0_0/0.3)] ring-2 ring-card"
             initial={{ scale: 0.25 }}
