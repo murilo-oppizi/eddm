@@ -492,12 +492,28 @@ function Paper({
   );
 }
 
+/**
+ * The stand every story scene stands on: a round base (round, so it can't read as a
+ * phone), the scene a little smaller on top of it, so the four sit as one set.
+ */
+const STAND_R = 88;
+const STAND_H = 6;
+function Stand({ children, x = 0 }: { children: React.ReactNode; x?: number }) {
+  return (
+    <g transform="translate(0 4) scale(0.86)">
+      <Block pts={circle(0, 0, STAND_R, 72)} h={STAND_H} />
+      <Flat z={STAND_H} pts={closed(circle(0, 0, STAND_R - 9, 72))} />
+      <g transform={`translate(${x} ${-STAND_H})`}>{children}</g>
+    </g>
+  );
+}
+
 /** 2014, flyering: a stack of printed flyers, the top one lifting off in pink, floating. */
 function StoryFlyers() {
   const t = 1.4;
   const n = 7;
   return (
-    <g transform="translate(-6 30)">
+    <Stand x={-6}>
       {Array.from({ length: n - 1 }, (_, i) => (
         <Block key={i} pts={roundRect(-18 + (i % 2) * 1.5, 6 - (i % 3), 60, 84, 1.5, 0.025 * ((i % 3) - 1))} h={t} z={i * t} />
       ))}
@@ -507,7 +523,7 @@ function StoryFlyers() {
           <Paper cx={30} cy={-34} z={44} rot={-0.18} pink />
         </Bob>
       </Drop>
-    </g>
+    </Stand>
   );
 }
 
@@ -547,9 +563,9 @@ function Pin({ x, y, z = 0, pink }: { x: number; y: number; z?: number; pink?: b
 /** Growing, 12+ countries: a folded paper map (four panels, zigzag), pins dropping onto
  *  it one after another along a dashed route; the newest in pink. */
 function StoryPins() {
-  const xs = [-76, -38, 0, 38, 76]; // the folds, across the map
+  const xs = [-62, -31, 0, 31, 62]; // the folds, across the map
   const zs = [0, 9, 0, 9, 0];
-  const Y = 50; // half the map's depth
+  const Y = 42; // half the map's depth
   const zAt = (x: number) => {
     const i = Math.max(0, Math.min(xs.length - 2, xs.findIndex((v, k) => x >= v && x <= xs[k + 1])));
     const f = (x - xs[i]) / (xs[i + 1] - xs[i]);
@@ -568,10 +584,10 @@ function StoryPins() {
     return out.sort((p, q) => p[0] - q[0]);
   };
   const pins: P[] = [
-    [-58, 18],
-    [-20, -26],
-    [22, 22],
-    [56, -14],
+    [-48, 15],
+    [-16, -22],
+    [18, 18],
+    [46, -12],
   ];
   const dashes = pins.slice(1).flatMap((b, i) => {
     const a = pins[i];
@@ -585,7 +601,7 @@ function StoryPins() {
     });
   });
   return (
-    <g transform="translate(0 22)">
+    <Stand>
       {/* The panels, far to near */}
       {xs.slice(0, -1).map((x0, i) => {
         const x1 = xs[i + 1];
@@ -598,9 +614,9 @@ function StoryPins() {
         );
       })}
       {/* Roads and a river, printed on the map */}
-      <Stroke path={onMap(across([[-76, 34], [76, 30]]))} />
-      <Stroke path={onMap(across([[-76, -38], [-10, -8], [76, -36]]))} />
-      <Stroke path={onMap(across([[-76, -6], [-30, 4], [20, -4], [76, 8]]))} />
+      <Stroke path={onMap(across([[-62, 28], [62, 25]]))} />
+      <Stroke path={onMap(across([[-62, -32], [-8, -7], [62, -30]]))} />
+      <Stroke path={onMap(across([[-62, -5], [-25, 3], [16, -3], [62, 7]]))} />
       {dashes.map((seg, k) => (
         <Stroke key={k} path={onMap(seg)} />
       ))}
@@ -609,7 +625,7 @@ function StoryPins() {
           <Pin x={x} y={y} z={zAt(x)} pink={i === pins.length - 1} />
         </Drop>
       ))}
-    </g>
+    </Stand>
   );
 }
 
@@ -617,13 +633,13 @@ function StoryPins() {
  *  after another; the parcel's tape in pink. */
 function StoryChannels() {
   // Their centers, placed in a row across the picture
-  const flyer: P = [-52, 38];
-  const env: P = [-1, 11];
-  const box = { cx: 35, cy: -35, w: 44, d: 44, h: 30 };
+  const flyer: P = [-42, 30];
+  const env: P = [-2, 6];
+  const box = { cx: 28, cy: -28, w: 42, d: 42, h: 30 };
   const ew = 44;
   const ed = 30;
   return (
-    <g transform="translate(0 6)">
+    <Stand>
       <Drop delay={0.3}>
         <Paper cx={flyer[0]} cy={flyer[1]} z={0} w={34} l={48} rot={0.05} />
       </Drop>
@@ -645,7 +661,7 @@ function StoryChannels() {
         <Flat z={box.h} pink width={3} pts={[[box.cx, box.cy - box.d / 2 + 1], [box.cx, box.cy + box.d / 2]]} />
         <Wall y={box.cy + box.d / 2} pink width={3} pts={[[box.cx, box.h], [box.cx, 1]]} />
       </Drop>
-    </g>
+    </Stand>
   );
 }
 
@@ -656,9 +672,9 @@ function StoryAgent() {
   const hub = 21; // half the key's base
   // Where to mail (left), the postcard (far right), the results (near right)
   const targets: P[] = [
-    [-59, 47],
-    [12, -81],
-    [69, -4],
+    [-50, 40],
+    [6, -56],
+    [58, -3],
   ];
   // Each line, from the key's edge to just short of the thing it reaches
   const lines = targets.map(([x, y]) => {
@@ -669,7 +685,7 @@ function StoryAgent() {
     return { from, to };
   });
   return (
-    <g transform="translate(0 8)">
+    <Stand>
       {/* The dashed lines on the ground */}
       {lines.map(({ from, to }, i) =>
         Array.from({ length: 6 }, (_, k) => {
@@ -723,6 +739,6 @@ function StoryAgent() {
           />
         );
       })}
-    </g>
+    </Stand>
   );
 }
