@@ -19,13 +19,13 @@ export const site = {
   login: { label: "Log in", href: "https://app.oppizi.com/login?oppizi_source=eddm" },
 }
 
-// The closing card. Its button opens the Oppizi app, where a campaign is made (the same
-// app login eddm.com uses, for now: confirm the sign-up link before launch). The line is
+// The closing card. Its button opens the Oppizi app, where a campaign is made (the link
+// oppizi.com's own "Launch a campaign" buttons use). The line is
 // the closing card's on oppizi.com's EDDM page (Oct 2026).
 export const cta = {
   title: "Ready to reach every door?",
   body: "Reach every household in your target area, launch in minutes, and track delivery and performance in one place.",
-  button: { label: "Launch a campaign", href: "https://app.oppizi.com/login?oppizi_source=eddm" },
+  button: { label: "Launch a campaign", href: "https://app.oppizi.com/?oppizi_source=eddm" },
 }
 
 export const hero = {
@@ -452,50 +452,115 @@ export const faqs = [
 
 // About page. Facts from oppizi.com (About us, homepage, imprint) and eddm.com, Sept
 // 2026; the values are Oppizi's own, explained for EDDM. Confirm with marketing.
+// About page. Copy from oppizi.com's About us page, homepage and imprint (Oct 2026):
+// the mission, the four beliefs, the leadership team, the numbers, the countries and the
+// case-study results are theirs; the EDDM lines tie them to this site. Confirm before launch.
 export const about = {
   description:
-    "EDDM is Every Door Direct Mail by Oppizi, the offline marketing platform that plans, launches and measures campaigns for brands like DoorDash, Uber Eats and Chipotle.",
-  eyebrow: "About",
-  title: "Every door, powered by Oppizi",
-  body: "EDDM helps businesses that serve a neighborhood reach every home on the routes they choose. It's built and run by Oppizi, the offline marketing platform growth teams use to plan, launch and measure direct mail, inserts and flyering.",
+    "EDDM is Every Door Direct Mail by Oppizi, the agentic offline marketing platform that plans, launches and measures campaigns for brands like DoorDash, Uber Eats and Chipotle.",
+  hero: {
+    eyebrow: "About Oppizi",
+    title: "We're redefining how offline marketing works",
+    body: "Offline shouldn't be guesswork. We built Oppizi to bring agents to offline marketing, to help plan, create and track every campaign. EDDM is how we bring it to the businesses that serve a neighborhood.",
+    primary: { label: "Launch a campaign", href: "https://app.oppizi.com/?oppizi_source=eddm" },
+    secondary: { label: "Join the team", href: "https://oppizi.com/us/en/work-at-oppizi/corporate-roles/" },
+    // Around the postmark
+    postmark: "OPPIZI · OFFLINE MARKETING · SINCE 2014 · SYDNEY → BROOKLYN · ",
+    postmarkValue: "306M+",
+    postmarkLabel: "pieces delivered",
+  },
   story: {
-    title: "From flyers in Sydney to AI agents in New York",
-    paragraphs: [
-      "Oppizi started in Sydney in 2014 as a flyering company. Over the next decade it grew into a dozen countries across Europe, the Americas and Asia-Pacific, adding direct mail and package inserts along the way.",
-      "Today Oppizi is headquartered in New York, and its platform uses AI agents to plan, launch and measure offline campaigns, with the targeting and tracking teams expect from digital channels.",
-      "EDDM brings the same tools to local businesses: pick routes on a map, design your postcard, and we print it near your neighborhood and hand it to USPS.",
+    eyebrow: "Our story",
+    title: "From flyers in Sydney to agents in Brooklyn",
+    stops: [
+      { when: "2014", where: "Sydney", title: "A flyering company", body: "Oppizi starts out on the street, putting flyers into hands for brands that want local customers." },
+      { when: "Growing", where: "12+ countries", title: "Across three continents", body: "Teams on the ground in Europe, the Americas and Asia-Pacific, in 77+ cities and counting." },
+      { when: "More channels", where: "One platform", title: "Mail, inserts and flyers", body: "Direct mail, Every Door Direct Mail and package inserts join flyering, planned and measured in one place." },
+      { when: "Today", where: "Brooklyn, NY", title: "An agentic platform", body: "Oppizi OS uses AI agents to plan, launch and measure offline campaigns, with the precision of a digital channel." },
     ],
   },
-  facts: [
-    { value: "2014", label: "Founded, in Sydney" },
-    { value: "New York", label: "Headquarters" },
-    { value: "700+", label: "Local print partners in the US" },
-    { value: "Oppizi OS", label: "The platform behind EDDM" },
-  ],
-  valuesTitle: "What we believe",
-  valuesBody: "Four ideas guide how Oppizi builds, and how EDDM works for you.",
+  mission: {
+    eyebrow: "Our mission",
+    // The highlighted words sit between the two parts.
+    before: "To transform offline marketing into an",
+    highlight: "agentic performance channel",
+    after: "that teams can plan, execute, and scale with confidence.",
+  },
+  valuesEyebrow: "What drives us",
+  valuesTitle: "Four ideas behind everything we build",
   values: [
     {
-      icon: "sparkles",
+      art: "agents",
       title: "Agents should power execution",
-      body: "Our AI agents do the legwork of planning, from finding routes to matching your audience and estimating cost, so a mailing takes minutes to plan, not days.",
+      body: "Our AI agents do the legwork, from finding routes to matching your audience and estimating cost, so a mailing takes minutes to plan, not days.",
     },
     {
-      icon: "mail",
+      art: "attention",
       title: "Attention is earned, not bought",
-      body: "A postcard in hand gets looked at. We help you design one worth keeping and send it to the neighborhoods that matter to your business.",
+      body: "Real-world interactions create focus and presence that digital channels can't replicate. A postcard in hand gets looked at.",
     },
     {
-      icon: "chart",
+      art: "measurable",
       title: "Offline should be measurable",
-      body: "Every campaign comes with QR code and scan tracking by route, so you can see what worked and where to mail next.",
+      body: "Marketing in the physical world should be held to the same standards as digital: every campaign tracks scans and results by route.",
     },
     {
-      icon: "shield",
+      art: "scale",
       title: "Scale should not break quality",
       body: "One neighborhood or a whole city, every campaign gets the same USPS checks, local printing and delivery you can follow.",
     },
   ],
+  world: {
+    eyebrow: "Where we work",
+    title: "Global, and on the ground",
+    body: "Oppizi runs campaigns across 14 countries from one platform, with local teams and partners in every market.",
+    regions: [
+      { name: "Americas", countries: [["US", "United States"], ["CA", "Canada"], ["BR", "Brazil"], ["AR", "Argentina"]] },
+      { name: "Europe", countries: [["GB", "United Kingdom"], ["FR", "France"], ["DE", "Germany"], ["ES", "Spain"], ["PT", "Portugal"], ["NL", "Netherlands"], ["BE", "Belgium"], ["PL", "Poland"]] },
+      { name: "Asia-Pacific", countries: [["AU", "Australia"], ["NZ", "New Zealand"]] },
+    ],
+    hq: { label: "Headquarters", place: "Brooklyn, New York", address: "426 Union Ave, Brooklyn, NY 11211" },
+    network: [
+      { value: "77+", label: "Cities with flyering" },
+      { value: "400+", label: "Retail partners for inserts" },
+      { value: "700+", label: "Print partners in the US" },
+    ],
+  },
+  team: {
+    eyebrow: "Sourced from around the world",
+    title: "Our leadership team",
+    people: [
+      { name: "Arthur Favier", role: "Founder & CEO" },
+      { name: "Sami Andreani", role: "CFO" },
+      { name: "Nicolas de Resbecq", role: "CRO" },
+      { name: "Slava Tykhonchuk", role: "CTO" },
+      { name: "Erin Stuckert", role: "GM US" },
+      { name: "Raphael Vivant", role: "GM ANZ" },
+      { name: "Vincent Bonnet", role: "GM France" },
+      { name: "Gaëlle Walrave", role: "GM Germany" },
+      { name: "Silvana Sánchez", role: "GM Spain & Portugal" },
+    ],
+  },
+  results: {
+    title: "Results that show up in the real world",
+    items: [
+      { brand: "Uber Eats", value: "2M+", label: "new customers acquired" },
+      { brand: "Getaround", value: "70%", label: "lower cost per acquisition" },
+      { brand: "THE ICONIC", value: "5.7M", label: "satchel inserts delivered" },
+    ],
+  },
+  life: {
+    eyebrow: "Life at Oppizi",
+    title: "A place for people who like building real things",
+    lines: [
+      "You'll work across markets, teams, and disciplines.",
+      "You'll see your work show up in the real world.",
+      "We move fast, but with purpose.",
+    ],
+    tags: ["Teamwork", "Field work", "Global network"],
+    primary: { label: "Join the team", href: "https://oppizi.com/us/en/work-at-oppizi/corporate-roles/" },
+    secondary: { label: "Become a Brand Ambassador", href: "https://oppizi.com/us/en/work-at-oppizi/on-site-distribution-roles/" },
+  },
 } as const
 
 // Contact page. Email and address from oppizi.com's imprint; the one-business-day
