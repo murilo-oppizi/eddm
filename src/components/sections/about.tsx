@@ -16,7 +16,8 @@ import {
 import { MotionConfig, motion } from "motion/react";
 
 import { DotOrb } from "@/components/sections/dot-orb";
-import { Globe, type Place } from "@/components/sections/globe";
+import { type Place } from "@/components/sections/globe";
+import { WorldMap } from "@/components/sections/world-map";
 import { Button } from "@/components/ui/button";
 import { about } from "@/content/site";
 import { cn } from "@/lib/utils";
@@ -389,9 +390,9 @@ const countryNames: Record<string, string> = Object.fromEntries(
 );
 
 /**
- * Where Oppizi works, as a bento grid: a big tile with the globe rising out of its bottom
- * edge, the headquarters, the markets (pointing at one turns the globe to it), and the
- * network in three small tiles. Stacked on phones.
+ * Where Oppizi works, as a bento grid: a big tile with a dotted world map, the
+ * headquarters, the markets (pointing at one moves the map's pin to it), and the network
+ * in three small tiles. Stacked on phones.
  */
 export function AboutWorld() {
   const { world } = about;
@@ -407,15 +408,11 @@ export function AboutWorld() {
           </Reveal>
 
           <div className="grid gap-4 lg:grid-cols-3">
-            {/* The globe, half out of view, rising from the tile's bottom edge */}
-            <Tile className="relative min-h-[440px] overflow-hidden sm:min-h-[560px] lg:col-span-2 lg:row-span-2">
+            {/* The world map, every market on it, a pin touring them */}
+            <Tile className="relative overflow-hidden lg:col-span-2 lg:row-span-2">
               <TileHead icon={<IconWorld className="size-5" />} title={world.reach.title} body={world.reach.body} />
-              <div
-                aria-hidden
-                className="pointer-events-none absolute inset-x-0 bottom-0 h-2/3 bg-[radial-gradient(60%_70%_at_50%_100%,color-mix(in_oklab,var(--primary)_12%,transparent),transparent)]"
-              />
-              <div className="absolute top-[30%] left-1/2 w-[125%] max-w-[760px] -translate-x-1/2 sm:top-[24%] sm:w-[100%]">
-                <Globe places={places} hub={hub} focus={focus} lift={0.5} />
+              <div className="my-auto py-6 sm:px-4">
+                <WorldMap order={places.map((p) => p.id)} hub={hub.id} focus={focus} names={countryNames} />
               </div>
             </Tile>
 

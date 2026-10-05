@@ -517,7 +517,7 @@ export const about = {
     // The bento's big tile, over the globe
     reach: { title: "14 countries, one platform", body: "Plan, launch and measure every market from the same dashboard." },
     countriesTitle: "Our markets",
-    countriesBody: "Point at one to find it on the globe.",
+    countriesBody: "Point at one to find it on the map.",
     // Each country's main city, for its pin on the globe: [code, name, latitude, longitude]
     regions: [
       { name: "Americas", countries: [["US", "United States", 40.68, -73.94], ["CA", "Canada", 43.65, -79.38], ["BR", "Brazil", -23.55, -46.63], ["AR", "Argentina", -34.6, -58.38]] },
