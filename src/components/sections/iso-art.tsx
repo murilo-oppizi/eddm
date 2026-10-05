@@ -168,7 +168,12 @@ export type IsoArtName =
   | "quality-level"
   // after the icons on oppizi.com's About page
   | "attention-eye"
-  | "quality-network";
+  | "quality-network"
+  // round 4
+  | "attention-mat"
+  | "attention-door"
+  | "quality-printer"
+  | "quality-mailboxes";
 
 /** One picture: the object (which lifts on hover of a `group` around it) over a soft shadow. */
 export function IsoArt({ name, className }: { name: IsoArtName; className?: string }) {
@@ -211,6 +216,10 @@ export function IsoArt({ name, className }: { name: IsoArtName; className?: stri
         {name === "quality-level" && <Level />}
         {name === "attention-eye" && <Eye />}
         {name === "quality-network" && <Network />}
+        {name === "attention-mat" && <Doormat />}
+        {name === "attention-door" && <Door />}
+        {name === "quality-printer" && <Printer />}
+        {name === "quality-mailboxes" && <Mailboxes />}
       </g>
     </motion.svg>
   );
@@ -570,6 +579,114 @@ function Network() {
     <g>
       {pieces.map((p, i) => (
         <g key={i}>{p.el}</g>
+      ))}
+    </g>
+  );
+}
+
+/* -------------------------------- Round 4 -------------------------------- */
+
+/** Lines drawn on an upright face that looks down-left (a fixed y): points as (x, z). */
+function Wall({ pts, y, pink, width }: { pts: [number, number][]; y: number; pink?: boolean; width?: number }) {
+  return <Stroke path={d(pts.map(([x, z]) => iso([x, y], z)))} pink={pink} width={width} />;
+}
+const wallRect = (x0: number, x1: number, z0: number, z1: number): [number, number][] => [
+  [x0, z0],
+  [x1, z0],
+  [x1, z1],
+  [x0, z1],
+  [x0, z0],
+];
+
+/** Text printed flat on the ground (or a surface at height z), running down-right. */
+function GroundText({ x, y, z = 0, size, children }: { x: number; y: number; z?: number; size: number; children: string }) {
+  const [tx, ty] = iso([x, y], z);
+  return (
+    <motion.text
+      variants={fadeIn}
+      transform={`matrix(${COS} 0.5 ${-COS} 0.5 ${tx} ${ty})`}
+      textAnchor="middle"
+      dominantBaseline="middle"
+      className="fill-foreground/30 font-semibold tracking-[0.25em]"
+      style={{ fontSize: size }}
+    >
+      {children}
+    </motion.text>
+  );
+}
+
+/** Attention, at the door: a postcard landed on a WELCOME mat, its stamp in pink. */
+function Doormat() {
+  return (
+    <g>
+      <Block pts={roundRect(0, 0, 150, 92, 10)} h={4} />
+      <Flat z={4} pts={closed(roundRect(0, 0, 136, 78, 7))} />
+      <GroundText x={6} y={30} z={4} size={12}>
+        WELCOME
+      </GroundText>
+      <Block pts={rect(-10, -16, 72, 48, 0.22)} h={2.5} z={4} />
+      <Block pts={rect(6, -32, 14, 16, 0.22)} h={1} z={6.5} pink />
+      <Flat z={6.5} pts={[[-38, -30], [-12, -24]]} />
+      <Flat z={6.5} pts={[[-40, -20], [-22, -16]]} />
+    </g>
+  );
+}
+
+/** Attention, at the door: a front door on its step, a postcard poking out of the mail
+ *  slot in pink. */
+function Door() {
+  const face = 0; // the door's front face (it looks down-left)
+  return (
+    <g>
+      <Block pts={rect(0, 14, 96, 44)} h={5} />
+      <Block pts={rect(0, -4, 64, 8)} h={82} z={5} />
+      {/* Panels, the slot, the knob */}
+      <Wall y={face} pts={wallRect(-22, 22, 52, 78)} />
+      <Wall y={face} pts={wallRect(-22, 22, 12, 30)} />
+      <Wall y={face} pts={wallRect(-14, 14, 38, 43)} />
+      <Wall y={face} pts={Array.from({ length: 17 }, (_, i) => {
+        const t = (i / 16) * Math.PI * 2;
+        return [24 + 3 * Math.cos(t), 33 + 3 * Math.sin(t)] as [number, number];
+      })} />
+      {/* The postcard, half through the slot */}
+      <Block pts={[[-11, face], [11, face], [11, face + 22], [-11, face + 22]]} h={2} z={40} pink />
+    </g>
+  );
+}
+
+/** Quality at scale: a printer and its output, a stack of identical cards, the top one
+ *  checked in pink. */
+function Printer() {
+  const sheets = 7;
+  return (
+    <g>
+      <Block pts={roundRect(-14, -12, 92, 70, 6)} h={30} />
+      {/* The paper going in at the back, the slot it comes out of */}
+      <Block pts={rect(-24, -46, 60, 4, 0)} h={14} z={30} />
+      <Flat z={30} pts={closed(roundRect(-14, -12, 70, 48, 4))} />
+      {/* The stack, in front */}
+      {Array.from({ length: sheets }, (_, i) => (
+        <Block key={i} pts={rect(42, 36, 58, 40)} h={2.4} z={i * 2.4} />
+      ))}
+      <Flat z={sheets * 2.4} pink width={2.4} pts={[onScreen(42, 36, -9, 0), onScreen(42, 36, -2, -6), onScreen(42, 36, 11, 7)]} />
+    </g>
+  );
+}
+
+/** Quality at scale: a street of identical mailboxes on posts, every flag up in pink. */
+function Mailboxes() {
+  const xs = [-72, -24, 24, 72];
+  return (
+    // Down a little, to sit in the middle of the card like the others
+    <g transform="translate(0 20)">
+      {xs.map((x) => (
+        <g key={x}>
+          <Block pts={rect(x, 0, 5, 5)} h={34} />
+          <Block pts={roundRect(x, 0, 16, 30, 4)} h={16} z={34} />
+          {/* The flag, up */}
+          <Block pts={rect(x + 9.5, -6, 2, 4)} h={22} z={36} pink />
+          <Block pts={rect(x + 9.5, -9, 2, 8)} h={7} z={51} pink />
+        </g>
       ))}
     </g>
   );

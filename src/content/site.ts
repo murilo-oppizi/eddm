@@ -495,7 +495,7 @@ export const about = {
       body: "Our AI agents do the legwork, from finding routes to matching your audience and estimating cost, so a mailing takes minutes to plan, not days.",
     },
     {
-      art: "attention-eye",
+      art: "attention-mat",
       title: "Attention is earned, not bought",
       body: "Real-world interactions create focus and presence that digital channels can't replicate. A postcard in hand gets looked at.",
     },
@@ -505,7 +505,7 @@ export const about = {
       body: "Marketing in the physical world should be held to the same standards as digital: every campaign tracks scans and results by route.",
     },
     {
-      art: "quality-network",
+      art: "quality-mailboxes",
       title: "Scale should not break quality",
       body: "One neighborhood or a whole city, every campaign gets the same USPS checks, local printing and delivery you can follow.",
     },
