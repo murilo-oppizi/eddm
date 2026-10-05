@@ -176,7 +176,10 @@ export type IsoArtName =
   | "quality-mailboxes"
   // round 5
   | "attention-slot"
-  | "quality-street";
+  | "quality-street"
+  // round 6
+  | "quality-pile"
+  | "quality-pile-stamp";
 
 /** One picture: the object (which lifts on hover of a `group` around it) over a soft shadow. */
 export function IsoArt({ name, className }: { name: IsoArtName; className?: string }) {
@@ -225,6 +228,8 @@ export function IsoArt({ name, className }: { name: IsoArtName; className?: stri
         {name === "quality-mailboxes" && <Mailboxes />}
         {name === "attention-slot" && <MailSlot />}
         {name === "quality-street" && <Street />}
+        {name === "quality-pile" && <Pile />}
+        {name === "quality-pile-stamp" && <Pile withStamp />}
       </g>
     </motion.svg>
   );
@@ -830,6 +835,59 @@ function Street() {
           </g>
         );
       })}
+    </g>
+  );
+}
+
+/* -------------------------------- Round 6 -------------------------------- */
+
+/**
+ * Quality at scale: a pile of identical postcards, a little uneven like a real stack,
+ * the top one with its address and a round pink seal of approval printed on it. With
+ * `withStamp`, the rubber stamp that printed it is lifted just above the pile.
+ */
+function Pile({ withStamp = false }: { withStamp?: boolean }) {
+  const t = 2.4; // one card's thickness
+  // Twelve cards, each a touch off square, like a real pile
+  const tilts = [0.06, -0.04, 0.03, -0.05, 0.04, -0.02, 0.05, -0.03, 0.02, -0.04, 0.02, 0];
+  const shifts: P[] = [[-3, 2], [2, -2], [-2, -1], [3, 2], [-1, 2], [2, 0], [-2, 1], [1, -2], [-1, 1], [2, 1], [-1, -1], [0, 0]];
+  const top = tilts.length * t;
+  const seal: P = [26, -10];
+  const ring = (r: number) => closed(circle(seal[0], seal[1], r, 36));
+  return (
+    <g transform={withStamp ? "translate(0 26)" : "translate(0 16)"}>
+      {tilts.map((a, i) => (
+        <Block key={i} pts={rect(shifts[i][0], shifts[i][1], 112, 74, a)} h={t} z={i * t} />
+      ))}
+      {/* The address on the top card */}
+      <Flat z={top} width={2} pts={[[-44, -24], [-12, -24]]} />
+      <Flat z={top} pts={[[-44, -14], [-22, -14]]} />
+      <Flat z={top} pts={[[-44, 12], [-8, 12]]} />
+      <Flat z={top} pts={[[-44, 20], [-16, 20]]} />
+      <Flat z={top} pts={[[-44, 28], [-24, 28]]} />
+      {/* The seal: two rings and a check */}
+      <Flat z={top} pink width={1.6} pts={ring(18)} />
+      <Flat z={top} pink pts={ring(14)} />
+      <Flat
+        z={top}
+        pink
+        width={2.4}
+        pts={[onScreen(seal[0], seal[1], -6, 0), onScreen(seal[0], seal[1], -1.5, -4.5), onScreen(seal[0], seal[1], 7, 4.5)]}
+      />
+      {withStamp && <LiftedStamp at={onScreen(seal[0], seal[1], 30, 18)} z={top + 14} />}
+    </g>
+  );
+}
+
+/** The rubber stamp from round 3, lifted off the ground to height z. */
+function LiftedStamp({ at: [sx, sy], z }: { at: P; z: number }) {
+  return (
+    <g>
+      <Block pts={roundRect(sx, sy, 40, 40, 5)} h={3} z={z} />
+      <Block pts={roundRect(sx, sy, 44, 44, 5)} h={9} z={z + 3} />
+      <Block pts={roundRect(sx, sy, 20, 20, 3)} h={6} z={z + 12} />
+      <Block pts={circle(sx, sy, 9)} h={20} z={z + 18} />
+      <Block pts={circle(sx, sy, 12.5)} h={7} z={z + 38} />
     </g>
   );
 }
