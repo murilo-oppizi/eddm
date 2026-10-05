@@ -564,40 +564,6 @@ function CarouselButton({
   );
 }
 
-/* -------------------------------- Results ------------------------------- */
-
-/** Three case-study numbers, under the client logos. */
-export function AboutResults() {
-  const { results } = about;
-  return (
-    <MotionConfig reducedMotion="user">
-      <section className="pb-20">
-        <div className="container-page space-y-8">
-          <Reveal>
-            <h2 className="text-center text-2xl font-bold text-balance sm:text-3xl">{results.title}</h2>
-          </Reveal>
-          <ul className="grid gap-4 md:grid-cols-3">
-            {results.items.map((item, i) => (
-              <motion.li
-                key={item.brand}
-                initial={{ opacity: 0, y: 14 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.5 }}
-                transition={{ duration: 0.5, delay: i * 0.1, ease }}
-                className="rounded-2xl border bg-card p-6"
-              >
-                <p className="text-sm font-semibold">{item.brand}</p>
-                <p className="mt-3 font-heading text-5xl font-bold tracking-tight text-brand tabular-nums">{item.value}</p>
-                <p className="mt-1 text-muted-foreground">{item.label}</p>
-              </motion.li>
-            ))}
-          </ul>
-        </div>
-      </section>
-    </MotionConfig>
-  );
-}
-
 /* ---------------------------------- Life -------------------------------- */
 
 /** Careers: a dark card, the one on the page, with the two ways to join. */

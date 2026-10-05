@@ -547,14 +547,6 @@ export const about = {
       { name: "Silvana Sánchez", role: "GM Spain & Portugal", photo: "silvana-sanchez" },
     ],
   },
-  results: {
-    title: "Results that show up in the real world",
-    items: [
-      { brand: "Uber Eats", value: "2M+", label: "new customers acquired" },
-      { brand: "Getaround", value: "70%", label: "lower cost per acquisition" },
-      { brand: "THE ICONIC", value: "5.7M", label: "satchel inserts delivered" },
-    ],
-  },
   life: {
     eyebrow: "Life at Oppizi",
     title: "A place for people who like building real things",
