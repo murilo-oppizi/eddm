@@ -344,10 +344,11 @@ function Bars() {
  * the top one with its address and a round pink seal of approval printed on it.
  */
 function Pile() {
-  const t = 2.4; // one card's thickness
-  // Twelve cards, each a touch off square, like a real pile
-  const tilts = [0.06, -0.04, 0.03, -0.05, 0.04, -0.02, 0.05, -0.03, 0.02, -0.04, 0.02, 0];
-  const shifts: P[] = [[-3, 2], [2, -2], [-2, -1], [3, 2], [-1, 2], [2, 0], [-2, 1], [1, -2], [-1, 1], [2, 1], [-1, -1], [0, 0]];
+  const t = 5; // one card's thickness
+  // Five cards, each a touch off square, like a real pile (fewer, thicker cards than a
+  // real stack, so the pile's edges don't make it denser than the other drawings)
+  const tilts = [0.05, -0.04, 0.03, -0.03, 0];
+  const shifts: P[] = [[-3, 2], [2, -2], [-2, 1], [1, 1], [0, 0]];
   const top = tilts.length * t;
   const seal: P = [26, -10];
   const ring = (r: number) => closed(circle(seal[0], seal[1], r, 36));
@@ -358,14 +359,11 @@ function Pile() {
       ))}
       {/* The address on the top card */}
       <Flat z={top} width={2} pts={[[-44, -24], [-12, -24]]} />
-      <Flat z={top} pts={[[-44, -14], [-22, -14]]} />
-      <Flat z={top} pts={[[-44, 12], [-8, 12]]} />
-      <Flat z={top} pts={[[-44, 20], [-16, 20]]} />
-      <Flat z={top} pts={[[-44, 28], [-24, 28]]} />
-      {/* The seal: two rings printed on the card, and a check lying on it as a small solid
+      <Flat z={top} pts={[[-44, 14], [-10, 14]]} />
+      <Flat z={top} pts={[[-44, 23], [-20, 23]]} />
+      {/* The seal: a ring printed on the card, and a check lying on it as a small solid
           tick, aligned to the card like the address (as isometric icon sets draw it) */}
-      <Flat z={top} pink width={1.6} pts={ring(18)} />
-      <Flat z={top} pink pts={ring(14)} />
+      <Flat z={top} pink width={1.6} pts={ring(17)} />
       <Block pts={checkShape(seal, CHECK_TURN)} h={1.4} z={top} pink />
     </g>
   );
