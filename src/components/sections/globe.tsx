@@ -31,6 +31,7 @@ export function Globe({
   places,
   hub,
   focus,
+  lift = 0,
   className,
 }: {
   places: Place[];
@@ -38,6 +39,9 @@ export function Globe({
   hub: Place;
   /** The place to turn to, if any */
   focus: string | null;
+  /** How far above the middle (radians) a place in focus sits: for a globe whose lower
+   *  half is out of view, so the place lands where it can be seen */
+  lift?: number;
   className?: string;
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -61,6 +65,8 @@ export function Globe({
     let theta = TILT;
     let drag: { x: number; phi: number } | null = null;
     let momentum = 0;
+    // The tilt that shows a place in focus: a little toward the resting tilt, then raised
+    const aim = (t: number) => Math.min(1, Math.max(-1.2, t * 0.75 + TILT * 0.25 - lift));
 
     const markers = () =>
       places.map((p) => ({
@@ -102,7 +108,7 @@ export function Globe({
       } else if (target) {
         const f = facing(target.lat, target.lng);
         phi += towards(phi, f.phi) * 0.08;
-        theta += (Math.min(0.9, Math.max(-0.6, f.theta)) * 0.6 + TILT * 0.4 - theta) * 0.08;
+        theta += (aim(f.theta) - theta) * 0.08;
       } else {
         phi += SPIN + momentum;
         momentum *= 0.95;
@@ -118,7 +124,7 @@ export function Globe({
       if (target) {
         const f = facing(target.lat, target.lng);
         phi = f.phi;
-        theta = Math.min(0.9, Math.max(-0.6, f.theta)) * 0.6 + TILT * 0.4;
+        theta = aim(f.theta);
       }
       draw();
     };
@@ -176,7 +182,7 @@ export function Globe({
       canvas.removeEventListener("pointercancel", up);
       globe.destroy();
     };
-  }, [places, hub]);
+  }, [places, hub, lift]);
 
   return (
     <canvas

@@ -514,6 +514,10 @@ export const about = {
     eyebrow: "Where we work",
     title: "Global, and on the ground",
     body: "Oppizi runs campaigns across 14 countries from one platform, with local teams and partners in every market.",
+    // The bento's big tile, over the globe
+    reach: { title: "14 countries, one platform", body: "Plan, launch and measure every market from the same dashboard." },
+    countriesTitle: "Our markets",
+    countriesBody: "Point at one to find it on the globe.",
     // Each country's main city, for its pin on the globe: [code, name, latitude, longitude]
     regions: [
       { name: "Americas", countries: [["US", "United States", 40.68, -73.94], ["CA", "Canada", 43.65, -79.38], ["BR", "Brazil", -23.55, -46.63], ["AR", "Argentina", -34.6, -58.38]] },
@@ -522,9 +526,9 @@ export const about = {
     ],
     hq: { label: "Headquarters", place: "Brooklyn, New York", address: "426 Union Ave, Brooklyn, NY 11211" },
     network: [
-      { value: "77+", label: "Cities with flyering" },
-      { value: "400+", label: "Retail partners for inserts" },
-      { value: "700+", label: "Print partners in the US" },
+      { icon: "walk", value: "77+", label: "Cities with flyering", body: "Brand ambassadors hand flyers out on the street." },
+      { icon: "store", value: "400+", label: "Retail partners", body: "Package inserts reach customers in their orders." },
+      { icon: "printer", value: "700+", label: "Print partners in the US", body: "Postcards print close to the homes they reach." },
     ],
   },
   team: {

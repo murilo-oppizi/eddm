@@ -4,8 +4,14 @@ import { useId, useState } from "react";
 import {
   IconArrowRight,
   IconArrowUpRight,
+  IconBuildingSkyscraper,
+  IconBuildingStore,
   IconMapPin,
+  IconMapPins,
+  IconPrinter,
   IconQrcode,
+  IconWalk,
+  IconWorld,
 } from "@tabler/icons-react";
 import { MotionConfig, motion } from "motion/react";
 
@@ -378,11 +384,14 @@ const places: Place[] = about.world.regions.flatMap((r) =>
   r.countries.map(([id, , lat, lng]) => ({ id, lat, lng }))
 );
 const hub = places.find((p) => p.id === "US") ?? places[0];
+const countryNames: Record<string, string> = Object.fromEntries(
+  about.world.regions.flatMap((r) => r.countries.map(([id, name]) => [id, name] as const))
+);
 
 /**
- * Where Oppizi works: a globe with a pin in every country and routes from Brooklyn, the
- * headquarters and network beside it, and the countries by region under it. Pointing at
- * (or tabbing to) a country turns the globe to it.
+ * Where Oppizi works, as a bento grid: a big tile with the globe rising out of its bottom
+ * edge, the headquarters, the markets (pointing at one turns the globe to it), and the
+ * network in three small tiles. Stacked on phones.
  */
 export function AboutWorld() {
   const { world } = about;
@@ -390,87 +399,128 @@ export function AboutWorld() {
   return (
     <MotionConfig reducedMotion="user">
       <section className="py-20 lg:py-28">
-        <div className="container-page grid gap-12 lg:grid-cols-[1fr_1.35fr] lg:items-center lg:gap-16">
-          <Reveal className="space-y-6">
+        <div className="container-page space-y-12">
+          <Reveal className="mx-auto max-w-2xl space-y-3 text-center">
             <Eyebrow>{world.eyebrow}</Eyebrow>
             <h2 className="text-3xl font-bold text-balance sm:text-4xl">{world.title}</h2>
             <p className="text-lg text-pretty text-muted-foreground">{world.body}</p>
-
-            {/* The headquarters, as an address label */}
-            <div className="flex items-start gap-4 rounded-2xl border bg-card p-5">
-              <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-brand-subtle text-brand">
-                <IconMapPin className="size-5" aria-hidden />
-              </span>
-              <div>
-                <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase">{world.hq.label}</p>
-                <p className="mt-1 font-semibold">{world.hq.place}</p>
-                <p className="text-sm text-muted-foreground">{world.hq.address}</p>
-              </div>
-            </div>
-
-            <dl className="grid grid-cols-3 divide-x rounded-2xl border bg-card">
-              {world.network.map((n) => (
-                <div key={n.label} className="flex flex-col-reverse gap-1 p-4">
-                  <dt className="text-xs text-muted-foreground">{n.label}</dt>
-                  <dd className="font-heading text-2xl font-bold tracking-tight tabular-nums">{n.value}</dd>
-                </div>
-              ))}
-            </dl>
           </Reveal>
 
-          <div className="space-y-8">
-            <Reveal className="relative mx-auto w-full max-w-[520px]">
-              {/* A soft pink halo behind the globe */}
+          <div className="grid gap-4 lg:grid-cols-3">
+            {/* The globe, half out of view, rising from the tile's bottom edge */}
+            <Tile className="relative min-h-[440px] overflow-hidden sm:min-h-[560px] lg:col-span-2 lg:row-span-2">
+              <TileHead icon={<IconWorld className="size-5" />} title={world.reach.title} body={world.reach.body} />
               <div
                 aria-hidden
-                className="absolute inset-[6%] rounded-full bg-[radial-gradient(closest-side,color-mix(in_oklab,var(--primary)_10%,transparent),transparent)]"
+                className="pointer-events-none absolute inset-x-0 bottom-0 h-2/3 bg-[radial-gradient(60%_70%_at_50%_100%,color-mix(in_oklab,var(--primary)_12%,transparent),transparent)]"
               />
-              <Globe places={places} hub={hub} focus={focus} className="relative" />
-            </Reveal>
+              <div className="absolute top-[30%] left-1/2 w-[125%] max-w-[760px] -translate-x-1/2 sm:top-[24%] sm:w-[100%]">
+                <Globe places={places} hub={hub} focus={focus} lift={0.5} />
+              </div>
+            </Tile>
 
-            <div className="grid gap-6 sm:grid-cols-[1fr_1.6fr_1fr]">
-              {world.regions.map((region, r) => (
-                <Reveal key={region.name} delay={r * 0.08} className="space-y-3">
-                  <h3 className="flex items-baseline justify-between border-b pb-2 text-sm font-semibold">
-                    {region.name}
-                    <span className="font-normal text-muted-foreground tabular-nums">{region.countries.length}</span>
-                  </h3>
-                  <ul className="flex flex-wrap gap-1.5">
-                    {region.countries.map(([code, name]) => (
-                      <li key={code}>
-                        <button
-                          type="button"
-                          aria-label={`Show ${name} on the globe`}
-                          onPointerEnter={() => setFocus(code)}
-                          onPointerLeave={() => setFocus(null)}
-                          onFocus={() => setFocus(code)}
-                          onBlur={() => setFocus(null)}
-                          onClick={() => setFocus(code)}
-                          className={cn(
-                            "inline-flex cursor-pointer items-center gap-1.5 rounded-full border bg-card py-1 pr-3 pl-1 text-sm transition-colors outline-none hover:border-primary/40 focus-visible:ring-3 focus-visible:ring-ring/50",
-                            focus === code && "border-primary/50 bg-brand-subtle/60"
-                          )}
-                        >
-                          <span
+            {/* The headquarters, as an address label */}
+            <Tile delay={0.08}>
+              <TileHead icon={<IconBuildingSkyscraper className="size-5" />} title={world.hq.label} />
+              <div className="mt-auto rounded-2xl border border-dashed bg-muted/40 p-4">
+                <p className="flex items-center gap-1.5 text-xs font-semibold tracking-wider text-brand uppercase">
+                  <IconMapPin className="size-3.5" aria-hidden /> {world.hq.place}
+                </p>
+                <p className="mt-2 font-medium">Oppizi US Inc</p>
+                <p className="text-sm text-muted-foreground">{world.hq.address}</p>
+              </div>
+            </Tile>
+
+            {/* The markets: pointing at one turns the globe to it */}
+            <Tile delay={0.16}>
+              <TileHead icon={<IconMapPins className="size-5" />} title={world.countriesTitle} body={world.countriesBody} />
+              <div className="mt-auto space-y-3">
+                {world.regions.map((region) => (
+                  <div key={region.name} className="space-y-1.5">
+                    <p className="text-xs font-semibold text-muted-foreground">{region.name}</p>
+                    <ul className="flex flex-wrap gap-1">
+                      {region.countries.map(([code, name]) => (
+                        <li key={code}>
+                          <button
+                            type="button"
+                            title={name}
+                            aria-label={`Show ${name} on the globe`}
+                            onPointerEnter={() => setFocus(code)}
+                            onPointerLeave={() => setFocus(null)}
+                            onFocus={() => setFocus(code)}
+                            onBlur={() => setFocus(null)}
+                            onClick={() => setFocus(code)}
                             className={cn(
-                              "grid h-5 min-w-5 place-items-center rounded-full px-1 text-[9px] font-bold tracking-wide transition-colors",
-                              focus === code || code === hub.id ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                              "h-7 cursor-pointer rounded-lg border bg-card px-2 text-xs font-bold tracking-wide transition-colors outline-none hover:border-primary/40 focus-visible:ring-3 focus-visible:ring-ring/50",
+                              focus === code
+                                ? "border-primary bg-primary text-primary-foreground"
+                                : code === hub.id
+                                  ? "border-primary/40 bg-brand-subtle/60 text-brand"
+                                  : "text-muted-foreground"
                             )}
                           >
                             {code}
-                          </span>
-                          {name}
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                </Reveal>
-              ))}
-            </div>
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+              {/* Which one is in focus, spelled out */}
+              <p aria-live="polite" className="mt-3 h-5 text-sm font-medium text-brand">
+                {focus && countryNames[focus]}
+              </p>
+            </Tile>
+
+            {/* The network */}
+            {world.network.map((n, i) => {
+              const Icon = networkIcons[n.icon];
+              return (
+                <Tile key={n.label} delay={0.08 * i}>
+                  <span className="grid size-10 place-items-center rounded-xl bg-brand-subtle text-brand">
+                    <Icon className="size-5" aria-hidden />
+                  </span>
+                  <p className="mt-6 font-heading text-4xl font-bold tracking-tight tabular-nums">{n.value}</p>
+                  <p className="mt-1 font-semibold">{n.label}</p>
+                  <p className="mt-1 text-sm text-muted-foreground text-pretty">{n.body}</p>
+                </Tile>
+              );
+            })}
           </div>
         </div>
       </section>
     </MotionConfig>
+  );
+}
+
+const networkIcons = { walk: IconWalk, store: IconBuildingStore, printer: IconPrinter } as const;
+
+/** One tile of the bento: a white card that fades up into view. */
+function Tile({ children, className, delay = 0 }: { children: React.ReactNode; className?: string; delay?: number }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 18 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.3 }}
+      transition={{ duration: 0.6, delay, ease }}
+      className={cn("flex flex-col rounded-3xl border bg-card p-6 sm:p-7", className)}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+/** A tile's icon, title and line. */
+function TileHead({ icon, title, body }: { icon: React.ReactNode; title: string; body?: string }) {
+  return (
+    <div className="relative z-10 mb-6 space-y-2">
+      <span aria-hidden className="text-brand">
+        {icon}
+      </span>
+      <h3 className="pt-2 text-lg font-semibold">{title}</h3>
+      {body && <p className="max-w-sm text-muted-foreground text-pretty">{body}</p>}
+    </div>
   );
 }
 
