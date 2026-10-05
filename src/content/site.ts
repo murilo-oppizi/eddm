@@ -490,22 +490,22 @@ export const about = {
   valuesTitle: "Four ideas behind everything we build",
   values: [
     {
-      art: "agents",
+      icon: "sparkles",
       title: "Agents should power execution",
       body: "Our AI agents do the legwork, from finding routes to matching your audience and estimating cost, so a mailing takes minutes to plan, not days.",
     },
     {
-      art: "attention",
+      icon: "mail",
       title: "Attention is earned, not bought",
       body: "Real-world interactions create focus and presence that digital channels can't replicate. A postcard in hand gets looked at.",
     },
     {
-      art: "measurable",
+      icon: "chart",
       title: "Offline should be measurable",
       body: "Marketing in the physical world should be held to the same standards as digital: every campaign tracks scans and results by route.",
     },
     {
-      art: "scale",
+      icon: "shield",
       title: "Scale should not break quality",
       body: "One neighborhood or a whole city, every campaign gets the same USPS checks, local printing and delivery you can follow.",
     },

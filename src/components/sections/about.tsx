@@ -8,16 +8,14 @@ import {
   IconBuildingSkyscraper,
   IconBuildingStore,
   IconChevronLeft,
-  IconCalendar,
-  IconCheck,
   IconChevronRight,
   IconMapPin,
   IconMapPins,
   IconPrinter,
-  IconReceipt,
-  IconRoute,
+  IconChartBar,
+  IconMailOpened,
+  IconShieldCheck,
   IconSparkles,
-  IconUsers,
   IconWalk,
   IconWorld,
 } from "@tabler/icons-react";
@@ -275,7 +273,7 @@ export function AboutMission() {
 
 /* -------------------------------- Values -------------------------------- */
 
-/** The four beliefs, each with a small live picture of it. */
+/** The four beliefs, simply: an icon and a title on one line, a sentence under it. */
 export function AboutValues() {
   return (
     <MotionConfig reducedMotion="user">
@@ -285,26 +283,27 @@ export function AboutValues() {
             <Eyebrow>{about.valuesEyebrow}</Eyebrow>
             <h2 className="text-3xl font-bold text-balance sm:text-4xl">{about.valuesTitle}</h2>
           </Reveal>
-          <ul className="grid gap-5 sm:grid-cols-2">
-            {about.values.map((value, i) => (
-              <motion.li
-                key={value.title}
-                initial={{ opacity: 0, y: 18 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, amount: 0.3 }}
-                transition={{ duration: 0.6, delay: (i % 2) * 0.12, ease }}
-                className="group flex flex-col overflow-hidden rounded-3xl border bg-card"
-              >
-                <div className="relative h-44 overflow-hidden border-b bg-muted/40">
-                  <ValueArt art={value.art} />
-                </div>
-                <div className="space-y-2 p-6 sm:p-7">
-                  <p className="text-xs font-semibold tracking-wider text-brand tabular-nums">0{i + 1}</p>
-                  <h3 className="text-xl font-semibold">{value.title}</h3>
+          <ul className="grid gap-x-10 gap-y-10 border-t pt-12 sm:grid-cols-2 lg:grid-cols-4">
+            {about.values.map((value, i) => {
+              const Icon = valueIcons[value.icon];
+              return (
+                <motion.li
+                  key={value.title}
+                  initial={{ opacity: 0, y: 12 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.5 }}
+                  transition={{ duration: 0.5, delay: i * 0.08, ease }}
+                  className="space-y-3"
+                >
+                  {/* The icon sits by the first line when a title wraps */}
+                  <h3 className="flex items-start gap-2.5 font-semibold text-balance">
+                    <Icon className="mt-0.5 size-5 shrink-0 text-brand" aria-hidden />
+                    {value.title}
+                  </h3>
                   <p className="text-muted-foreground text-pretty">{value.body}</p>
-                </div>
-              </motion.li>
-            ))}
+                </motion.li>
+              );
+            })}
           </ul>
         </div>
       </section>
@@ -312,162 +311,12 @@ export function AboutValues() {
   );
 }
 
-// The four beliefs' pictures, after Tailark's illustrations: each is one small piece of
-// the product (an agent picker, a postcard file, a stats widget, a print job) in the
-// middle of calm space, in greys with the brand pink used once, over faint dashed guide
-// lines. They come alive a little when their card comes into view.
-
-/** Faint dashed guide lines through the middle of a picture, like a design grid. */
-function Guides() {
-  return (
-    <div aria-hidden className="pointer-events-none absolute inset-0">
-      <span className="absolute inset-x-0 top-1/2 h-px bg-[repeating-linear-gradient(90deg,var(--border)_0_4px,transparent_4px_8px)]" />
-      <span className="absolute inset-y-0 left-1/2 w-px bg-[repeating-linear-gradient(180deg,var(--border)_0_4px,transparent_4px_8px)]" />
-    </div>
-  );
-}
-
-/** A small white surface, the stuff every picture is made of. */
-const surface = "rounded-xl bg-card shadow-[0_1px_2px_rgb(0_0_0/0.05),0_8px_20px_-12px_rgb(0_0_0/0.25)] ring-1 ring-border";
-
-function ValueArt({ art }: { art: (typeof about.values)[number]["art"] }) {
-  if (art === "agents") return <AgentsArt />;
-  if (art === "attention") return <PostcardArt />;
-  if (art === "measurable") return <ScansArt />;
-  return <PrintJobArt />;
-}
-
-/** Agents: a row of agents, the planning one picked in the middle, glowing, named. */
-function AgentsArt() {
-  const agents = [IconRoute, IconUsers, IconSparkles, IconReceipt, IconCalendar];
-  return (
-    <div className="absolute inset-0 grid place-items-center">
-      <Guides />
-      <div className="relative flex items-center gap-5">
-        {agents.map((Icon, i) => {
-          const picked = i === 2;
-          const off = Math.abs(i - 2);
-          return (
-            <motion.span
-              key={i}
-              initial={{ opacity: 0, scale: 0.8 }}
-              whileInView={{ opacity: picked ? 1 : 1 - off * 0.3, scale: 1 }}
-              viewport={{ once: true, amount: 0.6 }}
-              transition={{ duration: 0.5, delay: 0.15 + off * 0.1, ease }}
-              className={cn(
-                "relative grid place-items-center rounded-full",
-                picked
-                  ? "size-14 bg-card text-brand shadow-[0_0_0_1px_var(--border),0_0_0_6px_color-mix(in_oklab,var(--primary)_8%,transparent),0_10px_28px_-8px_color-mix(in_oklab,var(--primary)_55%,transparent)]"
-                  : "size-9 text-muted-foreground"
-              )}
-            >
-              <Icon className={picked ? "size-6" : "size-5"} aria-hidden />
-            </motion.span>
-          );
-        })}
-        <span className="absolute top-full left-1/2 mt-3 -translate-x-1/2 text-xs font-medium whitespace-nowrap text-muted-foreground">
-          Planning agent
-        </span>
-      </div>
-    </div>
-  );
-}
-
-/** Attention: a postcard as a file, its size tag in pink, like a document thumbnail. */
-function PostcardArt() {
-  return (
-    <div className="absolute inset-0 grid place-items-center">
-      <Guides />
-      <motion.div
-        initial={{ y: 10, rotate: -2 }}
-        whileInView={{ y: 0, rotate: 0 }}
-        viewport={{ once: true, amount: 0.6 }}
-        transition={{ duration: 0.7, ease }}
-        className={cn("relative flex h-24 w-36 flex-col justify-between p-3", surface)}
-      >
-        <div className="flex items-start justify-between">
-          <div className="space-y-1.5">
-            <span className="block h-1.5 w-14 rounded-full bg-foreground/70" />
-            <span className="block h-1.5 w-9 rounded-full bg-muted-foreground/25" />
-          </div>
-          <span className="stamp-perforated size-6 bg-muted">
-            <span className="block size-full bg-muted-foreground/25" />
-          </span>
-        </div>
-        <div className="space-y-1">
-          <span className="block h-1 w-16 rounded-full bg-muted-foreground/25" />
-          <span className="block h-1 w-12 rounded-full bg-muted-foreground/25" />
-          <span className="block h-1 w-14 rounded-full bg-muted-foreground/25" />
-        </div>
-        <span className="absolute -right-3 -bottom-2.5 rounded-md bg-primary px-1.5 py-0.5 text-[10px] font-bold tracking-wide text-primary-foreground shadow-sm">
-          6 × 9
-        </span>
-      </motion.div>
-    </div>
-  );
-}
-
-/** Measurable: a stats widget, scans this week with the newest day's bar in pink. */
-function ScansArt() {
-  const bars = [30, 52, 40, 68, 46, 100];
-  return (
-    <div className="absolute inset-0 grid place-items-center">
-      <Guides />
-      <div className={cn("relative flex w-64 items-end justify-between gap-4 p-4", surface)}>
-        <div>
-          <p className="text-[11px] font-medium text-muted-foreground">QR scans this week</p>
-          <p className="mt-1 flex items-baseline gap-2">
-            <span className="font-heading text-3xl font-bold tracking-tight tabular-nums">212</span>
-            <span className="rounded bg-brand-subtle px-1 py-0.5 text-[10px] font-semibold text-brand tabular-nums">+18%</span>
-          </p>
-        </div>
-        <div className="flex h-10 items-end gap-1">
-          {bars.map((h, i) => (
-            <motion.span
-              key={i}
-              initial={{ scaleY: 0.2 }}
-              whileInView={{ scaleY: 1 }}
-              viewport={{ once: true, amount: 0.6 }}
-              transition={{ duration: 0.6, delay: 0.15 + i * 0.06, ease }}
-              style={{ height: `${h}%` }}
-              className={cn("w-1.5 origin-bottom rounded-full", i === bars.length - 1 ? "bg-primary" : "bg-muted-foreground/25")}
-            />
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/** Scale: a print job, every home checked, the bar filling as it comes into view. */
-function PrintJobArt() {
-  return (
-    <div className="absolute inset-0 grid place-items-center">
-      <Guides />
-      <div className={cn("relative flex w-72 items-center gap-3 p-3.5", surface)}>
-        <span className="relative grid size-10 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground ring-1 ring-border">
-          <IconPrinter className="size-5" aria-hidden />
-          <span className="absolute -right-1.5 -bottom-1.5 grid size-4 place-items-center rounded-full bg-primary text-primary-foreground ring-2 ring-card">
-            <IconCheck className="size-2.5" stroke={3} aria-hidden />
-          </span>
-        </span>
-        <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium">grand-opening-6x9.pdf</p>
-          <div className="mt-1.5 h-1 overflow-hidden rounded-full bg-muted">
-            <motion.span
-              initial={{ scaleX: 0.15 }}
-              whileInView={{ scaleX: 1 }}
-              viewport={{ once: true, amount: 0.6 }}
-              transition={{ duration: 1.4, delay: 0.2, ease }}
-              className="block h-full origin-left rounded-full bg-primary"
-            />
-          </div>
-          <p className="mt-1.5 text-[11px] text-muted-foreground tabular-nums">4,820 / 4,820 homes · USPS checked</p>
-        </div>
-      </div>
-    </div>
-  );
-}
+const valueIcons = {
+  sparkles: IconSparkles,
+  mail: IconMailOpened,
+  chart: IconChartBar,
+  shield: IconShieldCheck,
+} as const;
 
 /* --------------------------------- World -------------------------------- */
 
