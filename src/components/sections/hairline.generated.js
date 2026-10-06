@@ -1015,19 +1015,44 @@ const place2 = (ring, a, x, y) => {
   return ring.map((q) => ({ u: x + q.u * c - q.v * s, v: y + q.u * s + q.v * c, nu: q.nu * c - q.nv * s, nv: q.nu * s + q.nv * c }));
 };
 
-// each kind of thing, in its own frame (x along the belt): its solids, and its marks as [x, y, z] polylines
+// each kind of thing, in its own frame (x along the belt): its solids as [outline, crease ring,
+// z0, z1], and its marks as [x, y, z] polylines; `seen(nx, ny)` says whether a face whose
+// outward normal is (nx, ny) faces you, for marks that wrap round a side
+const ring3 = (r, z) => r.map((q) => [q.u, q.v, z]).concat([[r[0].u, r[0].v, z]]);
 const KINDS = [
-  { // a letter: its flap and its stamp
-    parts: [[rrect(-11, -7.5, 11, 7.5, 1.4, 3), 0, 1.6]],
-    marks: [[[-10, -6.5, 1.6], [0, 1, 1.6], [10, -6.5, 1.6]], [[5, 2.5, 1.6], [9, 2.5, 1.6], [9, 6, 1.6], [5, 6, 1.6], [5, 2.5, 1.6]]],
+  { // a letter: its flap folded to a point, and a stamp in the corner
+    parts: [[rrect(-11, -7.5, 11, 7.5, 1.6, 4), rrect(-10.4, -6.9, 10.4, 6.9, 1, 4), 0, 1.4]],
+    marks: () => [
+      [[-9.2, -5.7, 1.4], [0, 1.2, 1.4], [9.2, -5.7, 1.4]],
+      ring3(rrect(5.2, 1.6, 9.2, 5.6, 0.7, 2), 1.4),
+    ],
   },
-  { // a parcel, taped
-    parts: [[rrect(-9, -8, 9, 8, 2.4, 4), 0, 14]],
-    marks: [[[-9, -1.6, 14], [9, -1.6, 14]], [[-9, 1.6, 14], [9, 1.6, 14]]],
+  { // a parcel: tape along its top and down each end that faces you
+    parts: [[rrect(-9, -8, 9, 8, 2.4, 4), rrect(-7.9, -6.9, 7.9, 6.9, 1.3, 4), 0, 14]],
+    marks: (seen) => {
+      // over an end you can see, the tape runs to the edge and on down it, in one line
+      const lo = seen(-1, 0), hi = seen(1, 0), out = [];
+      for (const v of [-1.8, 1.8]) {
+        const line = [];
+        if (lo) line.push([-9, v, 4]);
+        line.push([lo ? -9 : -7.9, v, 14], [hi ? 9 : 7.9, v, 14]);
+        if (hi) line.push([9, v, 4]);
+        out.push(line);
+      }
+      return out;
+    },
   },
   { // three flyers, a little uneven, the top one printed
-    parts: [[rrect(-8.6, -11, 8.6, 11, 1, 3), 0, 1], [rrect(-8, -11.4, 9.2, 10.6, 1, 3), 1.6, 2.6], [rrect(-8.4, -10.8, 8.8, 11.2, 1, 3), 3.2, 4.2]],
-    marks: [[[-6, -8.4, 4.2], [6.4, -8.4, 4.2], [6.4, 0, 4.2], [-6, 0, 4.2], [-6, -8.4, 4.2]], [[-6, 4, 4.2], [5, 4, 4.2]], [[-6, 7.4, 4.2], [2, 7.4, 4.2]]],
+    parts: [
+      [rrect(-8.6, -11, 8.6, 11, 1, 3), rrect(-8.1, -10.5, 8.1, 10.5, 0.6, 3), 0, 1],
+      [rrect(-8, -11.4, 9.2, 10.6, 1, 3), rrect(-7.5, -10.9, 8.7, 10.1, 0.6, 3), 1.6, 2.6],
+      [rrect(-8.4, -10.8, 8.8, 11.2, 1, 3), rrect(-7.9, -10.3, 8.3, 10.7, 0.6, 3), 3.2, 4.2],
+    ],
+    marks: () => [
+      ring3(rrect(-6, -8.4, 6.4, 0, 0.6, 2), 4.2),
+      [[-6, 4, 4.2], [5, 4, 4.2]],
+      [[-6, 7.4, 4.2], [2, 7.4, 4.2]],
+    ],
   },
 ];
 
@@ -1068,10 +1093,9 @@ function mount({ stage, svg, read }, value) {
     for (const it of items) {
       const [x, y, a] = along(pos + (it.i * LOOP) / N);
       it.x = x; it.y = y;
-      it.kind.parts.forEach(([ring, z0, z1], k) => put(it.solids[k], prism(P, front, place2(ring, a, x, y), place2(ring, a, x, y), z0, z1)));
-      it.solids.forEach((sd) => sd.cr.setAttribute("d", ""));
-      const c = Math.cos(a), s = Math.sin(a);
-      it.mk.setAttribute("d", it.kind.marks.map((l) => open(l.map(([u, v, z]) => P(x + u * c - v * s, y + u * s + v * c, z)))).join(""));
+      it.kind.parts.forEach(([ring, inner, z0, z1], k) => put(it.solids[k], prism(P, front, place2(ring, a, x, y), place2(inner, a, x, y), z0, z1)));
+      const c = Math.cos(a), s = Math.sin(a), seen = (nx, ny) => nx * c - ny * s + (nx * s + ny * c) > 0.05;
+      it.mk.setAttribute("d", it.kind.marks(seen).map((l) => open(l.map(([u, v, z]) => P(x + u * c - v * s, y + u * s + v * c, z)))).join(""));
     }
     // far to near: move the groups only when the order changes
     const sorted = items.slice().sort((p, q) => p.x + p.y - (q.x + q.y)), key = sorted.map((it) => it.i).join();
