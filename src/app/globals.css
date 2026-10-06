@@ -82,14 +82,6 @@
   }
 }
 
-/* The story's Hairline drawings (hairline-art.tsx): Hairline's own greys and dark ink,
-   light and dark, on plates the colour of a card. Its defaults have no specificity, so
-   these win. */
-[data-hairline] {
-  --hairline-plate: var(--card);
-  --hairline-stroke: 1;
-}
-
 /* The hero cards' gentle bob (see hero-composition.tsx). Animating `translate` in CSS
    keeps it on the compositor: no main-thread work per frame. */
 /* Marching dashes (the story scenes' moving bases: a belt, a route, an orbit). The

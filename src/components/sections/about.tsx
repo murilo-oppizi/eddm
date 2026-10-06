@@ -12,16 +12,12 @@ import {
   IconMapPin,
   IconMapPins,
   IconPrinter,
-  IconSparkles,
   IconWalk,
-  IconNews,
-  IconStack2,
   IconWorld,
 } from "@tabler/icons-react";
-import { AnimatePresence, MotionConfig, motion, useInView, useReducedMotion } from "motion/react";
+import { MotionConfig, motion } from "motion/react";
 
 import { type Place } from "@/components/sections/globe";
-import { HairlineArt } from "@/components/sections/hairline-art";
 import { IsoArt } from "@/components/sections/iso-art";
 import { AboutHeroArt } from "@/components/sections/about-hero-art";
 import { Flag, WorldMap } from "@/components/sections/world-map";
@@ -94,139 +90,6 @@ export function AboutHero() {
 
           <Reveal delay={0.15} className="mx-auto w-full max-w-[340px] sm:max-w-[480px]">
             <AboutHeroArt />
-          </Reveal>
-        </div>
-      </section>
-    </MotionConfig>
-  );
-}
-
-/* --------------------------------- Story -------------------------------- */
-
-/**
- * The story as a stepper: four moments along a line, each with its icon, the line filling
- * in pink toward the next; below, the moment's scene, drawn in the same raised line style
- * as "What drives us" (it draws itself in, and moves a little), beside its title and
- * line. It moves on by itself every few seconds while on screen; pointing at it holds
- * it, picking a moment jumps there and ends the tour.
- */
-const STORY_MS = 4500;
-const storyIcons = [IconNews, IconWorld, IconStack2, IconSparkles];
-const storyArt = ["flyers", "countries", "channels", "agent"] as const;
-
-export function AboutStory() {
-  const { story } = about;
-  const n = story.stops.length;
-  const [active, setActive] = useState(0);
-  const [touched, setTouched] = useState(false);
-  const [held, setHeld] = useState(false);
-  const root = useRef<HTMLDivElement>(null);
-  const onScreen = useInView(root, { amount: 0.5 });
-  const reduce = useReducedMotion();
-  const touring = onScreen && !touched && !held && !reduce;
-
-  useEffect(() => {
-    if (!touring) return;
-    const t = setTimeout(() => setActive((i) => (i + 1) % n), STORY_MS);
-    return () => clearTimeout(t);
-  }, [touring, active, n]);
-
-  const stop = story.stops[active];
-  const pick = (i: number) => {
-    setTouched(true);
-    setActive(i);
-  };
-
-  return (
-    <MotionConfig reducedMotion="user">
-      <section className="py-20 lg:py-28">
-        <div className="container-page space-y-12">
-          <Reveal className="mx-auto max-w-2xl space-y-3 text-center">
-            <Eyebrow>{story.eyebrow}</Eyebrow>
-            <h2 className="text-3xl font-bold text-balance sm:text-4xl">{story.title}</h2>
-          </Reveal>
-
-          <Reveal>
-            <div
-              ref={root}
-              onPointerEnter={() => setHeld(true)}
-              onPointerLeave={() => setHeld(false)}
-              className="space-y-6 rounded-3xl bg-muted/50 px-4 pt-8 pb-6 sm:px-10 sm:pt-10 sm:pb-8 lg:px-14"
-            >
-              {/* The stepper, soft like the drawings it sits over: a thin-lined icon per moment on a
-                  hairline that fills, in the drawings' ink, toward the next */}
-              <div role="tablist" aria-label={story.title} className="relative grid grid-cols-4">
-                <div aria-hidden className="absolute inset-x-[12.5%] top-5 h-px bg-border">
-                  <motion.div
-                    className="h-full origin-left bg-foreground/60"
-                    initial={false}
-                    animate={{ scaleX: (active + (touring && active < n - 1 ? 1 : 0)) / (n - 1) }}
-                    transition={
-                      touring && active < n - 1 ? { duration: STORY_MS / 1000, ease: "linear" } : { duration: 0.5, ease }
-                    }
-                  />
-                </div>
-                {story.stops.map((s, i) => {
-                  const Icon = storyIcons[i];
-                  const on = i === active;
-                  const done = i < active;
-                  return (
-                    <button
-                      key={s.title}
-                      type="button"
-                      role="tab"
-                      aria-selected={on}
-                      onClick={() => pick(i)}
-                      className="group flex cursor-pointer flex-col items-center gap-3 px-1 text-center outline-none"
-                    >
-                      <span
-                        className={cn(
-                          "relative z-10 grid size-10 place-items-center rounded-full border bg-card transition-[border-color,color,box-shadow] duration-300 group-focus-visible:ring-3 group-focus-visible:ring-ring/50",
-                          on
-                            ? "border-foreground/50 text-foreground shadow-[0_0_0_4px_color-mix(in_oklab,var(--foreground)_6%,transparent)]"
-                            : done
-                              ? "border-foreground/25 text-foreground/70"
-                              : "border-border text-muted-foreground group-hover:border-foreground/25 group-hover:text-foreground/70"
-                        )}
-                      >
-                        <Icon className="size-[18px]" stroke={1.5} aria-hidden />
-                      </span>
-                      <span>
-                        <span className={cn("block font-mono text-[11px] tracking-wide uppercase transition-colors", on ? "text-foreground" : "text-muted-foreground")}>
-                          {s.when}
-                        </span>
-                        <span className={cn("mt-1 hidden text-sm transition-colors lg:block", on ? "text-foreground" : "text-muted-foreground")}>
-                          {s.title}
-                        </span>
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* The moment: its scene, drawn in, beside its words */}
-              <div role="tabpanel" aria-live="polite" className="grid items-center gap-4 md:grid-cols-[1.1fr_1fr] md:gap-10">
-                <div className="grid place-items-center md:h-96">
-                  <HairlineArt key={active} name={storyArt[active]} className="max-w-[460px]" />
-                </div>
-                <AnimatePresence mode="wait" initial={false}>
-                  <motion.div
-                    key={active}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -8 }}
-                    transition={{ duration: 0.3, ease }}
-                    className="flex flex-col justify-center gap-3 px-2 pb-4 text-center md:px-0 md:pb-0 md:text-left"
-                  >
-                    <p className="font-mono text-xs tracking-wide text-muted-foreground uppercase tabular-nums">
-                      <span className="text-foreground">{stop.when}</span> · {stop.unit}
-                    </p>
-                    <h3 className="text-2xl font-medium text-balance sm:text-3xl">{stop.title}</h3>
-                    <p className="text-lg text-pretty text-muted-foreground">{stop.body}</p>
-                  </motion.div>
-                </AnimatePresence>
-              </div>
-            </div>
           </Reveal>
         </div>
       </section>

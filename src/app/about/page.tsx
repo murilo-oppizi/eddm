@@ -4,7 +4,6 @@ import {
   AboutHero,
   AboutLife,
   AboutMission,
-  AboutStory,
   AboutTeam,
   AboutValues,
   AboutWorld,
@@ -13,14 +12,13 @@ import { about } from "@/content/site";
 
 export const metadata: Metadata = { title: "About", description: about.description };
 
-// Who's behind EDDM: Oppizi's line and postmark, the story as a mail route, the
+// Who's behind EDDM: Oppizi's line and postmark, the
 // mission, the four beliefs, where it works, the people, and careers. The clients,
 // numbers and closing card are the homepage's; they aren't repeated here.
 export default function AboutPage() {
   return (
     <>
       <AboutHero />
-      <AboutStory />
       <AboutMission />
       <AboutValues />
       <AboutWorld />
