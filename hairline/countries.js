@@ -3,11 +3,13 @@
  * away to the right, each bar taller than the last. At rest the whole chart is grown and today's bar is bright. The
  * pointer is time: the bars up to the year under it stand grown, the years
  * after it fall back to stubs, each on its own spring, so moving left to right
- * grows the chart again; the year at the pointer is bright. The slider is the
- * tallest bar.
+ * grows the chart again; the year at the pointer is bright. A year is picked
+ * by what you see: a bar's outline where it is headed, then its outline grown,
+ * nearest first, then the slot on the plinth under the pointer; nothing
+ * outside the chart picks anything. The slider is the tallest bar.
  */
 const {
-  Cam, fit, proj, facing, unproj, prism, rings, rrect, clamp, seg,
+  Cam, fit, proj, facing, unproj, prism, rings, rrect, ringAt, hull, clamp, seg,
   spring, stepS, mk, solid, put, register, pointer, disposer,
 } = HL;
 
@@ -63,6 +65,23 @@ function mount({ stage, svg, read }, value) {
   }
   light(N - 1);
 
+  const inside = ([x, y], pts) => {
+    let c = false;
+    for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+      const [xi, yi] = pts[i], [xj, yj] = pts[j];
+      if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) c = !c;
+    }
+    return c;
+  };
+  const outline = (b, h) => hull(ringAt(P, b.ring, 0).concat(ringAt(P, b.ring, Math.max(STUB, h))));
+  const plinth = hull(ringAt(P, pr, -PB).concat(ringAt(P, pr, 0)));
+  /** The year under the pointer, by what is drawn there (nearest first), or null. */
+  function hit(pt) {
+    for (const b of bars) if (inside(pt, outline(b, b.sp.t))) return b.i;
+    for (const b of bars) if (inside(pt, outline(b, b.share * HMAX))) return b.i;
+    if (inside(pt, plinth)) return clamp(Math.floor(-unproj(C, pt[0], pt[1], 0)[1] / SP), 0, N - 1);
+    return null;
+  }
   function aim(i) {
     for (const b of bars) b.sp.t = i === null || b.i <= i ? b.share * HMAX : STUB;
     light(i === null ? N - 1 : i);
@@ -71,7 +90,7 @@ function mount({ stage, svg, read }, value) {
   }
   bag.add(pointer(stage, {
     // the year under the pointer, read off the ground, which never moves
-    move: (p) => aim(clamp(Math.floor(-unproj(C, p[0], p[1], 0)[1] / SP), 0, N - 1)),
+    move: (p) => aim(hit(p)),
     leave: () => aim(null),
   }));
   bag.add(() => svg.replaceChildren());
