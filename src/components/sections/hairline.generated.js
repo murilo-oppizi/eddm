@@ -1142,130 +1142,131 @@ hairline({
 // countries.js
 (() => {
 /**
- * Countries: a plaza of flags on a podium of three steps, one flag for each
- * country Oppizi works in, a step for each stage of its growth: Australia and
- * New Zealand on the low front step, where it began; Europe's eight on the
- * middle one; the Americas' four on the high back step. The poles stand taller
- * toward the back, and the United States, the newest home, is bright. The
- * pointer is put on the steps, and the poles near it grow taller, each on its
- * own spring, raising their flags; the nearest is bright and named. The slider
- * is the reach.
- *
- * Built on Terrain's pattern: a field, springs, a falloff by distance; the
- * steps stand at different heights, so the pointer is put on each pole's own
- * step to find how near it is.
+ * Countries: a globe built of fifteen thin slices of latitude on a stand, like
+ * a contour model, and a pin standing out of it for the city of every country
+ * Oppizi works in. At rest it faces the Atlantic, the Americas and Europe in
+ * view, the pins short, London's bright. Move the pointer across and the globe
+ * turns with it, on a spring, the pins riding round; the pins near the pointer
+ * stand out further, each on its own spring, and the nearest is bright and
+ * named. A pin round the back is not drawn. The slider is the pins' reach.
  */
 const {
-  Cam, fit, proj, facing, unproj, prism, rings, circ, poly, seg,
+  Cam, fit, proj, facing, prism, circ, clamp, seg,
   spring, stepS, mk, solid, put, register, pointer, disposer,
 } = HL;
 
-const W = 176, D = 30, FW = 16, FH = 11, GROW = 26, PB = 4;
-// the steps, back to front: [height, countries as [name, height of pole at rest]]
-const STEPS = [
-  [18, [["united states", 30], ["canada", 26], ["brazil", 24], ["argentina", 21]]],
-  [11, [["united kingdom", 24], ["france", 22], ["germany", 25], ["spain", 20], ["portugal", 18], ["netherlands", 21], ["belgium", 19], ["poland", 23]]],
-  [4, [["australia", 20], ["new zealand", 17]]],
+const R = 54, BANDS = 15, GAP = 0.9, FOOT = 7, STEM = 9, TURN = 2.2, SWING = 0.9, SHORT = 6, LONG = 34;
+const CITIES = [
+  ["new york", 40.7, -73.9], ["toronto", 43.7, -79.4], ["são paulo", -23.5, -46.6], ["buenos aires", -34.6, -58.4],
+  ["london", 51.5, -0.1], ["paris", 48.9, 2.4], ["berlin", 52.5, 13.4], ["madrid", 40.4, -3.7], ["lisbon", 38.7, -9.1],
+  ["amsterdam", 52.4, 4.9], ["brussels", 50.9, 4.4], ["warsaw", 52.2, 21], ["sydney", -33.9, 151.2], ["auckland", -36.8, 174.8],
 ];
-
-const falloff = (u) => (u <= 0.4 ? 1 - (u / 0.4) * 0.65 : u <= 1 ? 0.35 - ((u - 0.4) / 0.6) * 0.3 : 0.05);
-const shift = (ring, x, y) => ring.map((q) => ({ ...q, u: q.u + x, v: q.v + y }));
+const rad = (d) => (d * Math.PI) / 180;
+const edge = (k) => -90 + (180 / BANDS) * k;
+const Z0 = FOOT + STEM, CZ = Z0 + R;
+// toward you: the camera's azimuth 45°, elevation 30°
+const VIEW = [0.612, 0.612, 0.5];
+const falloff = (u) => (u <= 0.4 ? 1 - (u / 0.4) * 0.6 : u <= 1 ? 0.4 - ((u - 0.4) / 0.6) * 0.4 : 0);
+const circlePath = ([x, y], r) => `M${x - r} ${y}a${r} ${r} 0 1 0 ${2 * r} 0a${r} ${r} 0 1 0 ${-2 * r} 0`;
 
 function mount({ stage, svg, read }, value) {
   const bag = disposer();
-  let R = value;
-  const C = Cam(45, 0.5, 1.46);
-  fit(C, [[-6, -6, -PB], [W + 6, 3 * D + 6, -PB], [W + 6, -6, -PB], [-6, 3 * D + 6, -PB], [0, D / 2, 18 + 30 + GROW + 2], [W - 10, D / 2, 18 + 30 + 2]], 200, 172);
+  let REACH = value;
+  const C = Cam(45, 0.5, 1.6);
+  fit(C, [[-R, -R, CZ], [R, R, CZ], [R, -R, CZ], [-R, R, CZ], [0, 0, CZ + R + LONG + 8], [0, 0, 0], [24, 24, 0]], 200, 166);
   const P = proj(C), front = facing(C);
   const g = mk("g", {}, svg);
-  const poles = [];
-  const [br, bi] = rings(-6, -6, W + 6, 3 * D + 6, 8, 2);
-  put(solid(g), prism(P, front, br, bi, -PB, 0));
 
-  STEPS.forEach(([h, list], s) => {
-    // the step itself, then its poles, far (left) to near (right)
-    // tight corners, so the three read as one podium on its base
-    const [r, i] = rings(0, s * D, W, (s + 1) * D, 1.6, 1.2);
-    put(solid(g), prism(P, front, r, i, 0, h));
-    const gap = W / list.length;
-    list.forEach(([name, h0], k) => {
-      const x = gap * (k + 0.5) - FW / 2, y = s * D + D / 2;
-      const foot = solid(g);
-      put(foot, prism(P, front, shift(circ(2.8, 16), x, y), shift(circ(2, 16), x, y), h, h + 1.2));
-      poles.push({ name, x, y, base: h + 1.2, h0, sp: spring(h0, { eps: 0.03 }), pole: solid(g), ball: mk("path", {}, g), flag: mk("path", { class: "sil" }, g), stripe: mk("path", { class: "nf lo" }, g), drawn: NaN });
-    });
+  // the stand, then the slices south to north, each painted after the one under it
+  put(solid(g), prism(P, front, circ(24, 40), circ(22.4, 40), 0, FOOT));
+  mk("path", { d: seg(P(0, 0, FOOT), P(0, 0, Z0)), class: "nf" }, g);
+  for (let k = 0; k < BANDS; k++) {
+    const a = edge(k), b = edge(k + 1), r = Math.max(2.5, R * Math.cos(rad((a + b) / 2)));
+    const lo = CZ + R * Math.sin(rad(a)) + GAP / 2, hi = CZ + R * Math.sin(rad(b)) - GAP / 2;
+    put(solid(g), prism(P, front, circ(r, 56), circ(Math.max(0.3, r - 1.4), 56), lo, hi));
+  }
+
+  // the pins, over the globe: a stem out of its surface and a round head
+  const pins = CITIES.map(([name, lat, lon]) => {
+    const grp = mk("g", {}, g);
+    return { name, lat: rad(lat), lon: rad(lon), grp, stem: mk("path", { class: "nf" }, grp), head: mk("path", {}, grp), sp: spring(SHORT, { eps: 0.02 }) };
   });
+  const rot = spring(TURN, { eps: 0.0005 });
 
-  /** A flag hanging from the pole's top, in the upright plane through it, with a gentle wave. */
-  function flagAt(p, top) {
-    const wave = (u) => Math.sin((u / FW) * Math.PI * 1.4) * 1.1;
-    const pts = [];
-    for (let u = 0; u <= FW; u += 1) pts.push(P(p.x + u, p.y, top - 1 + wave(u)));
-    for (let u = FW; u >= 0; u -= 1) pts.push(P(p.x + u, p.y, top - 1 - FH + wave(u)));
-    const mid = [];
-    for (let u = 0; u <= FW; u += 1) mid.push(P(p.x + u, p.y, top - 1 - FH / 2 + wave(u)));
-    return [poly(pts), mid];
+  /** Where a pin stands with the globe turned by t: its foot and tip on screen, and whether it faces you. */
+  const at = (p, t, len) => {
+    const th = p.lon + t, n = [Math.cos(p.lat) * Math.cos(th), Math.cos(p.lat) * Math.sin(th), Math.sin(p.lat)];
+    // a marker stands upright from its city, as isometric pins do
+    const x = n[0] * R, y = n[1] * R, z = CZ + n[2] * R;
+    return { foot: P(x, y, z), tip: P(x, y, z + len), seen: n[0] * VIEW[0] + n[1] * VIEW[1] + n[2] * VIEW[2] > 0.08 };
+  };
+  let drawn = "";
+  function draw() {
+    const key = rot.x + pins.map((p) => p.sp.x).join();
+    if (key === drawn) return;
+    drawn = key;
+    // far to near, so a nearer pin's head covers a farther one's
+    const order = pins.map((p) => ({ p, q: at(p, rot.x, p.sp.x) })).sort((a, b) => a.q.foot[1] - b.q.foot[1]);
+    for (const { p, q } of order) {
+      if (q.seen) g.appendChild(p.grp);
+      // a pin round the back is taken out of the drawing, and put back when it comes round
+      else if (p.grp.isConnected) p.grp.remove();
+      p.stem.setAttribute("d", seg(q.foot, q.tip));
+      p.head.setAttribute("d", circlePath([q.tip[0], q.tip[1] - 3.2], 3.4));
+    }
   }
-  function draw(p) {
-    const len = p.sp.x;
-    if (len === p.drawn) return;
-    p.drawn = len;
-    const top = p.base + len;
-    put(p.pole, prism(P, front, shift(circ(0.9, 12), p.x, p.y), shift(circ(0.5, 12), p.x, p.y), p.base, top));
-    const [bx, by] = P(p.x, p.y, top + 1.4);
-    p.ball.setAttribute("d", `M${bx - 1.6} ${by}a1.6 1.6 0 1 0 3.2 0a1.6 1.6 0 1 0 -3.2 0`);
-    const [d, mid] = flagAt(p, top);
-    p.flag.setAttribute("d", d);
-    p.stripe.setAttribute("d", seg(mid[1], mid[Math.floor(mid.length / 2)]) + seg(mid[Math.floor(mid.length / 2) + 1], mid[mid.length - 2]));
-  }
-  poles.forEach(draw);
+  draw();
 
   const B = register(stage, (dt) => {
-    let m = false;
-    for (const p of poles) { if (stepS(p.sp, dt)) m = true; draw(p); }
+    let m = stepS(rot, dt);
+    for (const p of pins) if (stepS(p.sp, dt)) m = true;
+    draw();
     return m;
   });
   bag.add(B.unregister);
 
-  const home = poles[0];
   let lit = null;
   function light(p) {
     if (p === lit) return;
-    if (lit) lit.flag.classList.remove("hi");
+    if (lit) { lit.head.classList.remove("hi"); lit.stem.classList.remove("hi"); }
     lit = p;
-    lit.flag.classList.add("hi");
+    lit.head.classList.add("hi");
+    lit.stem.classList.add("hi");
   }
+  const home = pins.find((p) => p.name === "london");
   light(home);
 
-  function aim(pt) {
-    if (!pt) {
-      for (const p of poles) p.sp.t = p.h0;
+  const [left] = P(-R, R, CZ), [right] = P(R, -R, CZ);
+  bag.add(pointer(stage, {
+    move: ([sx, sy]) => {
+      rot.t = TURN + (0.5 - clamp((sx - left) / (right - left), 0, 1)) * 2 * SWING;
+      // judged where the turn is headed, never where it is on screen
+      let best = null, bd = Infinity;
+      for (const p of pins) {
+        const q = at(p, rot.t, SHORT), d = Math.hypot(q.foot[0] - sx, q.foot[1] - sy);
+        p.sp.t = q.seen ? SHORT + (LONG - SHORT) * falloff(d / REACH) : SHORT;
+        if (q.seen && d < bd) { bd = d; best = p; }
+      }
+      if (best) { light(best); read.textContent = best.name; }
+      B.wake();
+    },
+    leave: () => {
+      rot.t = TURN;
+      for (const p of pins) p.sp.t = SHORT;
       light(home);
       read.textContent = "rest";
-    } else {
-      let near = poles[0], best = Infinity;
-      for (const p of poles) {
-        // the pointer, put on this pole's own step
-        const [x, y] = unproj(C, pt[0], pt[1], p.base);
-        const d = Math.hypot(x - p.x, y - p.y);
-        p.sp.t = p.h0 + GROW * falloff(d / R);
-        if (d < best) { best = d; near = p; }
-      }
-      light(near);
-      read.textContent = near.name;
-    }
-    B.wake();
-  }
-  bag.add(pointer(stage, { move: aim, leave: () => aim(null) }));
+      B.wake();
+    },
+  }));
   bag.add(() => svg.replaceChildren());
-  return { set: (v) => { R = v; }, destroy: bag.dispose };
+  return { set: (v) => { REACH = v; }, destroy: bag.dispose };
 }
 
 hairline({
   name: "countries",
-  means: "A podium of flags, a step for each stage of growth: the poles near the pointer grow taller, and the nearest is named.",
+  means: "A globe of thin slices with a pin for every market: the pointer turns it, and the pins near it stand out.",
   rules: [1, 3, 5, 9],
-  range: [30, 50, 75],
+  range: [60, 95, 140],
   mount,
 });
 
