@@ -1142,9 +1142,9 @@ hairline({
 // countries.js
 (() => {
 /**
- * Growing: a bar chart on a rounded plinth, nine years from the first running
- * away to the right, each bar taller than the last, a trend line running through their tops with a dot
- * on each. At rest the whole chart is grown and today's bar is bright. The
+ * Growing: a bar chart on a rounded plinth, six years from the first running
+ * away to the right, each bar taller than the last, a trend line floating over
+ * their tops. At rest the whole chart is grown and today's bar is bright. The
  * pointer is time: the bars up to the year under it stand grown, the years
  * after it fall back to stubs, each on its own spring, so moving left to right
  * grows the chart again; the year at the pointer is bright. The slider is the
@@ -1152,10 +1152,10 @@ hairline({
  */
 const {
   Cam, fit, proj, facing, unproj, prism, rings, clamp, open, seg,
-  spring, stepS, flatDot, place, mk, solid, put, register, pointer, disposer,
+  spring, stepS, mk, solid, put, register, pointer, disposer,
 } = HL;
 
-const N = 9, SP = 20, FOOT = 12, STUB = 2.5, PB = 5, LIFT = 7;
+const N = 6, SP = 26, FOOT = 15, STUB = 2.5, PB = 5, LIFT = 7;
 // the years run away from you to the right (along -y), so the chart climbs up the screen
 const EY = N * SP, X0 = -12, X1 = 22;
 const yAt = (i) => -(i + 0.5) * SP;
@@ -1183,10 +1183,9 @@ function mount({ stage, svg, read }, value) {
   });
   for (let i = N - 1; i >= 0; i--) bars[i].el = solid(g);
   // the trend line, floating a little over the bars so it clears each taller one, a dashed
-  // guide down to each top, and a dot at each point
+  // guide down to each top
   const guides = mk("path", { class: "nf dash" }, g);
   const line = mk("path", { class: "nf" }, g);
-  const dots = bars.map(() => flatDot(g, C, 1.3, "dot m"));
 
   function draw() {
     let moved = false;
@@ -1199,7 +1198,6 @@ function mount({ stage, svg, read }, value) {
     const pts = bars.map((b) => P(5, b.cy, Math.max(STUB, b.sp.x) + LIFT));
     guides.setAttribute("d", pts.map((p, i) => seg(p, tops[i])).join(""));
     line.setAttribute("d", open(pts));
-    dots.forEach((el, i) => place(el, pts[i]));
   }
   draw();
 
@@ -1213,10 +1211,9 @@ function mount({ stage, svg, read }, value) {
 
   let lit = null;
   function light(i) {
-    if (lit !== null) { bars[lit].el.sil.classList.remove("hi"); dots[lit].setAttribute("class", "dot m"); }
+    if (lit !== null) bars[lit].el.sil.classList.remove("hi");
     lit = i;
     bars[i].el.sil.classList.add("hi");
-    dots[i].setAttribute("class", "dot");
   }
   light(N - 1);
 
@@ -1237,7 +1234,7 @@ function mount({ stage, svg, read }, value) {
 
 hairline({
   name: "countries",
-  means: "A bar chart of nine years, growing: the pointer is time, and the years after it fall back until you move on.",
+  means: "A bar chart of six years, growing: the pointer is time, and the years after it fall back until you move on.",
   rules: [1, 3, 5, 9],
   range: [52, 66, 76],
   mount,
