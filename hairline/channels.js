@@ -2,14 +2,16 @@
  * Channels: one carousel, like a baggage belt, an open loop round a sunken
  * floor, and the three channels riding it: letters, parcels and stacks of flyers, always
  * going round. Hovering slows the belt, on a spring, so one can be read; the
- * one nearest the pointer takes the bright stroke and is named. At rest the
- * one passing the front is bright. The slider is the belt's speed.
+ * one under the pointer, by its outline as drawn (nearest first), takes the
+ * bright stroke and is named, and over the bare belt none is. The things move
+ * whether or not you point, so they are picked where they are. At rest the one
+ * passing the front is bright. The slider is the belt's speed.
  *
  * Built on Slow's pattern: an ambient loop that keeps moving, and a spring on
  * its rate that the pointer pulls down.
  */
 const {
-  Cam, fit, proj, facing, unproj, prism, rrect, run, poly, open, seg,
+  Cam, fit, proj, facing, prism, rrect, run, ringAt, hull, poly, open, seg,
   spring, stepS, mk, solid, put, register, pointer, disposer,
 } = HL;
 
@@ -78,6 +80,16 @@ const KINDS = [
   },
 ];
 
+/** Whether the screen point lies inside the polygon. */
+const inside = ([x, y], pts) => {
+  let c = false;
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+    const [xi, yi] = pts[i], [xj, yj] = pts[j];
+    if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) c = !c;
+  }
+  return c;
+};
+
 function mount({ stage, svg, read }, value) {
   const bag = disposer();
   let speed = value;
@@ -115,23 +127,35 @@ function mount({ stage, svg, read }, value) {
     for (const it of items) {
       const [x, y, a] = along(pos + (it.i * LOOP) / N);
       it.x = x; it.y = y;
-      it.kind.parts.forEach(([ring, inner, z0, z1], k) => put(it.solids[k], prism(P, front, place2(ring, a, x, y), place2(inner, a, x, y), z0, z1)));
+      const outline = [];
+      it.kind.parts.forEach(([ring, inner, z0, z1], k) => {
+        const r = place2(ring, a, x, y);
+        put(it.solids[k], prism(P, front, r, place2(inner, a, x, y), z0, z1));
+        outline.push(...ringAt(P, r, z0), ...ringAt(P, r, z1));
+      });
+      it.outline = hull(outline);
       const c = Math.cos(a), s = Math.sin(a), seen = (nx, ny) => nx * c - ny * s + (nx * s + ny * c) > 0.05;
       it.mk.setAttribute("d", it.kind.marks(seen).map((l) => open(l.map(([u, v, z]) => P(x + u * c - v * s, y + u * s + v * c, z)))).join(""));
     }
     // far to near: move the groups only when the order changes
     const sorted = items.slice().sort((p, q) => p.x + p.y - (q.x + q.y)), key = sorted.map((it) => it.i).join();
     if (key !== order) { order = key; for (const it of sorted) things.appendChild(it.grp); }
-    // the bright one: nearest the pointer, or the one passing the front
-    const [tx, ty] = over || [RC * 0.71 + A * 0.3, RC * 0.71];
-    let best = items[0];
-    for (const it of items) if (Math.hypot(it.x - tx, it.y - ty) < Math.hypot(best.x - tx, best.y - ty)) best = it;
+    // the bright one: the nearest whose outline holds the pointer, none over the bare belt,
+    // and at rest the one passing the front
+    let best = null;
+    if (over) {
+      for (let k = sorted.length - 1; k >= 0 && !best; k--) if (inside(over, sorted[k].outline)) best = sorted[k];
+    } else {
+      const [tx, ty] = [RC * 0.71 + A * 0.3, RC * 0.71];
+      best = items[0];
+      for (const it of items) if (Math.hypot(it.x - tx, it.y - ty) < Math.hypot(best.x - tx, best.y - ty)) best = it;
+    }
     if (best !== lit) {
       if (lit) lit.solids[lit.solids.length - 1].sil.classList.remove("hi");
       lit = best;
-      lit.solids[lit.solids.length - 1].sil.classList.add("hi");
+      if (lit) lit.solids[lit.solids.length - 1].sil.classList.add("hi");
     }
-    read.textContent = over ? lit.name : "rest";
+    read.textContent = over ? (lit ? lit.name : "belt") : "rest";
   }
   draw();
 
@@ -145,7 +169,7 @@ function mount({ stage, svg, read }, value) {
   bag.add(B.unregister);
 
   bag.add(pointer(stage, {
-    move: (p) => { over = unproj(C, p[0], p[1], 0); rate.t = 0.12; B.wake(); },
+    move: (p) => { over = p; rate.t = 0.12; B.wake(); },
     leave: () => { over = null; rate.t = 1; B.wake(); },
   }));
   bag.add(() => svg.replaceChildren());
