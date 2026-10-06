@@ -5,11 +5,13 @@
  * lifts out of the crate; the ones in front lean forward and the ones behind
  * lean back, staggered outwards from it. The slider is the stagger, in ms.
  *
- * Built on Riffle's pattern: tweens, a stagger by distance, and a hit test on
- * static bands along the flyers' resting top edges.
+ * Built on Riffle's pattern: tweens and a stagger by distance. The hit test is
+ * what you see: the flyer under the pointer, nearest first, in its resting pose
+ * (or the pose the chosen one is headed for), with the crate's near wall in
+ * front of them all; never the pose on screen.
  */
 const {
-  Cam, clamp, facing, fillet, fit, hull, open, poly, proj, rad, ringAt, rrect, run, seg,
+  Cam, facing, fillet, fit, hull, open, poly, proj, rad, ringAt, rrect, run, seg,
   tdone, tset, tval, tween, disposer, mk, pointer, reflect, register,
 } = HL;
 
@@ -38,7 +40,9 @@ function crate(P, front, outer, inner) {
     [poly(onSide(rrect((Y0 + Y1) / 2 - 10, 13, (Y0 + Y1) / 2 + 10, 19, 3, 5))), "nf"],
     [poly(onFront(rrect((X0 + X1) / 2 - 9, 13, (X0 + X1) / 2 + 9, 19, 3, 5))), "nf"],
   ];
-  return { far, near };
+  // the near wall's outline on screen, for the hit test: it hides the flyers' feet
+  const wall = [...iF, oT[oT.length - 1], ...oB.slice().reverse(), oT[0]];
+  return { far, near, wall };
 }
 
 /** Flyer i leaning th degrees and lifted: its paper, and what's printed on its face. */
@@ -51,6 +55,7 @@ function pose(P, i, th, lift) {
   const sun = [];
   for (let k = 0; k < 16; k++) sun.push(w(W - 15 + 3.6 * Math.cos(k * 0.3927), H - 13 + 3.6 * Math.sin(k * 0.3927)));
   return {
+    outline: sheet.map((p) => w(p[0], p[1])),
     back: poly(sheet.map((p) => wb(p[0], p[1]))),
     face: poly(sheet.map((p) => w(p[0], p[1]))),
     pic: poly(pic.map((p) => w(p[0], p[1]))) + open([[6, H - 30], [18, H - 21], [27, H - 28], [37, H - 19], [W - 6, H - 33]].map((p) => w(p[0], p[1]))) + poly(sun),
@@ -84,16 +89,23 @@ function mount({ stage, svg, read }, value) {
   }
   for (const [d, cls] of paths.near) mk("path", { d, class: cls }, g);
 
-  // hit bands: oblique strips along the RESTING top edges; they never move, and nothing draws them
-  const top = (i) => P(W / 2, i * G + H * Math.sin(rad(REST)), H * Math.cos(rad(REST)));
-  const c0 = top(0), c1 = top(1), dd = [c1[0] - c0[0], c1[1] - c0[1]];
-  const px0 = P(0, 0, 0), px1 = P(1, 0, 0), ex = [px1[0] - px0[0], px1[1] - px0[1]];
-  const HALF = W / 2 + 6, det = dd[0] * ex[1] - dd[1] * ex[0];
-  function hit([x, y]) {
-    const qx = x - c0[0], qy = y - c0[1];
-    const s = (qx * ex[1] - qy * ex[0]) / det, r = (dd[0] * qy - dd[1] * qx) / det;
-    if (Math.abs(r) > HALF || s < -0.5 || s > N + 1) return -1;
-    return clamp(Math.round(s), 0, N - 1);
+  // the hit test: the outline of each flyer where it rests, and of the chosen one where it is
+  // headed; the crate's near wall is in front of every flyer's foot
+  const inside = ([x, y], pts) => {
+    let c = false;
+    for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+      const [xi, yi] = pts[i], [xj, yj] = pts[j];
+      if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) c = !c;
+    }
+    return c;
+  };
+  const restAt = fl.map((_, i) => pose(P, i, REST, 0).outline);
+  const upAt = fl.map((_, i) => pose(P, i, 0, LIFT).outline);
+  function hit(pt) {
+    if (act >= 0 && inside(pt, upAt[act])) return act;
+    if (inside(pt, paths.wall)) return -1;
+    for (let i = N - 1; i >= 0; i--) if (inside(pt, restAt[i])) return i;
+    return -1;
   }
 
   const drawn = fl.map(() => "");
