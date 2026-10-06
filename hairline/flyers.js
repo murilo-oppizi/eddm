@@ -6,9 +6,9 @@
  * lean back, staggered outwards from it. The slider is the stagger, in ms.
  *
  * Built on Riffle's pattern: tweens and a stagger by distance. The hit test is
- * what you see: the flyer under the pointer, nearest first, in its resting pose
- * (or the pose the chosen one is headed for), with the crate's near wall in
- * front of them all; never the pose on screen.
+ * what you see: the flyer under the pointer, nearest first, in its resting pose,
+ * with the crate's near wall in front of them all; the chosen one, lifted, keeps
+ * the pointer only above the rest. Never the pose on screen.
  */
 const {
   Cam, facing, fillet, fit, hull, open, poly, proj, rad, ringAt, rrect, run, seg,
@@ -101,10 +101,12 @@ function mount({ stage, svg, read }, value) {
   };
   const restAt = fl.map((_, i) => pose(P, i, REST, 0).outline);
   const upAt = fl.map((_, i) => pose(P, i, 0, LIFT).outline);
+  // the resting faces decide first, so moving across picks each flyer in turn; the chosen one,
+  // up and lifted, only keeps the pointer where no resting face is under it
   function hit(pt) {
-    if (act >= 0 && inside(pt, upAt[act])) return act;
     if (inside(pt, paths.wall)) return -1;
     for (let i = N - 1; i >= 0; i--) if (inside(pt, restAt[i])) return i;
+    if (act >= 0 && inside(pt, upAt[act])) return act;
     return -1;
   }
 
