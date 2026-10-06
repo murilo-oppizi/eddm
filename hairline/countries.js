@@ -59,9 +59,12 @@ function mount({ stage, svg, read }, value) {
 
   let lit = null;
   function light(i) {
-    if (lit !== null) bars[lit].el.sil.classList.remove("hi");
+    // the chosen bar is bright all over: its outline, and its top's inner edge, which is dim
+    // otherwise (the two classes can't both be on it: the dim one would win)
+    if (lit !== null) { bars[lit].el.sil.classList.remove("hi"); bars[lit].el.cr.classList.replace("hi", "lo"); }
     lit = i;
     bars[i].el.sil.classList.add("hi");
+    bars[i].el.cr.classList.replace("lo", "hi");
   }
   light(N - 1);
 
