@@ -1,112 +1,114 @@
 /**
- * Agent: a sorting arm on a round plinth, a postcard in its gripper, and three
- * trays in an arc in front of it: plan, launch, measure. At rest the arm
- * holds the card over the middle tray, which is bright. Point at a tray and
- * the arm lifts the card, swings over it on the 700ms curve, and lowers it in;
- * the tray goes bright. The trays are hit where they rest, and never move.
- * The slider is the pause before the card goes down, in ms.
+ * Agent: a gantry, like a plotter's, over a board of twelve trays of postcards
+ * stacked to different heights: the agent's work, placed for you. A bridge
+ * rides two rails, a carriage rides the bridge, and a gripper on a rod holds a
+ * postcard. Point at a tray: the gripper lifts, the gantry runs over it on the
+ * 700ms curve, and lowers the card onto the stack, which goes bright. At rest
+ * it holds a card over the tallest stack. The trays are hit where they rest;
+ * they never move. The slider is the pause before the card goes down, in ms.
  */
 const {
-  Cam, fit, proj, facing, unproj, prism, rings, rrect, circ, ringAt, run, hull, poly, open, seg,
+  Cam, fit, proj, facing, unproj, prism, rings, rrect, circ, poly, seg,
   tween, tset, tval, tdone, mk, solid, put, register, pointer, disposer,
 } = HL;
 
-const RA = 52, TS = 13, TH = 10, WT = 2, BOOM = 52, ZB = 50, UP = 34, DOWN = 15, FRONT = Math.PI / 4;
-const NAMES = ["plan", "launch", "measure"];
-// the arc swings off to one side, so the boom is never end-on to you and always reads as an arm
-const AT = [FRONT + 1.35, FRONT + 0.5, FRONT - 0.35];
-const PC = [22 * Math.cos(FRONT + 0.5), 22 * Math.sin(FRONT + 0.5)], PR = 78;
-const LR = (pts) => (pts[0][0] <= pts[pts.length - 1][0] ? pts : pts.slice().reverse());
-const turn = (ring, a, dx = 0, dy = 0) => {
-  const c = Math.cos(a), s = Math.sin(a);
-  return ring.map((q) => ({ u: dx + q.u * c - q.v * s, v: dy + q.u * s + q.v * c, nu: q.nu * c - q.nv * s, nv: q.nu * s + q.nv * c }));
-};
+const NXC = 4, NYC = 3, CELL = 26, EX = NXC * CELL, EY = NYC * CELL, M = 9, H = 56, PB = 5;
+const STACK = [[4, 9, 3, 6], [7, 2, 13, 5], [3, 6, 4, 8]];
+const REST = [2, 1];
+const UP = H - 18;
+const shift = (ring, x, y) => ring.map((q) => ({ ...q, u: q.u + x, v: q.v + y }));
 
 function mount({ stage, svg, read }, value) {
   const bag = disposer();
   let pause = value;
   const C = Cam(45, 0.5, 1.62);
-  fit(C, [[PC[0] - PR, PC[1], -6], [PC[0] + PR, PC[1], -6], [PC[0], PC[1] + PR, -6], [PC[0], PC[1] - PR, -6], [0, 0, ZB + 6], [BOOM * Math.cos(AT[0]), BOOM * Math.sin(AT[0]), ZB + 6]], 200, 164);
+  fit(C, [[-M, -M, -PB], [EX + M, EY + M, -PB], [EX + M, -M, -PB], [-M, EY + M, -PB], [-M, -M, H + 12], [EX + M, -M, H + 12]], 200, 162);
   const P = proj(C), front = facing(C);
   const g = mk("g", {}, svg);
+  const post = (x, y) => put(solid(g), prism(P, front, shift(circ(2.8, 16), x, y), shift(circ(2, 16), x, y), 0, H));
+  const rail = (y) => { const [r, i] = rings(-M - 3, y - 2.6, EX + M + 3, y + 2.6, 2.2, 0.8); put(solid(g), prism(P, front, r, i, H, H + 4)); };
 
-  // the plinth, the arm's foot and column
-  const disc = (r, n = 48) => turn(circ(r, n), 0, PC[0], PC[1]);
-  put(solid(g), prism(P, front, disc(PR), disc(PR - 2.2), -6, 0));
-  put(solid(g), prism(P, front, circ(16, 32), circ(14.4, 32), 0, 5));
-  put(solid(g), prism(P, front, circ(6.5, 24), circ(5.3, 24), 5, ZB - 2));
-
-  // the trays, far to near, each painted as a tray is: body and rim, a card lying in it, then its near wall
-  const trays = AT.map((a, i) => ({ i, a, x: RA * Math.cos(a), y: RA * Math.sin(a) })).sort((p, q) => p.x + p.y - (q.x + q.y));
-  for (const t of trays) {
-    const [outer, inner] = rings(t.x - TS, t.y - TS, t.x + TS, t.y + TS, 6, WT);
-    t.body = mk("path", { d: poly(hull(ringAt(P, outer, 0).concat(ringAt(P, outer, TH)))), class: "sil" }, g);
-    t.rim = mk("path", { d: poly(ringAt(P, inner, TH)), class: "nf" }, g);
-    mk("path", { d: poly(ringAt(P, rrect(t.x - 8, t.y - 6, t.x + 8, t.y + 6, 1, 3), 3)), class: "nf lo" }, g);
-    const iF = LR(ringAt(P, run(inner, front), TH)), oT = LR(ringAt(P, run(outer, front), TH)), oB = LR(ringAt(P, run(outer, front), 0));
-    mk("path", { d: poly([...iF, oT[oT.length - 1], ...oB.slice().reverse(), oT[0]]), class: "fo" }, g);
-    mk("path", { d: open(iF), class: "nf" }, g);
-    t.near = mk("path", { d: open([oT[0], ...oB, oT[oT.length - 1]]), class: "nf sil" }, g);
+  // the board, the far post and rail, then the stacks far to near, then the side posts
+  const [br, bi] = rings(-M - 4, -M - 4, EX + M + 4, EY + M + 4, 8, 2);
+  put(solid(g), prism(P, front, br, bi, -PB, 0));
+  post(-M, -M);
+  rail(-M);
+  const cells = [];
+  for (let s = 0; s <= NXC + NYC - 2; s++) for (let i = 0; i < NXC; i++) {
+    const j = s - i;
+    if (j < 0 || j >= NYC) continue;
+    const cx = (i + 0.5) * CELL, cy = (j + 0.5) * CELL, h = STACK[j][i];
+    mk("path", { d: poly(rrect(cx - 11.5, cy - 9.5, cx + 11.5, cy + 9.5, 3, 4).map((q) => P(q.u, q.v, 0))), class: "nf lo" }, g);
+    const st = solid(g), [r, ri] = rings(cx - 9, cy - 6.5, cx + 9, cy + 6.5, 1.4, 0.6);
+    put(st, prism(P, front, r, ri, 0, h));
+    // the top card's print: a picture and two lines
+    mk("path", { d: poly(rrect(cx - 7, cy - 4.5, cx - 1, cy + 4.5, 0.6, 2).map((q) => P(q.u, q.v, h))) + seg(P(cx + 1, cy - 2.5, h), P(cx + 7, cy - 2.5, h)) + seg(P(cx + 1, cy + 0.5, h), P(cx + 5, cy + 0.5, h)), class: "nf lo" }, st.g);
+    cells.push({ i, j, cx, cy, h, st });
   }
+  post(EX + M, -M);
+  post(-M, EY + M);
 
-  // the arm: a hub on the column, the boom, a rod down to the gripper, and the card it holds
-  const hub = solid(g), card = solid(g), rod = mk("path", { class: "nf" }, g), grip = solid(g), boom = solid(g);
-  put(hub, prism(P, front, circ(9, 24), circ(7.6, 24), ZB - 2, ZB + 4));
+  // what moves: the card, the gripper and its rod; then the near post and rail, the bridge, the carriage
+  const card = solid(g), grip = solid(g), rod = mk("path", { class: "nf" }, g);
+  post(EX + M, EY + M);
+  rail(EY + M);
+  const bridge = solid(g), carriage = solid(g);
 
-  const swing = tween(AT[1]), drop = tween(DOWN);
+  const home = cells.find((c) => c.i === REST[0] && c.j === REST[1]);
+  const tx = tween(home.cx), ty = tween(home.cy), tz = tween(home.h + 1.2);
   let drawn = "";
   function draw(now) {
-    const a = tval(swing, now), z = tval(drop, now), key = a + "," + z;
+    const x = tval(tx, now), y = tval(ty, now), z = tval(tz, now), key = x + "," + y + "," + z;
     if (key === drawn) return;
     drawn = key;
-    const ex = BOOM * Math.cos(a), ey = BOOM * Math.sin(a);
-    const [br, bi] = rings(-6, -5, BOOM + 6, 5, 5, 1.4);
-    put(boom, prism(P, front, turn(br, a), turn(bi, a), ZB, ZB + 5));
-    rod.setAttribute("d", seg(P(ex, ey, ZB), P(ex, ey, z + 6)));
-    put(grip, prism(P, front, turn(circ(4.4, 16), 0, ex, ey), turn(circ(3.4, 16), 0, ex, ey), z + 1.2, z + 6));
-    const [cr, ci] = rings(-9, -6.5, 9, 6.5, 1.4, 0.6);
-    put(card, prism(P, front, turn(cr, a, ex, ey), turn(ci, a, ex, ey), z, z + 1.2));
+    const [cr, ci] = rings(x - 8, y - 5.5, x + 8, y + 5.5, 1.2, 0.5);
+    put(card, prism(P, front, cr, ci, z, z + 1.2));
+    put(grip, prism(P, front, shift(circ(3.6, 16), x, y), shift(circ(2.6, 16), x, y), z + 1.2, z + 6));
+    rod.setAttribute("d", seg(P(x, y, z + 6), P(x, y, H + 2)));
+    const [bR, bI] = rings(x - 3.4, -M - 5, x + 3.4, EY + M + 5, 2.6, 0.9);
+    put(bridge, prism(P, front, bR, bI, H + 4, H + 9));
+    const [kR, kI] = rings(x - 6.5, y - 6.5, x + 6.5, y + 6.5, 3, 1);
+    put(carriage, prism(P, front, kR, kI, H + 1, H + 12));
   }
 
-  // lift, swing while it is up, and only once the swing has landed, lower it in
-  let lower = false;
+  // lift, run over, and only once the run has landed, lower the card
+  let lower = null;
   const B = register(stage, (_dt, now) => {
-    if (lower && tdone(swing, now)) { lower = false; tset(drop, DOWN, now, pause); }
+    if (lower && tdone(tx, now) && tdone(ty, now)) { tset(tz, lower.h + 1.2, now, pause); lower = null; }
     draw(now);
-    return lower || !tdone(swing, now) || !tdone(drop, now);
+    return lower !== null || !tdone(tx, now) || !tdone(ty, now) || !tdone(tz, now);
   });
   bag.add(B.unregister);
 
-  let act = -2;
-  function light(i) { for (const t of trays) for (const el of [t.body, t.near]) el.classList.toggle("hi", t.i === i); }
-  function choose(i) {
-    if (i === act) return;
-    const now = performance.now(), to = i < 0 ? 1 : i;
-    act = i;
-    if (Math.abs(tval(swing, now) - AT[to]) > 0.01) {
-      tset(drop, UP, now, 0);
-      tset(swing, AT[to], now, 220);
-      lower = true;
-    }
-    light(to);
-    read.textContent = i < 0 ? "rest" : NAMES[i];
+  let act = null;
+  function choose(c) {
+    const to = c || home;
+    if (to === act) return;
+    act = to;
+    const now = performance.now();
+    tset(tz, UP, now, 0);
+    tset(tx, to.cx, now, 220);
+    tset(ty, to.cy, now, 220);
+    lower = to;
+    for (const k of cells) k.st.sil.classList.toggle("hi", k === to);
+    read.textContent = c ? `tray ${"ABCD"[c.i]}${c.j + 1}` : "rest";
     B.wake();
   }
-  light(1);
+  choose(null);
 
   const hit = ([sx, sy]) => {
-    const [x, y] = unproj(C, sx, sy, TH);
-    const t = trays.find((q) => Math.abs(x - q.x) <= TS + 4 && Math.abs(y - q.y) <= TS + 4);
-    return t ? t.i : -1;
+    const [x, y] = unproj(C, sx, sy, 0);
+    if (x < 0 || x > EX || y < 0 || y > EY) return null;
+    return cells.find((c) => Math.abs(x - c.cx) <= CELL / 2 && Math.abs(y - c.cy) <= CELL / 2) || null;
   };
-  bag.add(pointer(stage, { move: (p) => choose(hit(p)), leave: () => choose(-1) }));
+  bag.add(pointer(stage, { move: (p) => choose(hit(p)), leave: () => choose(null) }));
   bag.add(() => svg.replaceChildren());
   return { set: (v) => { pause = v; }, destroy: bag.dispose };
 }
 
 hairline({
   name: "agent",
-  means: "An agent's sorting arm: point at a tray and it swings the postcard over and lowers it in.",
+  means: "A gantry over twelve trays of postcards: point at a tray and it runs over and lowers a card onto it.",
   rules: [1, 5, 6, 8],
   range: [0, 120, 320],
   mount,
