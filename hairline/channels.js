@@ -53,6 +53,16 @@ const KINDS = [
   },
 ];
 
+/** Whether the island stands between the ground point (x, y) and you: a line from it
+ *  toward you (+x, +y) passes over the island's footprint, widened by half a thing. */
+function hidden(x, y) {
+  for (let t = 0; t <= 2 * (A + RC); t += 2) {
+    const px = x + t, py = y + t, dx = Math.max(Math.abs(px) - A, 0);
+    if (Math.hypot(dx, py) < RC - BAND + 7) return true;
+  }
+  return false;
+}
+
 function mount({ stage, svg, read }, value) {
   const bag = disposer();
   let speed = value;
@@ -92,9 +102,9 @@ function mount({ stage, svg, read }, value) {
       const c = Math.cos(a), s = Math.sin(a);
       it.mk.setAttribute("d", it.kind.marks.map((l) => open(l.map(([u, v, z]) => P(x + u * c - v * s, y + u * s + v * c, z)))).join(""));
     }
-    // far side of the island, then near side; each far to near
+    // behind the island when the island lies between it and you; each side far to near
     const sorted = items.slice().sort((p, q) => p.x + p.y - (q.x + q.y));
-    for (const it of sorted) (it.x + it.y < 0 ? back : ahead).appendChild(it.grp);
+    for (const it of sorted) (hidden(it.x, it.y) ? back : ahead).appendChild(it.grp);
     // the bright one: nearest the pointer, or the one passing the front
     const [tx, ty] = over || [RC * 0.71 + A * 0.3, RC * 0.71];
     let best = items[0];
