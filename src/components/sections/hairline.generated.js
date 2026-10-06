@@ -633,7 +633,8 @@ function mount({ stage, svg, read }, value) {
   const flat = (ring, z) => poly(ring.map((q) => P(q.u, q.v, z)));
 
   // the board, with a few small parts soldered on
-  const [br, bi] = rings(0, 0, BX, BY, 9, 2.2);
+  // a large round: its corners built with more steps, so they don't show facets
+  const br = rrect(0, 0, BX, BY, 9, 12), bi = rrect(2.2, 2.2, BX - 2.2, BY - 2.2, 6.8, 12);
   put(solid(g), prism(P, front, br, bi, -PB, 0));
   const trace = TRACES.map(([, pts]) => mk("path", { d: open(pts.map(([x, y]) => P(x, y, 0))), class: "nf" }, g));
   const pads = TRACES.map(([, pts]) => {
@@ -1150,7 +1151,7 @@ hairline({
  * tallest bar.
  */
 const {
-  Cam, fit, proj, facing, unproj, prism, rings, clamp, seg,
+  Cam, fit, proj, facing, unproj, prism, rings, rrect, clamp, seg,
   spring, stepS, mk, solid, put, register, pointer, disposer,
 } = HL;
 
@@ -1170,7 +1171,8 @@ function mount({ stage, svg, read }, value) {
   const g = mk("g", {}, svg);
 
   // the plinth, a baseline and a tick under each year
-  const [pr, pi] = rings(X0, -EY - 8, X1, 8, 8, 2.2);
+  // a large round: its corners built with more steps, so they don't show facets
+  const pr = rrect(X0, -EY - 8, X1, 8, 8, 12), pi = rrect(X0 + 2.2, -EY - 5.8, X1 - 2.2, 5.8, 5.8, 12);
   put(solid(g), prism(P, front, pr, pi, -PB, 0));
   mk("path", { d: seg(P(X1 - 6, 0, 0), P(X1 - 6, -EY, 0)) + Array.from({ length: N }, (_, i) => seg(P(X1 - 6, yAt(i), 0), P(X1 - 3, yAt(i), 0))).join(""), class: "nf lo" }, g);
 

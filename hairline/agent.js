@@ -54,7 +54,8 @@ function mount({ stage, svg, read }, value) {
   const flat = (ring, z) => poly(ring.map((q) => P(q.u, q.v, z)));
 
   // the board, with a few small parts soldered on
-  const [br, bi] = rings(0, 0, BX, BY, 9, 2.2);
+  // a large round: its corners built with more steps, so they don't show facets
+  const br = rrect(0, 0, BX, BY, 9, 12), bi = rrect(2.2, 2.2, BX - 2.2, BY - 2.2, 6.8, 12);
   put(solid(g), prism(P, front, br, bi, -PB, 0));
   const trace = TRACES.map(([, pts]) => mk("path", { d: open(pts.map(([x, y]) => P(x, y, 0))), class: "nf" }, g));
   const pads = TRACES.map(([, pts]) => {
