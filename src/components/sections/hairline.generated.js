@@ -586,11 +586,12 @@ const hairline = (figure) => { figures[figure.name] = figure; };
  * at, staggered by distance round the chip, and each task's part rises as its
  * pulse arrives; that trace and its part go bright, and it is named. Point at
  * the chip itself and it sets them all off, in a sweep round it, the sparkle
- * staying bright. The pads are hit where
- * they lie; they never move. The slider is the stagger, in ms.
+ * staying bright. What is picked is what is drawn under the pointer: the
+ * chip's outline, a task's part and pad where it is headed, or the trace to
+ * it; the bare board picks nothing. The slider is the stagger, in ms.
  */
 const {
-  Cam, fit, proj, facing, unproj, prism, rings, rrect, circ, poly, open,
+  Cam, fit, proj, facing, prism, rings, rrect, circ, ringAt, hull, poly, open,
   tween, tset, tval, tdone, flatDot, place, mk, solid, put, register, pointer, disposer,
 } = HL;
 
@@ -719,7 +720,8 @@ function mount({ stage, svg, read }, value) {
       const d = from < 0 ? 0 : from === CORE ? k * 0.6 : Math.min(Math.abs(k - from), N - Math.abs(k - from));
       tset(p.t, a < 0 ? 0 : 1, now, d * stag);
       // the part rises once its pulse has arrived; on the way back it settles at once
-      tset(p.h, a < 0 ? LOW[k] : k === a ? TOP : UP, now, a < 0 ? 0 : d * stag + 420);
+      p.target = a < 0 ? LOW[k] : k === a ? TOP : UP;
+      tset(p.h, p.target, now, a < 0 ? 0 : d * stag + 420);
       p.el.setAttribute("class", a < 0 ? "dot off" : k === a ? "dot" : "dot m");
       trace[k].classList.toggle("hi", k === a);
       p.part.sil.classList.toggle("hi", k === a);
@@ -732,15 +734,33 @@ function mount({ stage, svg, read }, value) {
   }
   choose(-1);
 
-  const hit = ([sx, sy]) => {
-    // the chip, where its die rests: its top's plane, over the package
-    const [cx, cy] = unproj(C, sx, sy, PH + DH);
-    if (Math.abs(cx - CX) <= PK + 2 && Math.abs(cy - CY) <= PK + 2) return CORE;
-    const [x, y] = unproj(C, sx, sy, 0);
-    let best = -1, bd = 22;
-    pads.forEach(([px, py], k) => { const d = Math.hypot(x - px, y - py); if (d < bd) { bd = d; best = k; } });
+  // whether a screen point is inside a polygon; how far it is from a polyline
+  const inside = ([x, y], pts) => pts.reduce((c, [xi, yi], i) => {
+    const [xj, yj] = pts[(i || pts.length) - 1];
+    return yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi ? !c : c;
+  }, false);
+  const away = ([x, y], pts) => Math.min(...pts.slice(1).map(([bx, by], k) => {
+    const [ax, ay] = pts[k], dx = bx - ax, dy = by - ay, t = Math.max(0, Math.min(1, ((x - ax) * dx + (y - ay) * dy) / (dx * dx + dy * dy || 1)));
+    return Math.hypot(x - ax - t * dx, y - ay - t * dy);
+  }));
+  const traceAt = TRACES.map(([, pts]) => pts.map(([x, y]) => P(x, y, 0)));
+  /** What is drawn under the pointer: the chip, a task (its part and pad, then its trace), or nothing. */
+  function hit(pt) {
+    const lift = act === CORE ? LIFT : 0;
+    const chip = hull(ringAt(P, pr, 0).concat(ringAt(P, pr, PH), ringAt(P, dr, PH + DH + lift)));
+    // the parts nearest you first; the chip stands among them by depth
+    const order = pulses.map((p, k) => ({ p, k })).sort((a, b) => b.p.x + b.p.y - (a.p.x + a.p.y));
+    let chipDone = false;
+    for (const { p, k } of order) {
+      if (!chipDone && p.x + p.y < CX + CY) { chipDone = true; if (inside(pt, chip)) return CORE; }
+      const part = hull(ringAt(P, shift(circ(6.5, 16), p.x, p.y), 0).concat(ringAt(P, shift(circ(3.8, 16), p.x, p.y), p.target ?? LOW[k])));
+      if (inside(pt, part)) return k;
+    }
+    if (!chipDone && inside(pt, chip)) return CORE;
+    let best = -1, bd = 5;
+    traceAt.forEach((pts, k) => { const d = away(pt, pts); if (d < bd) { bd = d; best = k; } });
     return best;
-  };
+  }
   bag.add(pointer(stage, { move: (p) => choose(hit(p)), leave: () => choose(-1) }));
   bag.add(() => svg.replaceChildren());
   return { set: (v) => { stag = v; }, destroy: bag.dispose };
@@ -981,14 +1001,16 @@ hairline({
  * Channels: one carousel, like a baggage belt, an open loop round a sunken
  * floor, and the three channels riding it: letters, parcels and stacks of flyers, always
  * going round. Hovering slows the belt, on a spring, so one can be read; the
- * one nearest the pointer takes the bright stroke and is named. At rest the
- * one passing the front is bright. The slider is the belt's speed.
+ * one under the pointer, by its outline as drawn (nearest first), takes the
+ * bright stroke and is named, and over the bare belt none is. The things move
+ * whether or not you point, so they are picked where they are. At rest the one
+ * passing the front is bright. The slider is the belt's speed.
  *
  * Built on Slow's pattern: an ambient loop that keeps moving, and a spring on
  * its rate that the pointer pulls down.
  */
 const {
-  Cam, fit, proj, facing, unproj, prism, rrect, run, poly, open, seg,
+  Cam, fit, proj, facing, prism, rrect, run, ringAt, hull, poly, open, seg,
   spring, stepS, mk, solid, put, register, pointer, disposer,
 } = HL;
 
@@ -1057,6 +1079,16 @@ const KINDS = [
   },
 ];
 
+/** Whether the screen point lies inside the polygon. */
+const inside = ([x, y], pts) => {
+  let c = false;
+  for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+    const [xi, yi] = pts[i], [xj, yj] = pts[j];
+    if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) c = !c;
+  }
+  return c;
+};
+
 function mount({ stage, svg, read }, value) {
   const bag = disposer();
   let speed = value;
@@ -1094,23 +1126,35 @@ function mount({ stage, svg, read }, value) {
     for (const it of items) {
       const [x, y, a] = along(pos + (it.i * LOOP) / N);
       it.x = x; it.y = y;
-      it.kind.parts.forEach(([ring, inner, z0, z1], k) => put(it.solids[k], prism(P, front, place2(ring, a, x, y), place2(inner, a, x, y), z0, z1)));
+      const outline = [];
+      it.kind.parts.forEach(([ring, inner, z0, z1], k) => {
+        const r = place2(ring, a, x, y);
+        put(it.solids[k], prism(P, front, r, place2(inner, a, x, y), z0, z1));
+        outline.push(...ringAt(P, r, z0), ...ringAt(P, r, z1));
+      });
+      it.outline = hull(outline);
       const c = Math.cos(a), s = Math.sin(a), seen = (nx, ny) => nx * c - ny * s + (nx * s + ny * c) > 0.05;
       it.mk.setAttribute("d", it.kind.marks(seen).map((l) => open(l.map(([u, v, z]) => P(x + u * c - v * s, y + u * s + v * c, z)))).join(""));
     }
     // far to near: move the groups only when the order changes
     const sorted = items.slice().sort((p, q) => p.x + p.y - (q.x + q.y)), key = sorted.map((it) => it.i).join();
     if (key !== order) { order = key; for (const it of sorted) things.appendChild(it.grp); }
-    // the bright one: nearest the pointer, or the one passing the front
-    const [tx, ty] = over || [RC * 0.71 + A * 0.3, RC * 0.71];
-    let best = items[0];
-    for (const it of items) if (Math.hypot(it.x - tx, it.y - ty) < Math.hypot(best.x - tx, best.y - ty)) best = it;
+    // the bright one: the nearest whose outline holds the pointer, none over the bare belt,
+    // and at rest the one passing the front
+    let best = null;
+    if (over) {
+      for (let k = sorted.length - 1; k >= 0 && !best; k--) if (inside(over, sorted[k].outline)) best = sorted[k];
+    } else {
+      const [tx, ty] = [RC * 0.71 + A * 0.3, RC * 0.71];
+      best = items[0];
+      for (const it of items) if (Math.hypot(it.x - tx, it.y - ty) < Math.hypot(best.x - tx, best.y - ty)) best = it;
+    }
     if (best !== lit) {
       if (lit) lit.solids[lit.solids.length - 1].sil.classList.remove("hi");
       lit = best;
-      lit.solids[lit.solids.length - 1].sil.classList.add("hi");
+      if (lit) lit.solids[lit.solids.length - 1].sil.classList.add("hi");
     }
-    read.textContent = over ? lit.name : "rest";
+    read.textContent = over ? (lit ? lit.name : "belt") : "rest";
   }
   draw();
 
@@ -1124,7 +1168,7 @@ function mount({ stage, svg, read }, value) {
   bag.add(B.unregister);
 
   bag.add(pointer(stage, {
-    move: (p) => { over = unproj(C, p[0], p[1], 0); rate.t = 0.12; B.wake(); },
+    move: (p) => { over = p; rate.t = 0.12; B.wake(); },
     leave: () => { over = null; rate.t = 1; B.wake(); },
   }));
   bag.add(() => svg.replaceChildren());
@@ -1147,11 +1191,13 @@ hairline({
  * away to the right, each bar taller than the last. At rest the whole chart is grown and today's bar is bright. The
  * pointer is time: the bars up to the year under it stand grown, the years
  * after it fall back to stubs, each on its own spring, so moving left to right
- * grows the chart again; the year at the pointer is bright. The slider is the
- * tallest bar.
+ * grows the chart again; the year at the pointer is bright. A year is picked
+ * by what you see: a bar's outline where it is headed, then its outline grown,
+ * nearest first, then the slot on the plinth under the pointer; nothing
+ * outside the chart picks anything. The slider is the tallest bar.
  */
 const {
-  Cam, fit, proj, facing, unproj, prism, rings, rrect, clamp, seg,
+  Cam, fit, proj, facing, unproj, prism, rings, rrect, ringAt, hull, clamp, seg,
   spring, stepS, mk, solid, put, register, pointer, disposer,
 } = HL;
 
@@ -1207,6 +1253,23 @@ function mount({ stage, svg, read }, value) {
   }
   light(N - 1);
 
+  const inside = ([x, y], pts) => {
+    let c = false;
+    for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+      const [xi, yi] = pts[i], [xj, yj] = pts[j];
+      if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) c = !c;
+    }
+    return c;
+  };
+  const outline = (b, h) => hull(ringAt(P, b.ring, 0).concat(ringAt(P, b.ring, Math.max(STUB, h))));
+  const plinth = hull(ringAt(P, pr, -PB).concat(ringAt(P, pr, 0)));
+  /** The year under the pointer, by what is drawn there (nearest first), or null. */
+  function hit(pt) {
+    for (const b of bars) if (inside(pt, outline(b, b.sp.t))) return b.i;
+    for (const b of bars) if (inside(pt, outline(b, b.share * HMAX))) return b.i;
+    if (inside(pt, plinth)) return clamp(Math.floor(-unproj(C, pt[0], pt[1], 0)[1] / SP), 0, N - 1);
+    return null;
+  }
   function aim(i) {
     for (const b of bars) b.sp.t = i === null || b.i <= i ? b.share * HMAX : STUB;
     light(i === null ? N - 1 : i);
@@ -1215,7 +1278,7 @@ function mount({ stage, svg, read }, value) {
   }
   bag.add(pointer(stage, {
     // the year under the pointer, read off the ground, which never moves
-    move: (p) => aim(clamp(Math.floor(-unproj(C, p[0], p[1], 0)[1] / SP), 0, N - 1)),
+    move: (p) => aim(hit(p)),
     leave: () => aim(null),
   }));
   bag.add(() => svg.replaceChildren());
@@ -1240,11 +1303,13 @@ hairline({
  * lifts out of the crate; the ones in front lean forward and the ones behind
  * lean back, staggered outwards from it. The slider is the stagger, in ms.
  *
- * Built on Riffle's pattern: tweens, a stagger by distance, and a hit test on
- * static bands along the flyers' resting top edges.
+ * Built on Riffle's pattern: tweens and a stagger by distance. The hit test is
+ * what you see: the flyer under the pointer, nearest first, in its resting pose
+ * (or the pose the chosen one is headed for), with the crate's near wall in
+ * front of them all; never the pose on screen.
  */
 const {
-  Cam, clamp, facing, fillet, fit, hull, open, poly, proj, rad, ringAt, rrect, run, seg,
+  Cam, facing, fillet, fit, hull, open, poly, proj, rad, ringAt, rrect, run, seg,
   tdone, tset, tval, tween, disposer, mk, pointer, reflect, register,
 } = HL;
 
@@ -1273,7 +1338,9 @@ function crate(P, front, outer, inner) {
     [poly(onSide(rrect((Y0 + Y1) / 2 - 10, 13, (Y0 + Y1) / 2 + 10, 19, 3, 5))), "nf"],
     [poly(onFront(rrect((X0 + X1) / 2 - 9, 13, (X0 + X1) / 2 + 9, 19, 3, 5))), "nf"],
   ];
-  return { far, near };
+  // the near wall's outline on screen, for the hit test: it hides the flyers' feet
+  const wall = [...iF, oT[oT.length - 1], ...oB.slice().reverse(), oT[0]];
+  return { far, near, wall };
 }
 
 /** Flyer i leaning th degrees and lifted: its paper, and what's printed on its face. */
@@ -1286,6 +1353,7 @@ function pose(P, i, th, lift) {
   const sun = [];
   for (let k = 0; k < 16; k++) sun.push(w(W - 15 + 3.6 * Math.cos(k * 0.3927), H - 13 + 3.6 * Math.sin(k * 0.3927)));
   return {
+    outline: sheet.map((p) => w(p[0], p[1])),
     back: poly(sheet.map((p) => wb(p[0], p[1]))),
     face: poly(sheet.map((p) => w(p[0], p[1]))),
     pic: poly(pic.map((p) => w(p[0], p[1]))) + open([[6, H - 30], [18, H - 21], [27, H - 28], [37, H - 19], [W - 6, H - 33]].map((p) => w(p[0], p[1]))) + poly(sun),
@@ -1319,16 +1387,23 @@ function mount({ stage, svg, read }, value) {
   }
   for (const [d, cls] of paths.near) mk("path", { d, class: cls }, g);
 
-  // hit bands: oblique strips along the RESTING top edges; they never move, and nothing draws them
-  const top = (i) => P(W / 2, i * G + H * Math.sin(rad(REST)), H * Math.cos(rad(REST)));
-  const c0 = top(0), c1 = top(1), dd = [c1[0] - c0[0], c1[1] - c0[1]];
-  const px0 = P(0, 0, 0), px1 = P(1, 0, 0), ex = [px1[0] - px0[0], px1[1] - px0[1]];
-  const HALF = W / 2 + 6, det = dd[0] * ex[1] - dd[1] * ex[0];
-  function hit([x, y]) {
-    const qx = x - c0[0], qy = y - c0[1];
-    const s = (qx * ex[1] - qy * ex[0]) / det, r = (dd[0] * qy - dd[1] * qx) / det;
-    if (Math.abs(r) > HALF || s < -0.5 || s > N + 1) return -1;
-    return clamp(Math.round(s), 0, N - 1);
+  // the hit test: the outline of each flyer where it rests, and of the chosen one where it is
+  // headed; the crate's near wall is in front of every flyer's foot
+  const inside = ([x, y], pts) => {
+    let c = false;
+    for (let i = 0, j = pts.length - 1; i < pts.length; j = i++) {
+      const [xi, yi] = pts[i], [xj, yj] = pts[j];
+      if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) c = !c;
+    }
+    return c;
+  };
+  const restAt = fl.map((_, i) => pose(P, i, REST, 0).outline);
+  const upAt = fl.map((_, i) => pose(P, i, 0, LIFT).outline);
+  function hit(pt) {
+    if (act >= 0 && inside(pt, upAt[act])) return act;
+    if (inside(pt, paths.wall)) return -1;
+    for (let i = N - 1; i >= 0; i--) if (inside(pt, restAt[i])) return i;
+    return -1;
   }
 
   const drawn = fl.map(() => "");

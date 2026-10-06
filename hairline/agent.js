@@ -7,11 +7,12 @@
  * at, staggered by distance round the chip, and each task's part rises as its
  * pulse arrives; that trace and its part go bright, and it is named. Point at
  * the chip itself and it sets them all off, in a sweep round it, the sparkle
- * staying bright. The pads are hit where
- * they lie; they never move. The slider is the stagger, in ms.
+ * staying bright. What is picked is what is drawn under the pointer: the
+ * chip's outline, a task's part and pad where it is headed, or the trace to
+ * it; the bare board picks nothing. The slider is the stagger, in ms.
  */
 const {
-  Cam, fit, proj, facing, unproj, prism, rings, rrect, circ, poly, open,
+  Cam, fit, proj, facing, prism, rings, rrect, circ, ringAt, hull, poly, open,
   tween, tset, tval, tdone, flatDot, place, mk, solid, put, register, pointer, disposer,
 } = HL;
 
@@ -140,7 +141,8 @@ function mount({ stage, svg, read }, value) {
       const d = from < 0 ? 0 : from === CORE ? k * 0.6 : Math.min(Math.abs(k - from), N - Math.abs(k - from));
       tset(p.t, a < 0 ? 0 : 1, now, d * stag);
       // the part rises once its pulse has arrived; on the way back it settles at once
-      tset(p.h, a < 0 ? LOW[k] : k === a ? TOP : UP, now, a < 0 ? 0 : d * stag + 420);
+      p.target = a < 0 ? LOW[k] : k === a ? TOP : UP;
+      tset(p.h, p.target, now, a < 0 ? 0 : d * stag + 420);
       p.el.setAttribute("class", a < 0 ? "dot off" : k === a ? "dot" : "dot m");
       trace[k].classList.toggle("hi", k === a);
       p.part.sil.classList.toggle("hi", k === a);
@@ -153,15 +155,33 @@ function mount({ stage, svg, read }, value) {
   }
   choose(-1);
 
-  const hit = ([sx, sy]) => {
-    // the chip, where its die rests: its top's plane, over the package
-    const [cx, cy] = unproj(C, sx, sy, PH + DH);
-    if (Math.abs(cx - CX) <= PK + 2 && Math.abs(cy - CY) <= PK + 2) return CORE;
-    const [x, y] = unproj(C, sx, sy, 0);
-    let best = -1, bd = 22;
-    pads.forEach(([px, py], k) => { const d = Math.hypot(x - px, y - py); if (d < bd) { bd = d; best = k; } });
+  // whether a screen point is inside a polygon; how far it is from a polyline
+  const inside = ([x, y], pts) => pts.reduce((c, [xi, yi], i) => {
+    const [xj, yj] = pts[(i || pts.length) - 1];
+    return yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi ? !c : c;
+  }, false);
+  const away = ([x, y], pts) => Math.min(...pts.slice(1).map(([bx, by], k) => {
+    const [ax, ay] = pts[k], dx = bx - ax, dy = by - ay, t = Math.max(0, Math.min(1, ((x - ax) * dx + (y - ay) * dy) / (dx * dx + dy * dy || 1)));
+    return Math.hypot(x - ax - t * dx, y - ay - t * dy);
+  }));
+  const traceAt = TRACES.map(([, pts]) => pts.map(([x, y]) => P(x, y, 0)));
+  /** What is drawn under the pointer: the chip, a task (its part and pad, then its trace), or nothing. */
+  function hit(pt) {
+    const lift = act === CORE ? LIFT : 0;
+    const chip = hull(ringAt(P, pr, 0).concat(ringAt(P, pr, PH), ringAt(P, dr, PH + DH + lift)));
+    // the parts nearest you first; the chip stands among them by depth
+    const order = pulses.map((p, k) => ({ p, k })).sort((a, b) => b.p.x + b.p.y - (a.p.x + a.p.y));
+    let chipDone = false;
+    for (const { p, k } of order) {
+      if (!chipDone && p.x + p.y < CX + CY) { chipDone = true; if (inside(pt, chip)) return CORE; }
+      const part = hull(ringAt(P, shift(circ(6.5, 16), p.x, p.y), 0).concat(ringAt(P, shift(circ(3.8, 16), p.x, p.y), p.target ?? LOW[k])));
+      if (inside(pt, part)) return k;
+    }
+    if (!chipDone && inside(pt, chip)) return CORE;
+    let best = -1, bd = 5;
+    traceAt.forEach((pts, k) => { const d = away(pt, pts); if (d < bd) { bd = d; best = k; } });
     return best;
-  };
+  }
   bag.add(pointer(stage, { move: (p) => choose(hit(p)), leave: () => choose(-1) }));
   bag.add(() => svg.replaceChildren());
   return { set: (v) => { stag = v; }, destroy: bag.dispose };
