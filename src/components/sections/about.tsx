@@ -153,11 +153,12 @@ export function AboutStory() {
               onPointerLeave={() => setHeld(false)}
               className="space-y-6 rounded-3xl bg-muted/50 px-4 pt-8 pb-6 sm:px-10 sm:pt-10 sm:pb-8 lg:px-14"
             >
-              {/* The stepper: an icon per moment on a line that fills toward the next */}
+              {/* The stepper, soft like the drawings it sits over: a thin-lined icon per moment on a
+                  hairline that fills, in the drawings' ink, toward the next */}
               <div role="tablist" aria-label={story.title} className="relative grid grid-cols-4">
-                <div aria-hidden className="absolute inset-x-[12.5%] top-[23px] h-0.5 bg-border sm:top-[27px]">
+                <div aria-hidden className="absolute inset-x-[12.5%] top-5 h-px bg-border">
                   <motion.div
-                    className="h-full origin-left bg-primary"
+                    className="h-full origin-left bg-foreground/60"
                     initial={false}
                     animate={{ scaleX: (active + (touring && active < n - 1 ? 1 : 0)) / (n - 1) }}
                     transition={
@@ -180,21 +181,21 @@ export function AboutStory() {
                     >
                       <span
                         className={cn(
-                          "relative z-10 grid size-12 place-items-center rounded-full border-2 transition-[background-color,border-color,color,scale] duration-300 group-focus-visible:ring-3 group-focus-visible:ring-ring/50 sm:size-14",
+                          "relative z-10 grid size-10 place-items-center rounded-full border bg-card transition-[border-color,color,box-shadow] duration-300 group-focus-visible:ring-3 group-focus-visible:ring-ring/50",
                           on
-                            ? "scale-110 border-primary bg-primary text-primary-foreground shadow-[0_8px_20px_-8px_var(--primary)]"
+                            ? "border-foreground/50 text-foreground shadow-[0_0_0_4px_color-mix(in_oklab,var(--foreground)_6%,transparent)]"
                             : done
-                              ? "border-primary bg-card text-brand"
-                              : "border-border bg-card text-muted-foreground group-hover:border-primary/50 group-hover:text-brand"
+                              ? "border-foreground/25 text-foreground/70"
+                              : "border-border text-muted-foreground group-hover:border-foreground/25 group-hover:text-foreground/70"
                         )}
                       >
-                        <Icon className="size-5 sm:size-6" aria-hidden />
+                        <Icon className="size-[18px]" stroke={1.5} aria-hidden />
                       </span>
                       <span>
-                        <span className={cn("block text-xs font-semibold tracking-wider uppercase transition-colors", on ? "text-brand" : "text-muted-foreground")}>
+                        <span className={cn("block font-mono text-[11px] tracking-wide uppercase transition-colors", on ? "text-foreground" : "text-muted-foreground")}>
                           {s.when}
                         </span>
-                        <span className={cn("mt-0.5 hidden text-sm font-medium transition-colors lg:block", on ? "text-foreground" : "text-muted-foreground")}>
+                        <span className={cn("mt-1 hidden text-sm transition-colors lg:block", on ? "text-foreground" : "text-muted-foreground")}>
                           {s.title}
                         </span>
                       </span>
@@ -217,10 +218,10 @@ export function AboutStory() {
                     transition={{ duration: 0.3, ease }}
                     className="flex flex-col justify-center gap-3 px-2 pb-4 text-center md:px-0 md:pb-0 md:text-left"
                   >
-                    <p className="text-xs font-semibold tracking-wider text-muted-foreground uppercase tabular-nums">
-                      <span className="text-brand">{stop.when}</span> · {stop.unit}
+                    <p className="font-mono text-xs tracking-wide text-muted-foreground uppercase tabular-nums">
+                      <span className="text-foreground">{stop.when}</span> · {stop.unit}
                     </p>
-                    <h3 className="text-2xl font-semibold text-balance sm:text-3xl">{stop.title}</h3>
+                    <h3 className="text-2xl font-medium text-balance sm:text-3xl">{stop.title}</h3>
                     <p className="text-lg text-pretty text-muted-foreground">{stop.body}</p>
                   </motion.div>
                 </AnimatePresence>
