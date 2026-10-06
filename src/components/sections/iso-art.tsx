@@ -1,7 +1,7 @@
 "use client";
 
-import { useId } from "react";
-import { motion, type Variants } from "motion/react";
+import { createContext, useContext, useEffect, useId, useRef, useState } from "react";
+import { animate, motion, useReducedMotion, type Variants } from "motion/react";
 
 import { cn } from "@/lib/utils";
 
@@ -11,7 +11,8 @@ import { cn } from "@/lib/utils";
 // Each shape is a list of points on the ground; `Block` raises it, drawing only the faces
 // that face you, nearest last, so nearer faces hide farther ones. The lines trace
 // themselves in once, when the picture comes into view; on hover (of the card around it)
-// the object lifts a little.
+// the object lifts a little, and its one moving part answers: the key goes down, the
+// postcard comes out of the slot, the bars rise, the pile fans out.
 
 type P = [number, number]; // a point on the ground: x runs down-right, y down-left
 
@@ -275,6 +276,50 @@ const CHECK_TURN = -0.38; // radians: along the card it reads as an "L"; turned 
 
 /* ------------------------------ The pictures ----------------------------- */
 
+/** How far the pointer's hover has played, 0 (away) to 1 (on it), on a spring: the
+ *  pictures read it to move their one part. */
+const Hot = createContext(0);
+
+/** Hover of the card around the picture (the nearest `.group`, else the picture's own
+ *  box), as a springy 0 → 1. Under reduced motion it jumps. */
+function useHot(ref: React.RefObject<SVGSVGElement | null>) {
+  const [t, setT] = useState(0);
+  const reduce = useReducedMotion();
+  useEffect(() => {
+    const host = ref.current?.closest(".group") ?? ref.current?.parentElement;
+    if (!host) return;
+    let now = 0;
+    let ctl: ReturnType<typeof animate> | undefined;
+    const go = (to: number) => {
+      ctl?.stop();
+      if (reduce) {
+        now = to;
+        setT(to);
+        return;
+      }
+      ctl = animate(now, to, {
+        type: "spring",
+        stiffness: 220,
+        damping: 22,
+        onUpdate: (v) => {
+          now = v;
+          setT(v);
+        },
+      });
+    };
+    const on = () => go(1);
+    const off = () => go(0);
+    host.addEventListener("pointerenter", on);
+    host.addEventListener("pointerleave", off);
+    return () => {
+      ctl?.stop();
+      host.removeEventListener("pointerenter", on);
+      host.removeEventListener("pointerleave", off);
+    };
+  }, [ref, reduce]);
+  return t;
+}
+
 export type IsoArtName =
   | "agents"
   | "attention"
@@ -288,8 +333,11 @@ export type IsoArtName =
 
 /** One picture: the object (which lifts on hover of a `group` around it) over a soft shadow. */
 export function IsoArt({ name, className }: { name: IsoArtName; className?: string }) {
+  const ref = useRef<SVGSVGElement>(null);
+  const hot = useHot(ref);
   return (
     <motion.svg
+      ref={ref}
       aria-hidden
       viewBox="-120 -92 240 156"
       initial="hidden"
@@ -312,6 +360,7 @@ export function IsoArt({ name, className }: { name: IsoArtName; className?: stri
         className="origin-center transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] [transform-box:fill-box] group-hover:scale-90"
       />
       <g className="transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:-translate-y-1.5">
+        <Hot.Provider value={hot}>
         {name === "agents" && <Keycap />}
         {name === "attention" && <MailSlot />}
         {name === "scans" && <Bars />}
@@ -320,27 +369,31 @@ export function IsoArt({ name, className }: { name: IsoArtName; className?: stri
         {name === "story-pins" && <StoryPins />}
         {name === "story-channels" && <StoryChannels />}
         {name === "story-agent" && <StoryAgent />}
+        </Hot.Provider>
       </g>
     </motion.svg>
   );
 }
 
-/** Agents: one big rounded key on a plate, a pink sparkle on its top. */
+/** Agents: one big rounded key on a plate, a pink sparkle on its top; on hover it goes down. */
 function Keycap() {
+  const top = 26 - 7 * useContext(Hot);
   return (
     <g>
       <Block pts={roundRect(0, 0, 128, 128, 14)} h={6} />
-      <Block pts={roundRect(0, 0, 84, 84, 14)} h={20} z={6} />
-      <Flat z={26} pts={closed(roundRect(0, 0, 66, 66, 10))} />
-      <Flat z={26} pink width={1.6} pts={closed(sparkle(0, 0, 22))} />
+      <Block pts={roundRect(0, 0, 84, 84, 14)} h={top - 6} z={6} />
+      <Flat z={top} pts={closed(roundRect(0, 0, 66, 66, 10))} />
+      <Flat z={top} pink width={1.6} pts={closed(sparkle(0, 0, 22))} />
     </g>
   );
 }
 
-/** Attention: one postcard, pushed halfway through a door's mail slot; its stamp in pink. */
+/** Attention: one postcard, pushed halfway through a door's mail slot; its stamp in pink.
+ *  On hover it comes out a little further, toward you. */
 function MailSlot() {
   const face = 4; // the door's front face (it looks down-left)
   const plate = face + 3;
+  const out = 12 * useContext(Hot); // how much more of the card shows
   const knob = closed(circle(0, 0, 4, 20)).map(([a, b]) => [52 + a, -6 + b] as [number, number]);
   return (
     <g transform="translate(0 4)">
@@ -354,32 +407,35 @@ function MailSlot() {
       <WallBlock profile={roundRect(0, 22, 72, 20, 6)} y0={face} y1={plate} />
       <Wall y={plate} pts={closed(roundRect(0, 21.5, 54, 7, 3.5))} />
       {/* One postcard, halfway out of the opening */}
-      <Block pts={roundRect(0, plate + 19, 44, 38, 4)} h={2} z={20} />
-      <Block pts={roundRect(13, plate + 29, 9, 11, 1.5)} h={0.8} z={22} pink />
-      <Flat z={22} pts={[[-16, plate + 18], [2, plate + 18]]} />
-      <Flat z={22} pts={[[-16, plate + 26], [-4, plate + 26]]} />
-      <Flat z={22} pts={[[-16, plate + 33], [-8, plate + 33]]} />
+      <Block pts={roundRect(0, plate + 19 + out / 2, 44, 38 + out, 4)} h={2} z={20} />
+      <Block pts={roundRect(13, plate + 29 + out, 9, 11, 1.5)} h={0.8} z={22} pink />
+      <Flat z={22} pts={[[-16, plate + 18 + out], [2, plate + 18 + out]]} />
+      <Flat z={22} pts={[[-16, plate + 26 + out], [-4, plate + 26 + out]]} />
+      <Flat z={22} pts={[[-16, plate + 33 + out], [-8, plate + 33 + out]]} />
     </g>
   );
 }
 
-/** Measurable: three bars on a plate, rising; the tallest outlined in pink. */
+/** Measurable: three bars on a plate, rising; the tallest outlined in pink. On hover the
+ *  results come in: each bar grows, the shorter ones more, one after another. */
 function Bars() {
+  const t = useContext(Hot);
+  const grow = (i: number, by: number) => by * Math.max(0, Math.min(1.15, t * 1.3 - i * 0.15));
   const bars: [number, number][] = [
-    [-42, 22],
-    [0, 38],
-    [42, 60],
+    [-42, 22 + grow(0, 14)],
+    [0, 38 + grow(1, 11)],
+    [42, 60 + grow(2, 8)],
   ];
   return (
     <g>
       <Block pts={roundRect(0, 0, 150, 56, 10)} h={6} />
       {/* An inset edge around the plate, and a tick under each bar (like an axis) */}
       <Flat z={6} pts={closed(roundRect(0, 0, 138, 44, 6))} />
-      {bars.map(([x]) => (
-        <Flat key={x} z={6} pts={[[x - 6, 19], [x + 6, 19]]} />
+      {bars.map(([x], i) => (
+        <Flat key={i} z={6} pts={[[x - 6, 19], [x + 6, 19]]} />
       ))}
       {bars.map(([x, h], i) => (
-        <g key={x}>
+        <g key={i}>
           <Block pts={roundRect(x, 0, 28, 28, 6)} h={h} z={6} pink={i === bars.length - 1} />
           {/* An inset on each bar's top, like the keycap's */}
           <Flat z={6 + h} pink={i === bars.length - 1} pts={closed(roundRect(x, 0, 16, 16, 4))} />
@@ -391,27 +447,33 @@ function Bars() {
 
 /**
  * Quality at scale: a pile of identical postcards, a little uneven like a real stack,
- * the top one with its address and a round pink seal of approval printed on it.
+ * the top one with its address and a round pink seal of approval printed on it. On hover
+ * the pile fans out a little, each card sliding back from the one under it.
  */
 function Pile() {
+  const fan = useContext(Hot);
   const t = 2.4; // one card's thickness
   // Twelve cards, each a touch off square, like a real pile
   const tilts = [0.06, -0.04, 0.03, -0.05, 0.04, -0.02, 0.05, -0.03, 0.02, -0.04, 0.02, 0];
   const shifts: P[] = [[-3, 2], [2, -2], [-2, -1], [3, 2], [-1, 2], [2, 0], [-2, 1], [1, -2], [-1, 1], [2, 1], [-1, -1], [0, 0]];
   const top = tilts.length * t;
-  const seal: P = [26, -10];
+  // Card i's slide: back and to the left, more the higher it is; the top card's print goes with it
+  const slide = (i: number): P => [-1.6 * i * fan, -0.8 * i * fan];
+  const [ox, oy] = slide(tilts.length - 1);
+  const seal: P = [26 + ox, -10 + oy];
   const ring = (r: number) => closed(circle(seal[0], seal[1], r, 36));
+  const on = (pts: P[]): P[] => pts.map(([x, y]) => [x + ox, y + oy]);
   return (
     <g transform="translate(0 16)">
       {tilts.map((a, i) => (
-        <Block key={i} pts={roundRect(shifts[i][0], shifts[i][1], 112, 74, 6, a)} h={t} z={i * t} />
+        <Block key={i} pts={roundRect(shifts[i][0] + slide(i)[0], shifts[i][1] + slide(i)[1], 112, 74, 6, a)} h={t} z={i * t} />
       ))}
       {/* The address on the top card */}
-      <Flat z={top} width={2} pts={[[-44, -24], [-12, -24]]} />
-      <Flat z={top} pts={[[-44, -14], [-22, -14]]} />
-      <Flat z={top} pts={[[-44, 12], [-8, 12]]} />
-      <Flat z={top} pts={[[-44, 20], [-16, 20]]} />
-      <Flat z={top} pts={[[-44, 28], [-24, 28]]} />
+      <Flat z={top} width={2} pts={on([[-44, -24], [-12, -24]])} />
+      <Flat z={top} pts={on([[-44, -14], [-22, -14]])} />
+      <Flat z={top} pts={on([[-44, 12], [-8, 12]])} />
+      <Flat z={top} pts={on([[-44, 20], [-16, 20]])} />
+      <Flat z={top} pts={on([[-44, 28], [-24, 28]])} />
       {/* The seal: two rings printed on the card, and a check lying on it as a small solid
           tick, aligned to the card like the address (as isometric icon sets draw it) */}
       <Flat z={top} pink width={1.6} pts={ring(18)} />
@@ -607,8 +669,10 @@ function Stand({ kind, children, x = 0 }: { kind: StandKind; children: React.Rea
   );
 }
 
-/** 2014, flyering: a stack of printed flyers, the top one lifting off in pink, floating. */
+/** 2014, flyering: a stack of printed flyers, the top one lifting off in pink, floating;
+ *  on hover it rises a little higher. */
 function StoryFlyers() {
+  const rise = 10 * useContext(Hot);
   const t = 1.4;
   const n = 7;
   return (
@@ -619,7 +683,7 @@ function StoryFlyers() {
       <Paper cx={-14} cy={4} z={(n - 1) * t} />
       <Drop delay={0.35}>
         <Bob>
-          <Paper cx={30} cy={-34} z={44} rot={-0.18} pink />
+          <Paper cx={30} cy={-34} z={44 + rise} rot={-0.18} pink />
         </Bob>
       </Drop>
     </Stand>
@@ -646,22 +710,25 @@ const circlePath = (cx: number, cy: number, r: number) =>
   `M${cx - r} ${cy}a${r} ${r} 0 1 0 ${2 * r} 0a${r} ${r} 0 1 0 ${-2 * r} 0`;
 
 /** A map pin, facing you: a round head on a short point (not too tall), a ring in its
- *  head; it stands at x, y at height z. */
-function Pin({ x, y, z = 0, pink }: { x: number; y: number; z?: number; pink?: boolean }) {
+ *  head; it stands at x, y at height z, its ring on the ground, the pin `lift` above it. */
+function Pin({ x, y, z = 0, lift = 0, pink }: { x: number; y: number; z?: number; lift?: number; pink?: boolean }) {
   const r = 9;
   const h = 19; // the head's center, above the tip
   const path = `M0 0C${-r * 0.35} ${-h * 0.35} ${-r} ${-h * 0.55} ${-r} ${-h}A${r} ${r} 0 1 1 ${r} ${-h}C${r} ${-h * 0.55} ${r * 0.35} ${-h * 0.35} 0 0Z`;
   return (
     <g>
       <Flat z={z} pts={closed(circle(x, y, 3.5, 20))} />
-      <Facing x={x} y={y} z={z} path={path} details={circlePath(0, -h, 3.6)} pink={pink} />
+      <Facing x={x} y={y} z={z + lift} path={path} details={circlePath(0, -h, 3.6)} pink={pink} />
     </g>
   );
 }
 
 /** Growing, 12+ countries: a folded paper map (four panels, zigzag), pins dropping onto
- *  it one after another along a dashed route; the newest in pink. */
+ *  it one after another along a dashed route; the newest in pink. On hover they lift off
+ *  the map a little, one after another. */
 function StoryPins() {
+  const hot = useContext(Hot);
+  const lift = (i: number) => 7 * Math.max(0, Math.min(1.15, hot * 1.3 - i * 0.1));
   const xs = [-56, -28, 0, 28, 56]; // the folds, across the map
   const zs = [0, 9, 0, 9, 0];
   const Y = 38; // half the map's depth
@@ -736,7 +803,7 @@ function StoryPins() {
       })()}
       {pins.map(([x, y], i) => (
         <Drop key={i} delay={0.3 + i * 0.22}>
-          <Pin x={x} y={y} z={zAt(x)} pink={i === pins.length - 1} />
+          <Pin x={x} y={y} z={zAt(x)} lift={lift(i)} pink={i === pins.length - 1} />
         </Drop>
       ))}
     </Stand>
@@ -809,6 +876,7 @@ function StoryChannels() {
  *  running out along the lines, again and again. */
 function StoryAgent() {
   const hub = 21; // half the key's base
+  const keyTop = 18 - 5 * useContext(Hot); // on hover the key goes down, like the Agents card's
   // Where to mail (left), the postcard (far right), the results (near right)
   const targets: P[] = [
     [-50, 40],
@@ -850,8 +918,8 @@ function StoryAgent() {
       </Drop>
       {/* The agent: a raised key, a pink sparkle on it */}
       <Block pts={roundRect(0, 0, hub * 2, hub * 2, 10)} h={5} />
-      <Block pts={roundRect(0, 0, 30, 30, 8)} h={13} z={5} />
-      <Flat z={18} pink width={1.6} pts={closed(sparkle(0, 0, 9.5))} />
+      <Block pts={roundRect(0, 0, 30, 30, 8)} h={keyTop - 5} z={5} />
+      <Flat z={keyTop} pink width={1.6} pts={closed(sparkle(0, 0, 9.5))} />
       <Drop delay={0.7}>
         <g>
           {[
