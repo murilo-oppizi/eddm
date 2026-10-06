@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useId, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { animate, motion, useReducedMotion, type Variants } from "motion/react";
 
 import { cn } from "@/lib/utils";
@@ -499,18 +499,6 @@ function Drop({ delay, children }: { delay: number; children: React.ReactNode })
   );
 }
 
-/** A gentle, endless bob (CSS, so it doesn't interrupt the drawing-in). */
-function Bob({ children, distance = 6 }: { children: React.ReactNode; distance?: number }) {
-  return (
-    <g
-      className="animate-[float-y_3.6s_ease-in-out_infinite] motion-reduce:animate-none"
-      style={{ "--float-distance": `${distance}px` } as React.CSSProperties}
-    >
-      {children}
-    </g>
-  );
-}
-
 /** A sheet of paper at height z: a flyer or a postcard, sharp-cornered, thin, with a
  *  picture (hills and a sun) and lines of text, so it reads as print, not a screen.
  *  `w` × `l` on the ground, `rot` turned on the ground. */
@@ -562,12 +550,12 @@ function Paper({
 
 /**
  * The stand a story scene stands on, a different one for each, in its shape and in what
- * it does: a print shop's output tray the flyers sit in (the top one lifts out), a
- * two-step octagonal plinth for the map (the newest pin sends out a ripple), a belt whose rails
+ * it does: a piece of sidewalk, its paving joints, the flyers are dealt out on, a
+ * two-step octagonal plinth, a belt whose rails
  * roll (the channels), a disc with an orbit circling it (the agent). The scene sits on
  * top, a little smaller, so the four read as a set without being the same.
  */
-type StandKind = "tray" | "steps" | "belt" | "orbit";
+type StandKind = "paving" | "steps" | "belt" | "orbit";
 
 /** Dashes that keep moving along a path (CSS, so it doesn't fight the draw-in). */
 function Marching({ path, speed = 1.2 }: { path: string; speed?: number }) {
@@ -590,45 +578,20 @@ const octagon = (r: number): P[] =>
     return [r * Math.cos(t), r * Math.sin(t)] as P;
   });
 
-/** An open tray: walls round a sunken floor, seen into from above. */
-function Tray() {
-  const id = useId().replace(/:/g, "");
-  const W = 150;
-  const D = 112;
-  const H = 12; // the rim
-  const F = 3; // the floor
-  const i = 7; // the walls' thickness
-  const ix = W / 2 - i;
-  const iy = D / 2 - i;
-  const opening = d([iso([-ix, -iy], H), iso([ix, -iy], H), iso([ix, iy], H), iso([-ix, iy], H)], true);
-  const floor = d([iso([-ix, -iy], F), iso([ix, -iy], F), iso([ix, iy], F), iso([-ix, iy], F)], true);
-  // The two far walls' inner sides (they face you), and where they meet the floor
-  const back = d([iso([-ix, -iy], F), iso([ix, -iy], F), iso([ix, -iy], H), iso([-ix, -iy], H)], true);
-  const left = d([iso([-ix, -iy], F), iso([-ix, iy], F), iso([-ix, iy], H), iso([-ix, -iy], H)], true);
-  return (
-    <g>
-      <Block pts={roundRect(0, 0, W, D, 6)} h={H} />
-      <defs>
-        <clipPath id={`${id}-in`}>
-          <path d={opening} />
-        </clipPath>
-      </defs>
-      <g clipPath={`url(#${id}-in)`}>
-        <Face path={floor + back + left} />
-        <Stroke path={d([iso([ix, -iy], F), iso([-ix, -iy], F), iso([-ix, iy], F)])} />
-        <Stroke path={d([iso([-ix, -iy], F), iso([-ix, -iy], H)])} />
-      </g>
-      <Stroke path={opening} />
-    </g>
-  );
-}
-
 function Stand({ kind, children, x = 0 }: { kind: StandKind; children: React.ReactNode; x?: number }) {
   let base: React.ReactNode = null;
   let lift = 6; // the height the scene stands at
-  if (kind === "tray") {
-    base = <Tray />;
-    lift = 3;
+  if (kind === "paving") {
+    // Six paving slabs in one block: the joints between them, pressed into its top
+    base = (
+      <g>
+        <Block pts={roundRect(0, 0, 164, 118, 8)} h={8} />
+        <Flat z={8} pts={[[-27, -59], [-27, 59]]} />
+        <Flat z={8} pts={[[27, -59], [27, 59]]} />
+        <Flat z={8} pts={[[-82, 0], [82, 0]]} />
+      </g>
+    );
+    lift = 8;
   } else if (kind === "steps") {
     base = (
       <g>
@@ -669,23 +632,26 @@ function Stand({ kind, children, x = 0 }: { kind: StandKind; children: React.Rea
   );
 }
 
-/** 2014, flyering: a stack of printed flyers, the top one lifting off in pink, floating;
- *  on hover it rises a little higher. */
+/** 2014, flyering: flyers dealt out on the sidewalk, fanned from their near edge like a hand
+ *  of cards, the top one straight and in pink; on hover the fan opens a little wider. */
 function StoryFlyers() {
-  const rise = 10 * useContext(Hot);
-  const t = 1.4;
-  const n = 7;
+  const open = 1 + 0.45 * useContext(Hot);
+  const n = 5;
+  const w = 62;
+  const l = 88;
+  const pivot: P = [-6, 30]; // where the sheets' near edges meet
+  const k = l / 2 - 8; // from that point to a sheet's center
   return (
-    <Stand kind="tray" x={-6}>
-      {Array.from({ length: n - 1 }, (_, i) => (
-        <Block key={i} pts={roundRect(-14 + (i % 2) * 1.5, 4 - (i % 3), 60, 84, 1.5, 0.025 * ((i % 3) - 1))} h={t} z={i * t} />
-      ))}
-      <Paper cx={-14} cy={4} z={(n - 1) * t} />
-      <Drop delay={0.35}>
-        <Bob>
-          <Paper cx={30} cy={-34} z={44 + rise} rot={-0.18} pink />
-        </Bob>
-      </Drop>
+    <Stand kind="paving">
+      {Array.from({ length: n }, (_, i) => {
+        // the top one sits straight; those under it fan out to one side
+        const rot = (n - 1 - i) * 0.26 * open;
+        return (
+          <Drop key={i} delay={0.25 + i * 0.12}>
+            <Paper cx={pivot[0] + k * Math.sin(rot)} cy={pivot[1] - k * Math.cos(rot)} z={i * 1.6} w={w} l={l} rot={rot} pink={i === n - 1} />
+          </Drop>
+        );
+      })}
     </Stand>
   );
 }
@@ -723,90 +689,98 @@ function Pin({ x, y, z = 0, lift = 0, pink }: { x: number; y: number; z?: number
   );
 }
 
-/** Growing, 12+ countries: a folded paper map (four panels, zigzag), pins dropping onto
- *  it one after another along a dashed route; the newest in pink. On hover they lift off
- *  the map a little, one after another. */
+/** A point on the globe, on screen: its axis tilted, its north pole a little toward you,
+ *  turned by `turn`; and whether it is on the side facing you. */
+const GLOBE = { cx: 0, cy: -30, r: 44, tilt: -0.38, lean: 0.2 };
+const onGlobe = (lat: number, lon: number, turn: number): [P, boolean] => {
+  const la = (lat * Math.PI) / 180;
+  const lo = (lon * Math.PI) / 180 + turn;
+  const x0 = Math.cos(la) * Math.sin(lo);
+  const y0 = Math.sin(la);
+  const z0 = Math.cos(la) * Math.cos(lo);
+  const y1 = y0 * Math.cos(GLOBE.lean) - z0 * Math.sin(GLOBE.lean);
+  const z1 = y0 * Math.sin(GLOBE.lean) + z0 * Math.cos(GLOBE.lean);
+  const x2 = x0 * Math.cos(GLOBE.tilt) - y1 * Math.sin(GLOBE.tilt);
+  const y2 = x0 * Math.sin(GLOBE.tilt) + y1 * Math.cos(GLOBE.tilt);
+  return [[GLOBE.cx + GLOBE.r * x2, GLOBE.cy - GLOBE.r * y2], z1 > 0];
+};
+/** A line on the globe's surface, only where it faces you: one path of its visible runs. */
+const globeLine = (pts: [number, number][], turn: number) => {
+  let out = "";
+  let run: P[] = [];
+  const flush = () => {
+    if (run.length > 1) out += d(run);
+    run = [];
+  };
+  for (const [lat, lon] of pts) {
+    const [p, front] = onGlobe(lat, lon, turn);
+    if (front) run.push(p);
+    else flush();
+  }
+  flush();
+  return out;
+};
+
+/** Growing, 12+ countries: a desk globe, its lines of latitude and longitude, pins dropping
+ *  onto it one after another: New York, São Paulo, London, the newest in pink. On
+ *  hover the globe turns a little. */
 function StoryPins() {
-  const hot = useContext(Hot);
-  const lift = (i: number) => 7 * Math.max(0, Math.min(1.15, hot * 1.3 - i * 0.1));
-  const xs = [-56, -28, 0, 28, 56]; // the folds, across the map
-  const zs = [0, 9, 0, 9, 0];
-  const Y = 38; // half the map's depth
-  const zAt = (x: number) => {
-    const i = Math.max(0, Math.min(xs.length - 2, xs.findIndex((v, k) => x >= v && x <= xs[k + 1])));
-    const f = (x - xs[i]) / (xs[i + 1] - xs[i]);
-    return zs[i] + (zs[i + 1] - zs[i]) * Math.max(0, Math.min(1, f));
-  };
-  const onMap = (pts: P[]) => d(pts.map(([x, y]) => iso([x, y], zAt(x))));
-  // A line across the map that follows its folds
-  const across = (pts: P[]) => {
-    const out: P[] = [];
-    for (let k = 0; k < pts.length - 1; k++) {
-      const [a, b] = [pts[k], pts[k + 1]];
-      out.push(a);
-      for (const fx of xs) if ((fx - a[0]) * (fx - b[0]) < 0) out.push([fx, a[1] + ((b[1] - a[1]) * (fx - a[0])) / (b[0] - a[0])]);
-    }
-    out.push(pts[pts.length - 1]);
-    return out.sort((p, q) => p[0] - q[0]);
-  };
-  const pins: P[] = [
-    [-43, 13],
-    [-14, -20],
-    [16, 16],
-    [41, -11],
-  ];
-  const dashes = pins.slice(1).flatMap((b, i) => {
-    const a = pins[i];
-    return Array.from({ length: 6 }, (_, k) => {
-      const t0 = k / 6;
-      const t1 = t0 + 0.5 / 6;
-      return [
-        [a[0] + (b[0] - a[0]) * t0, a[1] + (b[1] - a[1]) * t0],
-        [a[0] + (b[0] - a[0]) * t1, a[1] + (b[1] - a[1]) * t1],
-      ] as P[];
-    });
+  const turn = 0.5 + 0.4 * useContext(Hot);
+  const { cx, cy, r, tilt } = GLOBE;
+  const steps = (a: number, b: number, n = 48) => Array.from({ length: n + 1 }, (_, i) => a + ((b - a) * i) / n);
+  const grid =
+    [-50, -25, 0, 25, 50].map((lat) => globeLine(steps(-180, 180, 96).map((lon) => [lat, lon] as [number, number]), turn)).join("") +
+    steps(0, 150, 5).map((lon) => globeLine(steps(-90, 90).map((lat) => [lat, lon] as [number, number]).concat(steps(90, -90).map((lat) => [lat, lon + 180] as [number, number])), turn)).join("");
+  // The frame: a half ring round the globe's west side, pole to pole, and a knob at each
+  const north: P = [-Math.sin(tilt), -Math.cos(tilt)];
+  const ring = (rr: number) => steps(0, Math.PI).map((t) => {
+    const a = Math.atan2(north[1], north[0]) - t;
+    return [cx + rr * Math.cos(a), cy + rr * Math.sin(a)] as P;
   });
+  const band = d([...ring(r + 5), ...ring(r + 8.5).reverse()], true);
+  const south: P = [cx - north[0] * (r + 7), cy - north[1] * (r + 7)];
+  const knob = (p: P) => circlePath(p[0], p[1], 3);
+  const pins: [number, number][] = [
+    [40.7, -74], // New York
+    [-23.5, -46.6], // São Paulo
+    [51.5, 0], // London
+  ];
+  const pin = (s = 0.8) =>
+    `M0 0C${-9 * s * 0.35} ${-19 * s * 0.35} ${-9 * s} ${-19 * s * 0.55} ${-9 * s} ${-19 * s}A${9 * s} ${9 * s} 0 1 1 ${9 * s} ${-19 * s}C${9 * s} ${-19 * s * 0.55} ${9 * s * 0.35} ${-19 * s * 0.35} 0 0Z`;
   return (
-    <Stand kind="steps">
-      {/* The panels, far to near */}
-      {xs.slice(0, -1).map((x0, i) => {
-        const x1 = xs[i + 1];
-        const panel = d([iso([x0, -Y], zs[i]), iso([x1, -Y], zs[i + 1]), iso([x1, Y], zs[i + 1]), iso([x0, Y], zs[i])], true);
+    <g transform="translate(0 4)">
+      {/* The foot, under the frame's lower end, and the stem up to it */}
+      <g transform={`translate(${south[0].toFixed(2)} ${(south[1] + 22).toFixed(2)})`}>
+        <Block pts={circle(0, 0, 30, 64)} h={6} />
+        <Flat z={6} pts={closed(circle(0, 0, 22, 64))} />
+        <Block pts={circle(0, 0, 4, 24)} h={18} z={6} />
+      </g>
+      <Face path={band} />
+      <Stroke path={band} />
+      {/* The globe: a ball, its lines, the pins */}
+      <Face path={circlePath(cx, cy, r)} />
+      <Stroke path={grid} />
+      <Stroke path={circlePath(cx, cy, r)} />
+      {[south, [cx + north[0] * (r + 7), cy + north[1] * (r + 7)] as P].map((p, i) => (
+        <g key={i}>
+          <Face path={knob(p)} />
+          <Stroke path={knob(p)} />
+        </g>
+      ))}
+      {pins.map(([lat, lon], i) => {
+        const [[x, y], front] = onGlobe(lat, lon, turn);
+        if (!front) return null;
         return (
-          <g key={i}>
-            <Face path={panel} />
-            <Stroke path={panel} />
-          </g>
+          <Drop key={i} delay={0.4 + i * 0.22}>
+            <g transform={`translate(${x.toFixed(2)} ${y.toFixed(2)})`}>
+              <Face path={pin()} />
+              <Stroke path={pin()} pink={i === pins.length - 1} />
+              <Stroke path={circlePath(0, -19 * 0.8, 3)} pink={i === pins.length - 1} />
+            </g>
+          </Drop>
         );
       })}
-      {/* Roads and a river, printed on the map */}
-      <Stroke path={onMap(across([[-56, 25], [56, 22]]))} />
-      <Stroke path={onMap(across([[-56, -29], [-7, -6], [56, -27]]))} />
-      <Stroke path={onMap(across([[-56, -5], [-22, 3], [14, -3], [56, 6]]))} />
-      {dashes.map((seg, k) => (
-        <Stroke key={k} path={onMap(seg)} />
-      ))}
-      {/* The newest pin's signal: a ring spreading out over the map, again and again */}
-      {(() => {
-        const [px, py] = pins[pins.length - 1];
-        const ring = (r: number) => d(closed(circle(px, py, r, 36)).map((p) => iso(p, zAt(px))));
-        return (
-          <motion.path
-            className={accent}
-            fill="none"
-            strokeWidth={1}
-            initial={false}
-            animate={{ d: [ring(4), ring(26)], opacity: [0, 0.9, 0] }}
-            transition={{ duration: 2, delay: 1.3, repeat: Infinity, repeatDelay: 0.3, ease: "easeOut" }}
-          />
-        );
-      })()}
-      {pins.map(([x, y], i) => (
-        <Drop key={i} delay={0.3 + i * 0.22}>
-          <Pin x={x} y={y} z={zAt(x)} lift={lift(i)} pink={i === pins.length - 1} />
-        </Drop>
-      ))}
-    </Stand>
+    </g>
   );
 }
 

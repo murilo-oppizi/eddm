@@ -203,8 +203,8 @@ export function AboutStory() {
               </div>
 
               {/* The moment: its scene, drawn in, beside its words */}
-              <div role="tabpanel" aria-live="polite" className="grid items-center md:grid-cols-[1.1fr_1fr] md:gap-10">
-                <div className="grid h-64 place-items-center md:h-96">
+              <div role="tabpanel" aria-live="polite" className="grid items-center gap-4 md:grid-cols-[1.1fr_1fr] md:gap-10">
+                <div className="grid place-items-center md:h-96">
                   <IsoArt key={active} name={storyArt[active]} className="w-full max-w-[460px]" />
                 </div>
                 <AnimatePresence mode="wait" initial={false}>
