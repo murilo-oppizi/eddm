@@ -1,7 +1,7 @@
 /**
  * Flyers: a street team's crate of seven printed flyers, leaning back in it, each
- * with its picture, headline and text. At rest the next one to hand out stands
- * a little proud of the rest, bright. The flyer under the pointer stands up and
+ * with its picture, headline and text. At rest they all lean back alike, none
+ * chosen. The flyer under the pointer stands up and
  * lifts out of the crate; the ones in front lean forward and the ones behind
  * lean back, staggered outwards from it. The slider is the stagger, in ms.
  *
@@ -14,7 +14,7 @@ const {
 } = HL;
 
 const N = 7, W = 62, H = 74, G = 12, TK = 1.2;
-const REST = -14, BACK = -26, FWD = 18, LIFT = 22, PROUD = 4, NEXT = 4;
+const REST = -14, BACK = -26, FWD = 18, LIFT = 22;
 const X0 = -6, X1 = W + 6, Y0 = -10, Y1 = (N - 1) * G + 10, WH = 27, WR = 6, WT = 2.4;
 
 const LR = (pts) => (pts[0][0] <= pts[pts.length - 1][0] ? pts : pts.slice().reverse());
@@ -34,7 +34,7 @@ function crate(P, front, outer, inner) {
     [open(iF), "nf"],
     [open([oT[0], ...oB, oT[oT.length - 1]]), "nf sil"],
     // the crate's slats, and a hand hole in each end
-    [seg(P(X0 + 4, Y1, 9), P(X1 - 4, Y1, 9)) + seg(P(X1, Y0 + 4, 9), P(X1, Y1 - 4, 9)), "nf lo"],
+    [open(LR(ringAt(P, run(outer, front), 9))), "nf lo"],
     [poly(onSide(rrect((Y0 + Y1) / 2 - 10, 13, (Y0 + Y1) / 2 + 10, 19, 3, 5))), "nf"],
     [poly(onFront(rrect((X0 + X1) / 2 - 9, 13, (X0 + X1) / 2 + 9, 19, 3, 5))), "nf"],
   ];
@@ -49,11 +49,11 @@ function pose(P, i, th, lift) {
   const sheet = fillet([[0, 0], [W, 0], [W, H], [0, H]], [1.6, 1.6, 1.6, 1.6]);
   const pic = [[6, H - 6], [W - 6, H - 6], [W - 6, H - 38], [6, H - 38]];
   const sun = [];
-  for (let k = 0; k < 14; k++) sun.push(w(W - 18 + 4 * Math.cos(k * 0.449), H - 15 + 4 * Math.sin(k * 0.449)));
+  for (let k = 0; k < 16; k++) sun.push(w(W - 15 + 3.6 * Math.cos(k * 0.3927), H - 13 + 3.6 * Math.sin(k * 0.3927)));
   return {
     back: poly(sheet.map((p) => wb(p[0], p[1]))),
     face: poly(sheet.map((p) => w(p[0], p[1]))),
-    pic: poly(pic.map((p) => w(p[0], p[1]))) + open([[6, H - 30], [20, H - 19], [29, H - 27], [41, H - 15], [W - 6, H - 32]].map((p) => w(p[0], p[1]))) + poly(sun),
+    pic: poly(pic.map((p) => w(p[0], p[1]))) + open([[6, H - 30], [18, H - 21], [27, H - 28], [37, H - 19], [W - 6, H - 33]].map((p) => w(p[0], p[1]))) + poly(sun),
     head: seg(w(6, H - 46), w(W - 18, H - 46)),
     text: [53, 59, 65].map((v, k) => seg(w(6, H - v), w(W - 6 - k * 10, H - v))).join(""),
   };
@@ -75,7 +75,7 @@ function mount({ stage, svg, read }, value) {
   const fl = [];
   for (let i = 0; i < N; i++) {
     const grp = mk("g", {}, g);
-    const rest = i === NEXT ? [REST + 6, PROUD] : [REST, 0];
+    const rest = [REST, 0];
     fl.push({
       rest, back: mk("path", { class: "lo" }, grp), face: mk("path", { class: "sil" }, grp),
       pic: mk("path", { class: "nf lo" }, grp), head: mk("path", { class: "nf" }, grp), text: mk("path", { class: "nf lo" }, grp),
@@ -118,13 +118,13 @@ function mount({ stage, svg, read }, value) {
   let act = -2;
   function setActive(a) {
     if (a === act) return;
-    const now = performance.now(), from = a >= 0 ? a : act >= 0 ? act : NEXT;
+    const now = performance.now(), from = a >= 0 ? a : Math.max(act, 0);
     act = a;
     fl.forEach((f, i) => {
       const delay = Math.abs(i - from) * stag;
       const th = a < 0 ? f.rest[0] : i < a ? BACK : i > a ? FWD : 0;
       tset(f.a, th, now, delay); tset(f.z, a < 0 ? f.rest[1] : a === i ? LIFT : 0, now, delay);
-      const lit = a < 0 ? i === NEXT : i === a;
+      const lit = i === a;
       f.face.classList.toggle("hi", lit); f.head.classList.toggle("hi", lit);
     });
     read.textContent = a < 0 ? "rest" : `flyer ${String(a + 1).padStart(2, "0")}`;
