@@ -977,8 +977,8 @@ hairline({
 // channels.js
 (() => {
 /**
- * Channels: one carousel, like a baggage belt, looping round an island, and
- * the three channels riding it: letters, parcels and stacks of flyers, always
+ * Channels: one carousel, like a baggage belt, an open loop round a sunken
+ * floor, and the three channels riding it: letters, parcels and stacks of flyers, always
  * going round. Hovering slows the belt, on a spring, so one can be read; the
  * one nearest the pointer takes the bright stroke and is named. At rest the
  * one passing the front is bright. The slider is the belt's speed.
@@ -987,11 +987,11 @@ hairline({
  * its rate that the pointer pulls down.
  */
 const {
-  Cam, fit, proj, facing, unproj, prism, rrect, poly, open, seg,
+  Cam, fit, proj, facing, unproj, prism, rrect, run, poly, open, seg,
   spring, stepS, mk, solid, put, register, pointer, disposer,
 } = HL;
 
-const A = 42, RC = 27, BAND = 12, N = 6, PB = 6, IH = 9;
+const A = 42, RC = 27, BAND = 12, N = 6, PB = 6, SINK = 2;
 const NAMES = ["mail", "inserts", "flyers"];
 const LOOP = 4 * A + 2 * Math.PI * RC;
 const stadium = (half) => rrect(-A - half, -half, A + half, half, half, 14);
@@ -1031,16 +1031,6 @@ const KINDS = [
   },
 ];
 
-/** Whether the island stands between the ground point (x, y) and you: a line from it
- *  toward you (+x, +y) passes over the island's footprint, widened by half a thing. */
-function hidden(x, y) {
-  for (let t = 0; t <= 2 * (A + RC); t += 2) {
-    const px = x + t, py = y + t, dx = Math.max(Math.abs(px) - A, 0);
-    if (Math.hypot(dx, py) < RC - BAND + 7) return true;
-  }
-  return false;
-}
-
 function mount({ stage, svg, read }, value) {
   const bag = disposer();
   let speed = value;
@@ -1050,21 +1040,24 @@ function mount({ stage, svg, read }, value) {
   const P = proj(C), front = facing(C);
   const g = mk("g", {}, svg);
 
-  // the base, the belt's two edges, its moving slats, then the things and the island
+  // the base, the floor sunk inside the loop, the belt's two edges and its moving slats, then the things
   put(solid(g), prism(P, front, stadium(OUT + 3), stadium(OUT + 1), -PB, 0));
   mk("path", { d: poly(stadium(OUT).map((q) => P(q.u, q.v, 0))), class: "nf lo" }, g);
   const slats = mk("path", { class: "nf lo" }, g);
-  const back = mk("g", {}, g), island = solid(g), ahead = mk("g", {}, g);
-  put(island, prism(P, front, stadium(RC - BAND), stadium(RC - BAND - 1.6), 0, IH));
-  mk("path", { d: poly(stadium(RC - BAND - 6).map((q) => P(q.u, q.v, IH))), class: "nf lo" }, island.g);
+  // the floor: the belt's inner edge, its wall down into the floor, and an inset on the floor
+  const inner = stadium(RC - BAND);
+  mk("path", { d: poly(inner.map((q) => P(q.u, q.v, 0))), class: "nf" }, g);
+  mk("path", { d: open(run(inner, (q) => !front(q)).map((q) => P(q.u, q.v, -SINK))), class: "nf lo" }, g);
+  mk("path", { d: poly(stadium(RC - BAND - 5).map((q) => P(q.u, q.v, -SINK))), class: "nf lo" }, g);
+  const things = mk("g", {}, g);
 
   const items = Array.from({ length: N }, (_, i) => {
-    const kind = KINDS[i % 3], grp = mk("g", {}, back);
+    const kind = KINDS[i % 3], grp = mk("g", {}, things);
     return { i, kind, name: NAMES[i % 3], grp, solids: kind.parts.map(() => solid(grp)), mk: mk("path", { class: "nf lo" }, grp) };
   });
 
   const rate = spring(1, { eps: 0.002 });
-  let pos = 0, over = null, lit = null;
+  let pos = 0, over = null, lit = null, order = "";
   function draw() {
     const sl = [];
     for (let k = 0; k < 44; k++) {
@@ -1080,9 +1073,9 @@ function mount({ stage, svg, read }, value) {
       const c = Math.cos(a), s = Math.sin(a);
       it.mk.setAttribute("d", it.kind.marks.map((l) => open(l.map(([u, v, z]) => P(x + u * c - v * s, y + u * s + v * c, z)))).join(""));
     }
-    // behind the island when the island lies between it and you; each side far to near
-    const sorted = items.slice().sort((p, q) => p.x + p.y - (q.x + q.y));
-    for (const it of sorted) (hidden(it.x, it.y) ? back : ahead).appendChild(it.grp);
+    // far to near: move the groups only when the order changes
+    const sorted = items.slice().sort((p, q) => p.x + p.y - (q.x + q.y)), key = sorted.map((it) => it.i).join();
+    if (key !== order) { order = key; for (const it of sorted) things.appendChild(it.grp); }
     // the bright one: nearest the pointer, or the one passing the front
     const [tx, ty] = over || [RC * 0.71 + A * 0.3, RC * 0.71];
     let best = items[0];
