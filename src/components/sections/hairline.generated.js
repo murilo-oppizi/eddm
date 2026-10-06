@@ -584,7 +584,9 @@ const hairline = (figure) => { figures[figure.name] = figure; };
  * is bright, a pulse waits at each pin, and each task's part stands low. Point
  * at a task: the agent sends a pulse down every trace, out from the one pointed
  * at, staggered by distance round the chip, and each task's part rises as its
- * pulse arrives; that trace and its part go bright, and it is named. The pads are hit where
+ * pulse arrives; that trace and its part go bright, and it is named. Point at
+ * the chip itself and it sets them all off, in a sweep round it, the sparkle
+ * staying bright. The pads are hit where
  * they lie; they never move. The slider is the stagger, in ms.
  */
 const {
@@ -705,13 +707,15 @@ function mount({ stage, svg, read }, value) {
   });
   bag.add(B.unregister);
 
+  // a = a trace, CORE = the chip itself, -1 = nothing
+  const CORE = N;
   let act = -2;
   function choose(a) {
     if (a === act) return;
     const now = performance.now(), from = a >= 0 ? a : act;
     act = a;
     pulses.forEach((p, k) => {
-      const d = from < 0 ? 0 : Math.min(Math.abs(k - from), N - Math.abs(k - from));
+      const d = from < 0 ? 0 : from === CORE ? k * 0.6 : Math.min(Math.abs(k - from), N - Math.abs(k - from));
       tset(p.t, a < 0 ? 0 : 1, now, d * stag);
       // the part rises once its pulse has arrived; on the way back it settles at once
       tset(p.h, a < 0 ? LOW[k] : k === a ? TOP : UP, now, a < 0 ? 0 : d * stag + 420);
@@ -719,14 +723,18 @@ function mount({ stage, svg, read }, value) {
       trace[k].classList.toggle("hi", k === a);
       p.part.sil.classList.toggle("hi", k === a);
     });
-    spark.classList.toggle("hi", a < 0);
+    spark.classList.toggle("hi", a < 0 || a === CORE);
+    die.sil.classList.toggle("hi", a === CORE);
     tset(lift, a < 0 ? 0 : LIFT, now, 0);
-    read.textContent = a < 0 ? "rest" : TRACES[a][0];
+    read.textContent = a < 0 ? "rest" : a === CORE ? "agent" : TRACES[a][0];
     B.wake();
   }
   choose(-1);
 
   const hit = ([sx, sy]) => {
+    // the chip, where its die rests: its top's plane, over the package
+    const [cx, cy] = unproj(C, sx, sy, PH + DH);
+    if (Math.abs(cx - CX) <= PK + 2 && Math.abs(cy - CY) <= PK + 2) return CORE;
     const [x, y] = unproj(C, sx, sy, 0);
     let best = -1, bd = 22;
     pads.forEach(([px, py], k) => { const d = Math.hypot(x - px, y - py); if (d < bd) { bd = d; best = k; } });
