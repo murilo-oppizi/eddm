@@ -578,114 +578,116 @@ const hairline = (figure) => { figures[figure.name] = figure; };
 // agent.js
 (() => {
 /**
- * Agent: a sorting arm on a round plinth, a postcard in its gripper, and three
- * trays in an arc in front of it: plan, launch, measure. At rest the arm
- * holds the card over the middle tray, which is bright. Point at a tray and
- * the arm lifts the card, swings over it on the 700ms curve, and lowers it in;
- * the tray goes bright. The trays are hit where they rest, and never move.
- * The slider is the pause before the card goes down, in ms.
+ * Agent: a gantry, like a plotter's, over a board of twelve trays of postcards
+ * stacked to different heights: the agent's work, placed for you. A bridge
+ * rides two rails, a carriage rides the bridge, and a gripper on a rod holds a
+ * postcard. Point at a tray: the gripper lifts, the gantry runs over it on the
+ * 700ms curve, and lowers the card onto the stack, which goes bright. At rest
+ * it holds a card over the tallest stack. The trays are hit where they rest;
+ * they never move. The slider is the pause before the card goes down, in ms.
  */
 const {
-  Cam, fit, proj, facing, unproj, prism, rings, rrect, circ, ringAt, run, hull, poly, open, seg,
+  Cam, fit, proj, facing, unproj, prism, rings, rrect, circ, poly, seg,
   tween, tset, tval, tdone, mk, solid, put, register, pointer, disposer,
 } = HL;
 
-const RA = 52, TS = 13, TH = 10, WT = 2, BOOM = 52, ZB = 50, UP = 34, DOWN = 15, FRONT = Math.PI / 4;
-const NAMES = ["plan", "launch", "measure"];
-// the arc swings off to one side, so the boom is never end-on to you and always reads as an arm
-const AT = [FRONT + 1.35, FRONT + 0.5, FRONT - 0.35];
-const PC = [22 * Math.cos(FRONT + 0.5), 22 * Math.sin(FRONT + 0.5)], PR = 78;
-const LR = (pts) => (pts[0][0] <= pts[pts.length - 1][0] ? pts : pts.slice().reverse());
-const turn = (ring, a, dx = 0, dy = 0) => {
-  const c = Math.cos(a), s = Math.sin(a);
-  return ring.map((q) => ({ u: dx + q.u * c - q.v * s, v: dy + q.u * s + q.v * c, nu: q.nu * c - q.nv * s, nv: q.nu * s + q.nv * c }));
-};
+const NXC = 4, NYC = 3, CELL = 26, EX = NXC * CELL, EY = NYC * CELL, M = 9, H = 56, PB = 5;
+const STACK = [[4, 9, 3, 6], [7, 2, 13, 5], [3, 6, 4, 8]];
+const REST = [2, 1];
+const UP = H - 18;
+const shift = (ring, x, y) => ring.map((q) => ({ ...q, u: q.u + x, v: q.v + y }));
 
 function mount({ stage, svg, read }, value) {
   const bag = disposer();
   let pause = value;
   const C = Cam(45, 0.5, 1.62);
-  fit(C, [[PC[0] - PR, PC[1], -6], [PC[0] + PR, PC[1], -6], [PC[0], PC[1] + PR, -6], [PC[0], PC[1] - PR, -6], [0, 0, ZB + 6], [BOOM * Math.cos(AT[0]), BOOM * Math.sin(AT[0]), ZB + 6]], 200, 164);
+  fit(C, [[-M, -M, -PB], [EX + M, EY + M, -PB], [EX + M, -M, -PB], [-M, EY + M, -PB], [-M, -M, H + 12], [EX + M, -M, H + 12]], 200, 162);
   const P = proj(C), front = facing(C);
   const g = mk("g", {}, svg);
+  const post = (x, y) => put(solid(g), prism(P, front, shift(circ(2.8, 16), x, y), shift(circ(2, 16), x, y), 0, H));
+  const rail = (y) => { const [r, i] = rings(-M - 3, y - 2.6, EX + M + 3, y + 2.6, 2.2, 0.8); put(solid(g), prism(P, front, r, i, H, H + 4)); };
 
-  // the plinth, the arm's foot and column
-  const disc = (r, n = 48) => turn(circ(r, n), 0, PC[0], PC[1]);
-  put(solid(g), prism(P, front, disc(PR), disc(PR - 2.2), -6, 0));
-  put(solid(g), prism(P, front, circ(16, 32), circ(14.4, 32), 0, 5));
-  put(solid(g), prism(P, front, circ(6.5, 24), circ(5.3, 24), 5, ZB - 2));
-
-  // the trays, far to near, each painted as a tray is: body and rim, a card lying in it, then its near wall
-  const trays = AT.map((a, i) => ({ i, a, x: RA * Math.cos(a), y: RA * Math.sin(a) })).sort((p, q) => p.x + p.y - (q.x + q.y));
-  for (const t of trays) {
-    const [outer, inner] = rings(t.x - TS, t.y - TS, t.x + TS, t.y + TS, 6, WT);
-    t.body = mk("path", { d: poly(hull(ringAt(P, outer, 0).concat(ringAt(P, outer, TH)))), class: "sil" }, g);
-    t.rim = mk("path", { d: poly(ringAt(P, inner, TH)), class: "nf" }, g);
-    mk("path", { d: poly(ringAt(P, rrect(t.x - 8, t.y - 6, t.x + 8, t.y + 6, 1, 3), 3)), class: "nf lo" }, g);
-    const iF = LR(ringAt(P, run(inner, front), TH)), oT = LR(ringAt(P, run(outer, front), TH)), oB = LR(ringAt(P, run(outer, front), 0));
-    mk("path", { d: poly([...iF, oT[oT.length - 1], ...oB.slice().reverse(), oT[0]]), class: "fo" }, g);
-    mk("path", { d: open(iF), class: "nf" }, g);
-    t.near = mk("path", { d: open([oT[0], ...oB, oT[oT.length - 1]]), class: "nf sil" }, g);
+  // the board, the far post and rail, then the stacks far to near, then the side posts
+  const [br, bi] = rings(-M - 4, -M - 4, EX + M + 4, EY + M + 4, 8, 2);
+  put(solid(g), prism(P, front, br, bi, -PB, 0));
+  post(-M, -M);
+  rail(-M);
+  const cells = [];
+  for (let s = 0; s <= NXC + NYC - 2; s++) for (let i = 0; i < NXC; i++) {
+    const j = s - i;
+    if (j < 0 || j >= NYC) continue;
+    const cx = (i + 0.5) * CELL, cy = (j + 0.5) * CELL, h = STACK[j][i];
+    mk("path", { d: poly(rrect(cx - 11.5, cy - 9.5, cx + 11.5, cy + 9.5, 3, 4).map((q) => P(q.u, q.v, 0))), class: "nf lo" }, g);
+    const st = solid(g), [r, ri] = rings(cx - 9, cy - 6.5, cx + 9, cy + 6.5, 1.4, 0.6);
+    put(st, prism(P, front, r, ri, 0, h));
+    // the top card's print: a picture and two lines
+    mk("path", { d: poly(rrect(cx - 7, cy - 4.5, cx - 1, cy + 4.5, 0.6, 2).map((q) => P(q.u, q.v, h))) + seg(P(cx + 1, cy - 2.5, h), P(cx + 7, cy - 2.5, h)) + seg(P(cx + 1, cy + 0.5, h), P(cx + 5, cy + 0.5, h)), class: "nf lo" }, st.g);
+    cells.push({ i, j, cx, cy, h, st });
   }
+  post(EX + M, -M);
+  post(-M, EY + M);
 
-  // the arm: a hub on the column, the boom, a rod down to the gripper, and the card it holds
-  const hub = solid(g), card = solid(g), rod = mk("path", { class: "nf" }, g), grip = solid(g), boom = solid(g);
-  put(hub, prism(P, front, circ(9, 24), circ(7.6, 24), ZB - 2, ZB + 4));
+  // what moves: the card, the gripper and its rod; then the near post and rail, the bridge, the carriage
+  const card = solid(g), grip = solid(g), rod = mk("path", { class: "nf" }, g);
+  post(EX + M, EY + M);
+  rail(EY + M);
+  const bridge = solid(g), carriage = solid(g);
 
-  const swing = tween(AT[1]), drop = tween(DOWN);
+  const home = cells.find((c) => c.i === REST[0] && c.j === REST[1]);
+  const tx = tween(home.cx), ty = tween(home.cy), tz = tween(home.h + 1.2);
   let drawn = "";
   function draw(now) {
-    const a = tval(swing, now), z = tval(drop, now), key = a + "," + z;
+    const x = tval(tx, now), y = tval(ty, now), z = tval(tz, now), key = x + "," + y + "," + z;
     if (key === drawn) return;
     drawn = key;
-    const ex = BOOM * Math.cos(a), ey = BOOM * Math.sin(a);
-    const [br, bi] = rings(-6, -5, BOOM + 6, 5, 5, 1.4);
-    put(boom, prism(P, front, turn(br, a), turn(bi, a), ZB, ZB + 5));
-    rod.setAttribute("d", seg(P(ex, ey, ZB), P(ex, ey, z + 6)));
-    put(grip, prism(P, front, turn(circ(4.4, 16), 0, ex, ey), turn(circ(3.4, 16), 0, ex, ey), z + 1.2, z + 6));
-    const [cr, ci] = rings(-9, -6.5, 9, 6.5, 1.4, 0.6);
-    put(card, prism(P, front, turn(cr, a, ex, ey), turn(ci, a, ex, ey), z, z + 1.2));
+    const [cr, ci] = rings(x - 8, y - 5.5, x + 8, y + 5.5, 1.2, 0.5);
+    put(card, prism(P, front, cr, ci, z, z + 1.2));
+    put(grip, prism(P, front, shift(circ(3.6, 16), x, y), shift(circ(2.6, 16), x, y), z + 1.2, z + 6));
+    rod.setAttribute("d", seg(P(x, y, z + 6), P(x, y, H + 2)));
+    const [bR, bI] = rings(x - 3.4, -M - 5, x + 3.4, EY + M + 5, 2.6, 0.9);
+    put(bridge, prism(P, front, bR, bI, H + 4, H + 9));
+    const [kR, kI] = rings(x - 6.5, y - 6.5, x + 6.5, y + 6.5, 3, 1);
+    put(carriage, prism(P, front, kR, kI, H + 1, H + 12));
   }
 
-  // lift, swing while it is up, and only once the swing has landed, lower it in
-  let lower = false;
+  // lift, run over, and only once the run has landed, lower the card
+  let lower = null;
   const B = register(stage, (_dt, now) => {
-    if (lower && tdone(swing, now)) { lower = false; tset(drop, DOWN, now, pause); }
+    if (lower && tdone(tx, now) && tdone(ty, now)) { tset(tz, lower.h + 1.2, now, pause); lower = null; }
     draw(now);
-    return lower || !tdone(swing, now) || !tdone(drop, now);
+    return lower !== null || !tdone(tx, now) || !tdone(ty, now) || !tdone(tz, now);
   });
   bag.add(B.unregister);
 
-  let act = -2;
-  function light(i) { for (const t of trays) for (const el of [t.body, t.near]) el.classList.toggle("hi", t.i === i); }
-  function choose(i) {
-    if (i === act) return;
-    const now = performance.now(), to = i < 0 ? 1 : i;
-    act = i;
-    if (Math.abs(tval(swing, now) - AT[to]) > 0.01) {
-      tset(drop, UP, now, 0);
-      tset(swing, AT[to], now, 220);
-      lower = true;
-    }
-    light(to);
-    read.textContent = i < 0 ? "rest" : NAMES[i];
+  let act = null;
+  function choose(c) {
+    const to = c || home;
+    if (to === act) return;
+    act = to;
+    const now = performance.now();
+    tset(tz, UP, now, 0);
+    tset(tx, to.cx, now, 220);
+    tset(ty, to.cy, now, 220);
+    lower = to;
+    for (const k of cells) k.st.sil.classList.toggle("hi", k === to);
+    read.textContent = c ? `tray ${"ABCD"[c.i]}${c.j + 1}` : "rest";
     B.wake();
   }
-  light(1);
+  choose(null);
 
   const hit = ([sx, sy]) => {
-    const [x, y] = unproj(C, sx, sy, TH);
-    const t = trays.find((q) => Math.abs(x - q.x) <= TS + 4 && Math.abs(y - q.y) <= TS + 4);
-    return t ? t.i : -1;
+    const [x, y] = unproj(C, sx, sy, 0);
+    if (x < 0 || x > EX || y < 0 || y > EY) return null;
+    return cells.find((c) => Math.abs(x - c.cx) <= CELL / 2 && Math.abs(y - c.cy) <= CELL / 2) || null;
   };
-  bag.add(pointer(stage, { move: (p) => choose(hit(p)), leave: () => choose(-1) }));
+  bag.add(pointer(stage, { move: (p) => choose(hit(p)), leave: () => choose(null) }));
   bag.add(() => svg.replaceChildren());
   return { set: (v) => { pause = v; }, destroy: bag.dispose };
 }
 
 hairline({
   name: "agent",
-  means: "An agent's sorting arm: point at a tray and it swings the postcard over and lowers it in.",
+  means: "A gantry over twelve trays of postcards: point at a tray and it runs over and lowers a card onto it.",
   rules: [1, 5, 6, 8],
   range: [0, 120, 320],
   mount,
@@ -915,134 +917,137 @@ hairline({
 // channels.js
 (() => {
 /**
- * Channels: one round platform carrying the three: a letter (direct mail), a
- * parcel (package inserts) and a small stack of flyers. At rest the parcel is
- * in front and bright. Point where a channel sits at rest and the platform
- * turns it to the front, on the 700ms curve, and lifts it a little. The hit
- * areas are the three resting sectors, which never turn. The slider is the
- * lift.
+ * Channels: one carousel, like a baggage belt, looping round an island, and
+ * the three channels riding it: letters, parcels and stacks of flyers, always
+ * going round. Hovering slows the belt, on a spring, so one can be read; the
+ * one nearest the pointer takes the bright stroke and is named. At rest the
+ * one passing the front is bright. The slider is the belt's speed.
+ *
+ * Built on Slow's pattern: an ambient loop that keeps moving, and a spring on
+ * its rate that the pointer pulls down.
  */
 const {
-  Cam, fit, proj, facing, unproj, prism, rrect, circ, poly, open, seg,
-  tween, tset, tval, tdone, mk, solid, put, register, pointer, disposer,
+  Cam, fit, proj, facing, unproj, prism, rrect, poly, open, seg,
+  spring, stepS, mk, solid, put, register, pointer, disposer,
 } = HL;
 
-const R = 56, RB = 60, RI = 31, FRONT = Math.PI / 4, TAU = Math.PI * 2;
-const NAMES = ["inserts", "mail", "flyers"];
-const AT = [FRONT, FRONT + TAU / 3, FRONT - TAU / 3];
+const A = 42, RC = 27, BAND = 12, N = 6, PB = 6, IH = 9;
+const NAMES = ["mail", "inserts", "flyers"];
+const LOOP = 4 * A + 2 * Math.PI * RC;
+const stadium = (half) => rrect(-A - half, -half, A + half, half, half, 14);
 
-/** A ring turned by a about the origin, then moved by (dx, dy): its normals turn with it. */
-const turn = (ring, a, dx = 0, dy = 0) => {
+/** The belt's middle line at s along it: [x, y, heading]. */
+function along(s) {
+  s = ((s % LOOP) + LOOP) % LOOP;
+  const arc = Math.PI * RC;
+  if (s < 2 * A) return [-A + s, -RC, 0];
+  s -= 2 * A;
+  if (s < arc) { const t = -Math.PI / 2 + s / RC; return [A + RC * Math.cos(t), RC * Math.sin(t), t + Math.PI / 2]; }
+  s -= arc;
+  if (s < 2 * A) return [A - s, RC, Math.PI];
+  s -= 2 * A;
+  const t = Math.PI / 2 + s / RC;
+  return [-A + RC * Math.cos(t), RC * Math.sin(t), t + Math.PI / 2];
+}
+/** A ring turned by a and moved to (x, y); its normals turn with it. */
+const place2 = (ring, a, x, y) => {
   const c = Math.cos(a), s = Math.sin(a);
-  return ring.map((q) => ({ u: dx + q.u * c - q.v * s, v: dy + q.u * s + q.v * c, nu: q.nu * c - q.nv * s, nv: q.nu * s + q.nv * c }));
+  return ring.map((q) => ({ u: x + q.u * c - q.v * s, v: y + q.u * s + q.v * c, nu: q.nu * c - q.nv * s, nv: q.nu * s + q.nv * c }));
 };
-const local = (ring) => ring.map((q) => [q.u, q.v]);
+
+// each kind of thing, in its own frame (x along the belt): its solids, and its marks as [x, y, z] polylines
+const KINDS = [
+  { // a letter: its flap and its stamp
+    parts: [[rrect(-11, -7.5, 11, 7.5, 1.4, 3), 0, 1.6]],
+    marks: [[[-10, -6.5, 1.6], [0, 1, 1.6], [10, -6.5, 1.6]], [[5, 2.5, 1.6], [9, 2.5, 1.6], [9, 6, 1.6], [5, 6, 1.6], [5, 2.5, 1.6]]],
+  },
+  { // a parcel, taped
+    parts: [[rrect(-9, -8, 9, 8, 2.4, 4), 0, 14]],
+    marks: [[[-9, -1.6, 14], [9, -1.6, 14]], [[-9, 1.6, 14], [9, 1.6, 14]]],
+  },
+  { // three flyers, a little uneven, the top one printed
+    parts: [[rrect(-8.6, -11, 8.6, 11, 1, 3), 0, 1], [rrect(-8, -11.4, 9.2, 10.6, 1, 3), 1.6, 2.6], [rrect(-8.4, -10.8, 8.8, 11.2, 1, 3), 3.2, 4.2]],
+    marks: [[[-6, -8.4, 4.2], [6.4, -8.4, 4.2], [6.4, 0, 4.2], [-6, 0, 4.2], [-6, -8.4, 4.2]], [[-6, 4, 4.2], [5, 4, 4.2]], [[-6, 7.4, 4.2], [2, 7.4, 4.2]]],
+  },
+];
 
 function mount({ stage, svg, read }, value) {
   const bag = disposer();
-  let LIFT = value;
-  const C = Cam(45, 0.5, 2.3);
-  fit(C, [[-RB, -RB, -14], [RB, RB, -14], [RB, -RB, -14], [-RB, RB, -14], [0, -RB, 34], [-RB, 0, 34]], 200, 168);
+  let speed = value;
+  const C = Cam(45, 0.5, 1.98);
+  const OUT = RC + BAND;
+  fit(C, [[-A - OUT, -OUT, -PB], [A + OUT, OUT, -PB], [A + OUT, -OUT, -PB], [-A - OUT, OUT, -PB], [0, -RC, 16]], 200, 166);
   const P = proj(C), front = facing(C);
   const g = mk("g", {}, svg);
 
-  // the base, which stays, and the platform on it, which turns: both round, so they are drawn once
-  put(solid(g), prism(P, front, circ(RB, 48), circ(RB - 2, 48), -14, -8));
-  put(solid(g), prism(P, front, circ(R, 48), circ(R - 2.2, 48), -8, 0));
-  mk("path", { d: poly(circ(R - 12, 48).map((q) => P(q.u, q.v, 0))), class: "nf lo" }, g);
+  // the base, the belt's two edges, its moving slats, then the things and the island
+  put(solid(g), prism(P, front, stadium(OUT + 3), stadium(OUT + 1), -PB, 0));
+  mk("path", { d: poly(stadium(OUT).map((q) => P(q.u, q.v, 0))), class: "nf lo" }, g);
+  const slats = mk("path", { class: "nf lo" }, g);
+  const back = mk("g", {}, g), island = solid(g), ahead = mk("g", {}, g);
+  put(island, prism(P, front, stadium(RC - BAND), stadium(RC - BAND - 1.6), 0, IH));
+  mk("path", { d: poly(stadium(RC - BAND - 6).map((q) => P(q.u, q.v, IH))), class: "nf lo" }, island.g);
 
-  // each channel: its shapes in its own frame (x along the platform's radius), and how to draw them
-  const items = [
-    { // a parcel, taped
-      parts: [{ ring: rrect(-15, -12, 15, 12, 3.4, 5), inner: rrect(-13.4, -10.4, 13.4, 10.4, 2, 5), z0: 0, z1: 20 }],
-      marks: (w) => seg(w(-15, -2.6, 20), w(15, -2.6, 20)) + seg(w(-15, 2.6, 20), w(15, 2.6, 20)),
-    },
-    { // a letter, its flap and its stamp
-      parts: [{ ring: rrect(-18, -13, 18, 13, 1.8, 3), inner: rrect(-17.4, -12.4, 17.4, 12.4, 1.2, 3), z0: 0, z1: 1.8 }],
-      marks: (w) => open([w(-17, -12, 1.8), w(0, 1.5, 1.8), w(17, -12, 1.8)]) + poly(local(rrect(10, 4, 16, 10.5, 0.8, 2)).map(([x, y]) => w(x, y, 1.8))),
-    },
-    { // three flyers, a little uneven, the top one printed
-      parts: [0, 1, 2].map((k) => ({ ring: turn(rrect(-13, -17, 13, 17, 1.2, 3), (k - 1) * 0.09, k * 0.8, -k * 0.6), inner: null, z0: k * 2.4, z1: k * 2.4 + 1 })),
-      marks: (w) => poly(local(turn(rrect(-9, -13, 9, 1, 0.8, 2), 0.09, 1.6, -1.2)).map(([x, y]) => w(x, y, 5.8)))
-        + seg(w(-7, 6, 5.8), w(10, 6, 5.8)) + seg(w(-7, 10, 5.8), w(6, 10, 5.8)),
-    },
-  ].map((it, i) => {
-    const grp = mk("g", {}, g);
-    return { ...it, i, grp, solids: it.parts.map(() => solid(grp)), mk: mk("path", { class: "nf lo" }, grp), z: tween(0) };
+  const items = Array.from({ length: N }, (_, i) => {
+    const kind = KINDS[i % 3], grp = mk("g", {}, back);
+    return { i, kind, name: NAMES[i % 3], grp, solids: kind.parts.map(() => solid(grp)), mk: mk("path", { class: "nf lo" }, grp) };
   });
 
-  const rot = tween(0);
-  let drawn = NaN, order = "";
-  function draw(now) {
-    const a = tval(rot, now), lifts = items.map((it) => tval(it.z, now)), key = a + "," + lifts.join();
-    if (key === drawn) return;
-    drawn = key;
-    for (const it of items) {
-      const th = AT[it.i] + a, cx = RI * Math.cos(th), cy = RI * Math.sin(th), lift = lifts[it.i];
-      it.parts.forEach((p, k) => {
-        // each keeps its own heading as the platform turns: square to the room when in front
-        const ring = turn(p.ring, th - FRONT, cx, cy), inner = turn(p.inner || p.ring, th - FRONT, cx, cy);
-        put(it.solids[k], prism(P, front, ring, inner, p.z0 + lift, p.z1 + lift));
-        if (!p.inner) it.solids[k].cr.setAttribute("d", "");
-      });
-      const c = Math.cos(th - FRONT), s = Math.sin(th - FRONT);
-      it.mk.setAttribute("d", it.marks((x, y, z) => P(cx + x * c - y * s, cy + x * s + y * c, z + lift)));
-      it.depth = cx + cy;
+  const rate = spring(1, { eps: 0.002 });
+  let pos = 0, over = null, lit = null;
+  function draw() {
+    const sl = [];
+    for (let k = 0; k < 44; k++) {
+      const [x, y, a] = along(pos + (k * LOOP) / 44), nx = -Math.sin(a), ny = Math.cos(a);
+      sl.push(seg(P(x - nx * (BAND - 1), y - ny * (BAND - 1), 0), P(x + nx * (BAND - 1), y + ny * (BAND - 1), 0)));
     }
-    // far to near: move the groups only when the order changes
-    const sorted = items.slice().sort((p, q) => p.depth - q.depth), k = sorted.map((it) => it.i).join();
-    if (k !== order) { order = k; sorted.forEach((it) => g.appendChild(it.grp)); }
+    slats.setAttribute("d", sl.join(""));
+    for (const it of items) {
+      const [x, y, a] = along(pos + (it.i * LOOP) / N);
+      it.x = x; it.y = y;
+      it.kind.parts.forEach(([ring, z0, z1], k) => put(it.solids[k], prism(P, front, place2(ring, a, x, y), place2(ring, a, x, y), z0, z1)));
+      it.solids.forEach((sd) => sd.cr.setAttribute("d", ""));
+      const c = Math.cos(a), s = Math.sin(a);
+      it.mk.setAttribute("d", it.kind.marks.map((l) => open(l.map(([u, v, z]) => P(x + u * c - v * s, y + u * s + v * c, z)))).join(""));
+    }
+    // far side of the island, then near side; each far to near
+    const sorted = items.slice().sort((p, q) => p.x + p.y - (q.x + q.y));
+    for (const it of sorted) (it.x + it.y < 0 ? back : ahead).appendChild(it.grp);
+    // the bright one: nearest the pointer, or the one passing the front
+    const [tx, ty] = over || [RC * 0.71 + A * 0.3, RC * 0.71];
+    let best = items[0];
+    for (const it of items) if (Math.hypot(it.x - tx, it.y - ty) < Math.hypot(best.x - tx, best.y - ty)) best = it;
+    if (best !== lit) {
+      if (lit) lit.solids[lit.solids.length - 1].sil.classList.remove("hi");
+      lit = best;
+      lit.solids[lit.solids.length - 1].sil.classList.add("hi");
+    }
+    read.textContent = over ? lit.name : "rest";
   }
+  draw();
 
-  const B = register(stage, (_dt, now) => {
-    draw(now);
-    return !tdone(rot, now) || items.some((it) => !tdone(it.z, now));
+  // ambient: the belt always runs, while the figure is on screen
+  const B = register(stage, (dt) => {
+    stepS(rate, dt);
+    pos += rate.x * speed * dt;
+    draw();
+    return true;
   });
   bag.add(B.unregister);
 
-  let act = -2, aim = 0;
-  const topSolid = (it) => it.solids[it.solids.length - 1];
-  function choose(a) {
-    if (a === act) return;
-    act = a;
-    const now = performance.now(), want = a < 0 ? 0 : FRONT - AT[a];
-    // the shortest way round, from where it is headed now
-    let t = want;
-    while (t - aim > Math.PI) t -= TAU;
-    while (aim - t > Math.PI) t += TAU;
-    aim = t;
-    tset(rot, t, now, 0);
-    items.forEach((it) => {
-      tset(it.z, it.i === a ? LIFT : 0, now, 0);
-      topSolid(it).sil.classList.toggle("hi", a < 0 ? it.i === 0 : it.i === a);
-    });
-    read.textContent = a < 0 ? "rest" : NAMES[a];
-    B.wake();
-  }
-  choose(-1);
-
-  // the sector the pointer is in, around the platform's middle, by where each channel sits at rest
-  const hit = ([sx, sy]) => {
-    const [x, y] = unproj(C, sx, sy, 0);
-    if (Math.hypot(x, y) > RB + 16) return -1;
-    let best = 0, bd = Infinity;
-    AT.forEach((t, i) => {
-      const d = Math.abs(Math.atan2(Math.sin(Math.atan2(y, x) - t), Math.cos(Math.atan2(y, x) - t)));
-      if (d < bd) { bd = d; best = i; }
-    });
-    return best;
-  };
-
-  bag.add(pointer(stage, { move: (p) => choose(hit(p)), leave: () => choose(-1) }));
+  bag.add(pointer(stage, {
+    move: (p) => { over = unproj(C, p[0], p[1], 0); rate.t = 0.12; B.wake(); },
+    leave: () => { over = null; rate.t = 1; B.wake(); },
+  }));
   bag.add(() => svg.replaceChildren());
-  return { set: (v) => { LIFT = v; }, destroy: bag.dispose };
+  return { set: (v) => { speed = v; }, destroy: bag.dispose };
 }
 
 hairline({
   name: "channels",
-  means: "Three channels on one platform: point where one sits and the platform turns it to the front.",
-  rules: [1, 6, 8, 9],
-  range: [0, 6, 12],
+  means: "Letters, parcels and flyers riding one carousel: hovering slows the belt so you can read one.",
+  rules: [4, 6, 7, 8],
+  range: [10, 18, 30],
   mount,
 });
 
@@ -1050,142 +1055,146 @@ hairline({
 // countries.js
 (() => {
 /**
- * Countries: a paper map folded in four, a dashed route across it from Sydney
- * out to the rest of the world, and a marker over each city it reached. At
- * rest the markers float at uneven heights, Sydney's the highest and bright.
- * The pointer is put on the map, and each marker rises with its nearness to
- * it, on its own spring; the nearest goes bright and is read out. The slider
- * is the reach, in map units.
+ * Countries: the world as a field of pillars on a rounded plinth, one pillar
+ * per patch of land, the cities Oppizi works in standing taller: the Americas,
+ * Europe, Sydney and Auckland. At rest Sydney, where it began, is the tallest
+ * and bright, with a 3 × 3 dot mark on its lid. The pointer is put on the
+ * ground and the land near it rises, the cities most, each on its own spring;
+ * the nearest city takes the bright stroke and the mark, and is read out. The
+ * slider is the reach, in cells.
+ *
+ * Built on Terrain's pattern: a continuous field, springs, a falloff by
+ * distance, and a hit test on the ground plane, which never moves.
  */
 const {
-  Cam, fit, proj, unproj, fillet, poly, open, clamp, lerp, spring, stepS,
-  mk, flatDot, place, register, pointer, disposer,
+  Cam, fit, prism, proj, rings, rrect, unproj, spring, stepS, facing,
+  flatDot, mk, place, pointer, put, register, disposer, solid,
 } = HL;
 
-const PW = 35, MD = 84, F = 8, H = 7, LIFT = 22, TK = 1.4;
-const FOLDS = [0, F, 0, F, 0];
-const CITIES = [
-  ["sydney", 124, 62, 12], ["new york", 20, 30, 3], ["são paulo", 40, 64, 0],
-  ["lisbon", 58, 42, 6], ["london", 64, 16, 1], ["berlin", 92, 24, 8],
+// the land, row by row from the north (Arctic left out), from the site's world map
+const LAND = [
+  "#.#####.#.......##############",
+  "...#######....##############..",
+  "....#####.....#############...",
+  "....####......###.########....",
+  ".....##......#############....",
+  "........##...#######..........",
+  "........###.....###.....##....",
+  "........####....###.......##..",
+  "........###.....##.......####.",
+  "........##.................#.#",
+  "........#.....................",
+  "........#.....................",
 ];
-const ROUTE = [0, 5, 4, 3, 1, 2];
-
-/** The map's height at x: four panels, folded up and down. */
-const zAt = (x) => {
-  const k = clamp(Math.floor(x / PW), 0, 3), t = (x - k * PW) / PW;
-  return lerp(FOLDS[k], FOLDS[k + 1], t);
+// [name, column, row, height at rest]
+const CITIES = [
+  ["toronto", 7, 2, 13], ["new york", 8, 2, 17], ["são paulo", 10, 8, 12], ["buenos aires", 9, 9, 9],
+  ["london", 14, 1, 15], ["berlin", 16, 1, 11], ["paris", 15, 2, 12], ["lisbon", 14, 2, 9],
+  ["sydney", 28, 8, 24], ["auckland", 29, 9, 10],
+];
+const NX = LAND[0].length, NY = LAND.length, CELL = 9, FOOT = 4.2, HMAX = 34, PB = 4;
+// The map lies with north away from you and east to the right: column i and row j sit on a
+// lattice turned 45° on the ground, so its columns run across the screen and its rows up it,
+// while every pillar is still a square seen corner-on. Rows are twice as far apart as
+// columns, so the 2:1 view shows every cell square.
+const at = (i, j) => {
+  const a = (i - (NX - 1) / 2) * CELL, c = (j - (NY - 1) / 2) * CELL * 2;
+  return [(a + c) / 2, (c - a) / 2];
+};
+/** The board: a rounded rectangle on the lattice, turned with it. */
+const board = (m, r) => {
+  const hx = ((NX - 1) / 2) * CELL + m, hc = ((NY - 1) / 2) * CELL * 2 + m;
+  return rrect(-hx, -hc, hx, hc, r, 8).map((q) => ({
+    u: (q.u + q.v) / 2, v: (q.v - q.u) / 2, nu: (q.nu + q.nv) * Math.SQRT1_2, nv: (q.nv - q.nu) * Math.SQRT1_2,
+  }));
 };
 
-const falloff = (u) => (u <= 0.4 ? 1 - u * 0.75 : u <= 1 ? 0.7 - ((u - 0.4) / 0.6) * 0.62 : 0.08);
+/** The share of the rise at u reaches from the pointer: 1 → .3 at 40% → .06 at the edge and beyond. */
+const falloff = (u) => (u <= 0.4 ? 1 - (u / 0.4) * 0.7 : u <= 1 ? 0.3 - ((u - 0.4) / 0.6) * 0.24 : 0.06);
 
 function mount({ stage, svg, read }, value) {
   const bag = disposer();
-  let R = value;
-  const C = Cam(45, 0.5, 1.86);
-  fit(C, [[0, 0, -TK], [4 * PW, MD, -TK], [4 * PW, 0, 0], [0, MD, 0], [124, 62, H + 8 + LIFT], [20, 30, H + 8 + LIFT]], 200, 160);
-  const P = proj(C), S = (x, y, dz = 0) => P(x, y, zAt(x) + dz);
-  const g = mk("g", {}, svg);
+  const C = Cam(45, 0.5, 1.62);
+  const corners = [[0, 0], [NX - 1, 0], [0, NY - 1], [NX - 1, NY - 1]].map(([i, j]) => at(i, j));
+  fit(C, corners.map(([x, y]) => [x * 1.12, y * 1.12, -PB]).concat([[...at(28, 8), HMAX + 24], [...at(14, 0), HMAX + 16]]), 200, 168);
+  const P = proj(C), front = facing(C);
+  let R = value * CELL, over = null;
 
-  // the panels, far to near: each its underside first (the paper's thickness), then its face
-  for (let k = 0; k < 4; k++) {
-    const x0 = k * PW, x1 = x0 + PW, z0 = FOLDS[k], z1 = FOLDS[k + 1];
-    const quad = (dz) => [P(x0, 0, z0 + dz), P(x1, 0, z1 + dz), P(x1, MD, z1 + dz), P(x0, MD, z0 + dz)];
-    // only the map's own four corners are rounded; the folds stay creased
-    const r = [k === 0 ? 4 : 0.4, k === 3 ? 4 : 0.4, k === 3 ? 4 : 0.4, k === 0 ? 4 : 0.4];
-    mk("path", { d: poly(fillet(quad(-TK), r)), class: "lo" }, g);
-    mk("path", { d: poly(fillet(quad(0), r)), class: "sil" }, g);
-  }
-  // what's printed on it: a coastline and two roads, following the folds
-  const line = (fn, n = 48) => open(Array.from({ length: n + 1 }, (_, i) => fn(i / n)));
-  mk("path", { d: line((t) => S(4 + t * 132, 50 + 12 * Math.sin(t * 9) + 6 * Math.sin(t * 23))) + line((t) => S(4 + t * 132, 8 + t * 20)) + line((t) => S(70 + 4 * Math.sin(t * 6), 4 + t * 76)), class: "nf lo" }, g);
-  // the route, city to city
-  const pts = [];
-  ROUTE.slice(1).forEach((b, i) => {
-    const [, ax, ay] = CITIES[ROUTE[i]], [, bx, by] = CITIES[b];
-    for (let s = 0; s <= 16; s++) pts.push(S(lerp(ax, bx, s / 16), lerp(ay, by, s / 16), 0.2));
-  });
-  mk("path", { d: open(pts), class: "nf dash" }, g);
-
-  // the markers, far to near
-  const marks = CITIES.map(([name, x, y, h0], i) => ({ i, name, x, y, h0, sp: spring(h0, { eps: 0.03 }), drawn: NaN }))
-    .sort((a, b) => a.x + a.y - (b.x + b.y))
-    .map((m) => {
-      m.foot = flatDot(g, C, 1.6, "dot off");
-      place(m.foot, S(m.x, m.y));
-      m.stem = mk("path", { class: "nf lo" }, g);
-      m.head = mk("path", {}, g);
-      m.hole = mk("path", { class: "nf" }, g);
-      return m;
-    });
-
-  /** A marker facing you: a round head drawn to a point, in screen units, its point at [px, py]. */
-  function drop(px, py) {
-    const r = 8.5, cy = py - r * 2.1, a = Math.acos(r / (r * 2.1)), pts = [[px, py]];
-    for (let s = 0; s <= 24; s++) {
-      const t = Math.PI / 2 + a + (s / 24) * (2 * Math.PI - 2 * a);
-      pts.push([px + r * Math.cos(t), cy + r * Math.sin(t)]);
+  const g = mk("g", {}, svg), cols = [];
+  put(solid(g), prism(P, front, board(7, 7), board(5.4, 5.4), -PB, 0));
+  // a dim dot on every patch of sea, so the land reads as land
+  const sea = mk("g", {}, g);
+  // far to near: row by row from the north, which is painting back to front on this lattice
+  for (let j = 0; j < NY; j++) for (let i = 0; i < NX; i++) {
+    const [x, y] = at(i, j);
+    if (LAND[j][i] !== "#") {
+      place(flatDot(sea, C, 0.5, "dot off"), P(x, y, 0));
+      continue;
     }
-    const hole = [];
-    for (let s = 0; s < 16; s++) hole.push([px + 3.2 * Math.cos(s * 0.3927), cy + 3.2 * Math.sin(s * 0.3927)]);
-    return [poly(fillet(pts, pts.map((_, k) => (k === 0 ? 1.2 : 0)))), poly(hole)];
+    const city = CITIES.find((c) => c[1] === i && c[2] === j);
+    const h0 = city ? city[3] : 2.2 + ((i * 7 + j * 3) % 5) * 0.5;
+    const [ring, inner] = rings(x - FOOT / 2, y - FOOT / 2, x + FOOT / 2, y + FOOT / 2, 1.2, 0.5);
+    cols.push({ i, j, x, y, city, h0, ring, inner, sp: spring(h0, { eps: 0.04 }), el: solid(g), drawn: NaN });
   }
-  function draw(m) {
-    const h = m.sp.x;
-    if (h === m.drawn) return;
-    m.drawn = h;
-    const [px, py] = S(m.x, m.y, H + h), [fx, fy] = S(m.x, m.y);
-    const [head, hole] = drop(px, py);
-    m.head.setAttribute("d", head);
-    m.hole.setAttribute("d", hole);
-    m.stem.setAttribute("d", open([[fx, fy], [px, py]]));
+
+  // the mark: a 3 × 3 of dots riding the lit city's lid, just after it in the paint order
+  const mark = mk("g", {}, g), md = [];
+  for (let k = 0; k < 9; k++) md.push(flatDot(mark, C, 0.45, k === 4 ? "dot" : "dot m"));
+  const home = cols.find((c) => c.city && c.city[0] === "sydney");
+  let lit = null, want = home;
+
+  function drawMark() {
+    if (want !== lit) {
+      if (lit) lit.el.sil.classList.remove("hi");
+      lit = want;
+      lit.el.sil.classList.add("hi");
+      lit.el.g.after(mark);
+    }
+    const h = lit.sp.x;
+    md.forEach((el, k) => place(el, P(lit.x + ((k % 3) - 1) * 1.05, lit.y + (Math.floor(k / 3) - 1) * 1.05, h)));
   }
-  marks.forEach(draw);
+  function drawCol(c) {
+    const h = Math.max(0.6, c.sp.x);
+    if (h === c.drawn) return;
+    c.drawn = h;
+    put(c.el, prism(P, front, c.ring, c.inner, 0, h));
+  }
 
   const B = register(stage, (dt) => {
-    let moving = false;
-    for (const m of marks) { if (stepS(m.sp, dt)) moving = true; draw(m); }
-    return moving;
+    let m = false;
+    for (const c of cols) { if (stepS(c.sp, dt)) m = true; drawCol(c); }
+    drawMark();
+    return m;
   });
   bag.add(B.unregister);
 
-  let lit = null;
-  function light(m) {
-    if (m === lit) return;
-    if (lit) { lit.head.classList.remove("hi"); lit.foot.setAttribute("class", "dot off"); }
-    lit = m;
-    lit.head.classList.add("hi");
-    lit.foot.setAttribute("class", "dot m");
-  }
-  const sydney = marks.find((m) => m.i === 0);
-  light(sydney);
-
-  function aim(at) {
-    if (!at) {
-      for (const m of marks) m.sp.t = m.h0;
-      light(sydney);
-      read.textContent = "rest";
-    } else {
-      let near = marks[0], best = Infinity;
-      for (const m of marks) {
-        const d = Math.hypot(m.x - at[0], m.y - at[1]);
-        m.sp.t = LIFT * falloff(d / R);
-        if (d < best) { best = d; near = m; }
-      }
-      light(near);
-      read.textContent = near.name;
+  function retarget() {
+    let near = home, best = Infinity;
+    for (const c of cols) {
+      if (!over) { c.sp.t = c.h0; continue; }
+      const d = Math.hypot(c.x - over[0], c.y - over[1]);
+      // the land rises with nearness; a city rises from its own height
+      c.sp.t = (c.city ? c.h0 : 1.5) + (c.city ? HMAX * 0.8 : HMAX * 0.65) * falloff(d / R);
+      if (c.city && d < best) { best = d; near = c; }
     }
+    want = near;
+    read.textContent = over ? near.city[0] : "rest";
     B.wake();
   }
-  bag.add(pointer(stage, { move: (p) => aim(unproj(C, p[0], p[1], F / 2)), leave: () => aim(null) }));
+
+  bag.add(pointer(stage, {
+    move: (p) => { over = unproj(C, p[0], p[1], 0); retarget(); },
+    leave: () => { over = null; retarget(); },
+  }));
   bag.add(() => svg.replaceChildren());
-  return { set: (v) => { R = v; }, destroy: bag.dispose };
+  return { set: (v) => { R = v * CELL; if (over) retarget(); }, destroy: bag.dispose };
 }
 
 hairline({
   name: "countries",
-  means: "A folded map with a marker on every city the route reached: the markers near the pointer rise, and the nearest is named.",
-  rules: [1, 3, 5, 10],
-  range: [24, 40, 60],
+  means: "The world as a field of pillars, the cities Oppizi works in standing tall: the land near the pointer rises, and the nearest city is named.",
+  rules: [1, 3, 5, 9],
+  range: [3, 5, 7.5],
   mount,
 });
 
@@ -1193,112 +1202,149 @@ hairline({
 // flyers.js
 (() => {
 /**
- * Flyers: a flyer holder, five flyers standing up out of it at uneven
- * heights, the tallest bright. The flyer under the pointer comes up out of
- * the holder to be handed out; its neighbours rise a little after it,
- * spreading out from it. The slider is that stagger, in ms.
+ * Flyers: a street team's crate of seven printed flyers, leaning back in it, each
+ * with its picture, headline and text. At rest the next one to hand out stands
+ * a little proud of the rest, bright. The flyer under the pointer stands up and
+ * lifts out of the crate; the ones in front lean forward and the ones behind
+ * lean back, staggered outwards from it. The slider is the stagger, in ms.
  *
- * Built as Riffle's tray is: the holder's far half is painted before the
- * flyers, its near wall after them, so they stand inside it.
+ * Built on Riffle's pattern: tweens, a stagger by distance, and a hit test on
+ * static bands along the flyers' resting top edges.
  */
 const {
-  Cam, fit, proj, facing, rrect, ringAt, run, hull, poly, open, seg,
-  tween, tset, tval, tdone, mk, solid, put, register, pointer, disposer,
+  Cam, clamp, facing, fillet, fit, hull, open, poly, proj, rad, ringAt, rrect, run, seg,
+  tdone, tset, tval, tween, disposer, mk, pointer, reflect, register,
 } = HL;
 
-const BW = 72, BD = 30, BH = 26, WT = 2.2, N = 5, FW = 52, FH = 62, FZ = 6, LIFT = 22;
-const REST = [8, 20, 3, 14, 9];
+const N = 7, W = 62, H = 74, G = 12, TK = 1.2;
+const REST = -14, BACK = -26, FWD = 18, LIFT = 22, PROUD = 4, NEXT = 4;
+const X0 = -6, X1 = W + 6, Y0 = -10, Y1 = (N - 1) * G + 10, WH = 27, WR = 6, WT = 2.4;
+
 const LR = (pts) => (pts[0][0] <= pts[pts.length - 1][0] ? pts : pts.slice().reverse());
+
+/** The crate: `far` is painted before the flyers, `near` after them; each entry is [d, class]. */
+function crate(P, front, outer, inner) {
+  const far = [
+    [poly(hull(ringAt(P, outer, 0).concat(ringAt(P, outer, WH)))), "sil"],
+    [poly(ringAt(P, inner, WH)), "nf"],
+    [open(ringAt(P, run(inner, (q) => !front(q)), 2.5)), "nf lo"],
+  ];
+  const iF = LR(ringAt(P, run(inner, front), WH)), oT = LR(ringAt(P, run(outer, front), WH)), oB = LR(ringAt(P, run(outer, front), 0));
+  const onFront = (ring) => ring.map((q) => P(q.u, Y1, q.v)), onSide = (ring) => ring.map((q) => P(X1, q.u, q.v));
+  const near = [
+    [poly([...iF, oT[oT.length - 1], ...oB.slice().reverse(), oT[0]]), "fo"],
+    [open(oT), "nf lo"],
+    [open(iF), "nf"],
+    [open([oT[0], ...oB, oT[oT.length - 1]]), "nf sil"],
+    // the crate's slats, and a hand hole in each end
+    [seg(P(X0 + 4, Y1, 9), P(X1 - 4, Y1, 9)) + seg(P(X1, Y0 + 4, 9), P(X1, Y1 - 4, 9)), "nf lo"],
+    [poly(onSide(rrect((Y0 + Y1) / 2 - 10, 13, (Y0 + Y1) / 2 + 10, 19, 3, 5))), "nf"],
+    [poly(onFront(rrect((X0 + X1) / 2 - 9, 13, (X0 + X1) / 2 + 9, 19, 3, 5))), "nf"],
+  ];
+  return { far, near };
+}
+
+/** Flyer i leaning th degrees and lifted: its paper, and what's printed on its face. */
+function pose(P, i, th, lift) {
+  const yb = i * G, s = Math.sin(rad(th)), c = Math.cos(rad(th));
+  const w = (u, v) => P(u, yb + v * s, v * c + lift + 3);
+  const wb = (u, v) => P(u, yb + v * s - TK * c, v * c + TK * s + lift + 3);
+  const sheet = fillet([[0, 0], [W, 0], [W, H], [0, H]], [1.6, 1.6, 1.6, 1.6]);
+  const pic = [[6, H - 6], [W - 6, H - 6], [W - 6, H - 38], [6, H - 38]];
+  const sun = [];
+  for (let k = 0; k < 14; k++) sun.push(w(W - 18 + 4 * Math.cos(k * 0.449), H - 15 + 4 * Math.sin(k * 0.449)));
+  return {
+    back: poly(sheet.map((p) => wb(p[0], p[1]))),
+    face: poly(sheet.map((p) => w(p[0], p[1]))),
+    pic: poly(pic.map((p) => w(p[0], p[1]))) + open([[6, H - 30], [20, H - 19], [29, H - 27], [41, H - 15], [W - 6, H - 32]].map((p) => w(p[0], p[1]))) + poly(sun),
+    head: seg(w(6, H - 46), w(W - 18, H - 46)),
+    text: [53, 59, 65].map((v, k) => seg(w(6, H - v), w(W - 6 - k * 10, H - v))).join(""),
+  };
+}
 
 function mount({ stage, svg, read }, value) {
   const bag = disposer();
   let stag = value;
-  const C = Cam(45, 0.5, 2.3);
-  fit(C, [[0, 0, 0], [BW, BD, 0], [BW, 0, 0], [0, BD, 0], [0, 0, FZ + FH + 20 + LIFT], [BW, BD, FZ + FH + 20 + LIFT]], 200, 166);
+  const C = Cam(45, 0.5, 1.66);
+  fit(C, [[X0, Y0, 0], [X1, Y1, -10], [X1, Y0, 0], [X0, Y1, 0], [X0, Y0, H + 3], [X1, Y0, H + LIFT + 3]], 200, 166);
   const P = proj(C), front = facing(C);
+  const outer = rrect(X0, Y0, X1, Y1, WR, 6), inner = rrect(X0 + WT, Y0 + WT, X1 - WT, Y1 - WT, WR - WT, 6);
+  const paths = crate(P, front, outer, inner);
+
   const g = mk("g", {}, svg);
+  reflect(svg, g, P, front, outer, 0, 16);
+  for (const [d, cls] of paths.far) mk("path", { d, class: cls }, g);
 
-  const outer = rrect(0, 0, BW, BD, 9, 6), inner = rrect(WT, WT, BW - WT, BD - WT, 9 - WT, 6);
-  // far half: the body and the opening's rim
-  mk("path", { d: poly(hull(ringAt(P, outer, 0).concat(ringAt(P, outer, BH)))), class: "sil" }, g);
-  mk("path", { d: poly(ringAt(P, inner, BH)), class: "nf" }, g);
+  const fl = [];
+  for (let i = 0; i < N; i++) {
+    const grp = mk("g", {}, g);
+    const rest = i === NEXT ? [REST + 6, PROUD] : [REST, 0];
+    fl.push({
+      rest, back: mk("path", { class: "lo" }, grp), face: mk("path", { class: "sil" }, grp),
+      pic: mk("path", { class: "nf lo" }, grp), head: mk("path", { class: "nf" }, grp), text: mk("path", { class: "nf lo" }, grp),
+      a: tween(rest[0]), z: tween(rest[1]),
+    });
+  }
+  for (const [d, cls] of paths.near) mk("path", { d, class: cls }, g);
 
-  const fl = REST.map((r, i) => {
-    const y = 6 + i * 4.6, grp = mk("g", {}, g);
-    return {
-      y, r, back: mk("path", { class: "lo" }, grp), face: mk("path", { class: "sil" }, grp),
-      art: mk("path", { class: "nf lo" }, grp), z: tween(r), drawn: NaN,
-    };
-  });
-
-  // near half: the front wall, from the rim's near edge down to the foot
-  const iF = LR(ringAt(P, run(inner, front), BH)), oT = LR(ringAt(P, run(outer, front), BH)), oB = LR(ringAt(P, run(outer, front), 0));
-  mk("path", { d: poly([...iF, oT[oT.length - 1], ...oB.slice().reverse(), oT[0]]), class: "fo" }, g);
-  mk("path", { d: open(iF), class: "nf" }, g);
-  mk("path", { d: open([oT[0], ...oB, oT[oT.length - 1]]), class: "nf sil" }, g);
-
-  const x0 = (BW - FW) / 2, x1 = x0 + FW;
-  function draw(f, now) {
-    const lift = tval(f.z, now);
-    if (lift === f.drawn) return;
-    f.drawn = lift;
-    const at = (y) => (pts) => pts.map(([x, z]) => P(x, y, FZ + z + lift));
-    const sheet = rrect(x0, 0, x1, FH, 1.4, 3).map((q) => [q.u, q.v]);
-    f.back.setAttribute("d", poly(at(f.y - 0.8)(sheet)));
-    f.face.setAttribute("d", poly(at(f.y)(sheet)));
-    // what's printed on it: a picture (hills under a sun), a headline and two lines of text
-    const w = at(f.y), sun = [];
-    for (let k = 0; k < 16; k++) sun.push([x1 - 12 + 3.2 * Math.cos(k * 0.3927), FH - 10 + 3.2 * Math.sin(k * 0.3927)]);
-    f.art.setAttribute("d", poly(w(rrect(x0 + 5, FH - 30, x1 - 5, FH - 5, 0.8, 2).map((q) => [q.u, q.v])))
-      + open(w([[x0 + 5, FH - 24], [x0 + 16, FH - 15], [x0 + 23, FH - 21], [x0 + 33, FH - 12], [x1 - 5, FH - 25]]))
-      + poly(w(sun))
-      + seg(...w([[x0 + 5, FH - 37], [x1 - 14, FH - 37]]))
-      + [43, 48].map((z, k) => seg(...w([[x0 + 5, FH - z], [x1 - 5 - k * 12, FH - z]]))).join(""));
+  // hit bands: oblique strips along the RESTING top edges; they never move, and nothing draws them
+  const top = (i) => P(W / 2, i * G + H * Math.sin(rad(REST)), H * Math.cos(rad(REST)));
+  const c0 = top(0), c1 = top(1), dd = [c1[0] - c0[0], c1[1] - c0[1]];
+  const px0 = P(0, 0, 0), px1 = P(1, 0, 0), ex = [px1[0] - px0[0], px1[1] - px0[1]];
+  const HALF = W / 2 + 6, det = dd[0] * ex[1] - dd[1] * ex[0];
+  function hit([x, y]) {
+    const qx = x - c0[0], qy = y - c0[1];
+    const s = (qx * ex[1] - qy * ex[0]) / det, r = (dd[0] * qy - dd[1] * qx) / det;
+    if (Math.abs(r) > HALF || s < -0.5 || s > N + 1) return -1;
+    return clamp(Math.round(s), 0, N - 1);
   }
 
+  const drawn = fl.map(() => "");
+  function draw(i, th, lift) {
+    const key = th + "," + lift;
+    if (key === drawn[i]) return;
+    drawn[i] = key;
+    const f = fl[i], q = pose(P, i, th, lift);
+    f.back.setAttribute("d", q.back);
+    f.face.setAttribute("d", q.face);
+    f.pic.setAttribute("d", q.pic);
+    f.head.setAttribute("d", q.head);
+    f.text.setAttribute("d", q.text);
+  }
   const B = register(stage, (_dt, now) => {
     let moving = false;
-    for (const f of fl) { draw(f, now); if (!tdone(f.z, now)) moving = true; }
+    fl.forEach((f, i) => { draw(i, tval(f.a, now), tval(f.z, now)); if (!tdone(f.a, now) || !tdone(f.z, now)) moving = true; });
     return moving;
   });
   bag.add(B.unregister);
 
-  // a single row: the flyer whose resting middle is nearest the pointer's x, over the holder
-  const mid = fl.map((f) => P(BW / 2, f.y, FZ + FH / 2 + f.r)[0]);
-  const top = REST.indexOf(Math.max(...REST));
-  const hit = ([sx, sy]) => {
-    const lo = P(0, BD, 0)[0], hi = P(BW, 0, 0)[0];
-    if (sx < lo || sx > hi || sy > P(BW, BD, 0)[1]) return -1;
-    let best = 0;
-    mid.forEach((m, i) => { if (Math.abs(m - sx) < Math.abs(mid[best] - sx)) best = i; });
-    return best;
-  };
-
   let act = -2;
-  function choose(a) {
+  function setActive(a) {
     if (a === act) return;
-    const now = performance.now(), from = a >= 0 ? a : act;
+    const now = performance.now(), from = a >= 0 ? a : act >= 0 ? act : NEXT;
     act = a;
     fl.forEach((f, i) => {
-      const d = Math.abs(i - from);
-      tset(f.z, a < 0 ? f.r : i === a ? f.r + LIFT : f.r + Math.max(0, 7 - d * 3), now, d * stag);
-      f.face.classList.toggle("hi", a < 0 ? i === top : i === a);
+      const delay = Math.abs(i - from) * stag;
+      const th = a < 0 ? f.rest[0] : i < a ? BACK : i > a ? FWD : 0;
+      tset(f.a, th, now, delay); tset(f.z, a < 0 ? f.rest[1] : a === i ? LIFT : 0, now, delay);
+      const lit = a < 0 ? i === NEXT : i === a;
+      f.face.classList.toggle("hi", lit); f.head.classList.toggle("hi", lit);
     });
-    read.textContent = a < 0 ? "rest" : `flyer ${a + 1}`;
+    read.textContent = a < 0 ? "rest" : `flyer ${String(a + 1).padStart(2, "0")}`;
     B.wake();
   }
-  choose(-1);
+  setActive(-1);
 
-  bag.add(pointer(stage, { move: (p) => choose(hit(p)), leave: () => choose(-1) }));
+  bag.add(pointer(stage, { move: (p) => setActive(hit(p)), leave: () => setActive(-1) }));
   bag.add(() => svg.replaceChildren());
   return { set: (v) => { stag = v; }, destroy: bag.dispose };
 }
 
 hairline({
   name: "flyers",
-  means: "A holder of flyers: the one under the pointer comes up to be handed out, and its neighbours follow.",
+  means: "A crate of printed flyers: the one under the pointer stands up to be handed out, and the rest lean away in turn.",
   rules: [1, 2, 5, 6],
-  range: [20, 45, 80],
+  range: [0, 40, 90],
   mount,
 });
 

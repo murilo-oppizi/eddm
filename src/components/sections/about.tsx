@@ -21,6 +21,7 @@ import {
 import { AnimatePresence, MotionConfig, motion, useInView, useReducedMotion } from "motion/react";
 
 import { type Place } from "@/components/sections/globe";
+import { HairlineArt } from "@/components/sections/hairline-art";
 import { IsoArt } from "@/components/sections/iso-art";
 import { AboutHeroArt } from "@/components/sections/about-hero-art";
 import { Flag, WorldMap } from "@/components/sections/world-map";
@@ -111,7 +112,7 @@ export function AboutHero() {
  */
 const STORY_MS = 4500;
 const storyIcons = [IconNews, IconWorld, IconStack2, IconSparkles];
-const storyArt = ["story-flyers", "story-pins", "story-channels", "story-agent"] as const;
+const storyArt = ["flyers", "countries", "channels", "agent"] as const;
 
 export function AboutStory() {
   const { story } = about;
@@ -205,7 +206,7 @@ export function AboutStory() {
               {/* The moment: its scene, drawn in, beside its words */}
               <div role="tabpanel" aria-live="polite" className="grid items-center gap-4 md:grid-cols-[1.1fr_1fr] md:gap-10">
                 <div className="grid place-items-center md:h-96">
-                  <IsoArt key={active} name={storyArt[active]} className="w-full max-w-[460px]" />
+                  <HairlineArt key={active} name={storyArt[active]} className="max-w-[460px]" />
                 </div>
                 <AnimatePresence mode="wait" initial={false}>
                   <motion.div
