@@ -1,18 +1,17 @@
 /**
  * Growing: a bar chart on a rounded plinth, six years from the first running
- * away to the right, each bar taller than the last, a trend line floating over
- * their tops. At rest the whole chart is grown and today's bar is bright. The
+ * away to the right, each bar taller than the last. At rest the whole chart is grown and today's bar is bright. The
  * pointer is time: the bars up to the year under it stand grown, the years
  * after it fall back to stubs, each on its own spring, so moving left to right
  * grows the chart again; the year at the pointer is bright. The slider is the
  * tallest bar.
  */
 const {
-  Cam, fit, proj, facing, unproj, prism, rings, clamp, open, seg,
+  Cam, fit, proj, facing, unproj, prism, rings, clamp, seg,
   spring, stepS, mk, solid, put, register, pointer, disposer,
 } = HL;
 
-const N = 6, SP = 26, FOOT = 15, STUB = 2.5, PB = 5, LIFT = 7;
+const N = 6, SP = 26, FOOT = 15, STUB = 2.5, PB = 5;
 // the years run away from you to the right (along -y), so the chart climbs up the screen
 const EY = N * SP, X0 = -12, X1 = 22;
 const yAt = (i) => -(i + 0.5) * SP;
@@ -23,7 +22,7 @@ function mount({ stage, svg, read }, value) {
   const bag = disposer();
   let HMAX = value;
   const C = Cam(45, 0.5, 1.62);
-  fit(C, [[X0, 8, -PB], [X1, -EY - 8, -PB], [X1, 8, -PB], [X0, -EY - 8, -PB], [5, yAt(N - 1), 76 + LIFT], [5, yAt(0), 20]], 200, 166);
+  fit(C, [[X0, 8, -PB], [X1, -EY - 8, -PB], [X1, 8, -PB], [X0, -EY - 8, -PB], [5, yAt(N - 1), 76], [5, yAt(0), 20]], 200, 166);
   const P = proj(C), front = facing(C);
   const g = mk("g", {}, svg);
 
@@ -39,22 +38,11 @@ function mount({ stage, svg, read }, value) {
     return { i, cy, share, ring, inner, sp: spring(share * HMAX, { eps: 0.03 }), drawn: NaN };
   });
   for (let i = N - 1; i >= 0; i--) bars[i].el = solid(g);
-  // the trend line, floating a little over the bars so it clears each taller one, a dashed
-  // guide down to each top
-  const guides = mk("path", { class: "nf dash" }, g);
-  const line = mk("path", { class: "nf" }, g);
-
   function draw() {
-    let moved = false;
     for (const b of bars) {
       const h = Math.max(STUB, b.sp.x);
-      if (h !== b.drawn) { b.drawn = h; put(b.el, prism(P, front, b.ring, b.inner, 0, h)); moved = true; }
+      if (h !== b.drawn) { b.drawn = h; put(b.el, prism(P, front, b.ring, b.inner, 0, h)); }
     }
-    if (!moved && line.getAttribute("d")) return;
-    const tops = bars.map((b) => P(5, b.cy, Math.max(STUB, b.sp.x)));
-    const pts = bars.map((b) => P(5, b.cy, Math.max(STUB, b.sp.x) + LIFT));
-    guides.setAttribute("d", pts.map((p, i) => seg(p, tops[i])).join(""));
-    line.setAttribute("d", open(pts));
   }
   draw();
 
