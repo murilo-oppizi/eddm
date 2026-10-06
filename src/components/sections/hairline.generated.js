@@ -1142,146 +1142,130 @@ hairline({
 // countries.js
 (() => {
 /**
- * Countries: the world as a field of pillars on a rounded plinth, one pillar
- * per patch of land, the cities Oppizi works in standing taller: the Americas,
- * Europe, Sydney and Auckland. At rest Sydney, where it began, is the tallest
- * and bright, with a 3 × 3 dot mark on its lid. The pointer is put on the
- * ground and the land near it rises, the cities most, each on its own spring;
- * the nearest city takes the bright stroke and the mark, and is read out. The
- * slider is the reach, in cells.
+ * Countries: a plaza of flags on a podium of three steps, one flag for each
+ * country Oppizi works in, a step for each stage of its growth: Australia and
+ * New Zealand on the low front step, where it began; Europe's eight on the
+ * middle one; the Americas' four on the high back step. The poles stand taller
+ * toward the back, and the United States, the newest home, is bright. The
+ * pointer is put on the steps, and the poles near it grow taller, each on its
+ * own spring, raising their flags; the nearest is bright and named. The slider
+ * is the reach.
  *
- * Built on Terrain's pattern: a continuous field, springs, a falloff by
- * distance, and a hit test on the ground plane, which never moves.
+ * Built on Terrain's pattern: a field, springs, a falloff by distance; the
+ * steps stand at different heights, so the pointer is put on each pole's own
+ * step to find how near it is.
  */
 const {
-  Cam, fit, prism, proj, rings, rrect, unproj, spring, stepS, facing,
-  flatDot, mk, place, pointer, put, register, disposer, solid,
+  Cam, fit, proj, facing, unproj, prism, rings, circ, poly, seg,
+  spring, stepS, mk, solid, put, register, pointer, disposer,
 } = HL;
 
-// the land, row by row from the north (Arctic left out), from the site's world map
-const LAND = [
-  "#.#####.#.......##############",
-  "...#######....##############..",
-  "....#####.....#############...",
-  "....####......###.########....",
-  ".....##......#############....",
-  "........##...#######..........",
-  "........###.....###.....##....",
-  "........####....###.......##..",
-  "........###.....##.......####.",
-  "........##.................#.#",
-  "........#.....................",
-  "........#.....................",
+const W = 176, D = 30, FW = 16, FH = 11, GROW = 26, PB = 4;
+// the steps, back to front: [height, countries as [name, height of pole at rest]]
+const STEPS = [
+  [18, [["united states", 30], ["canada", 26], ["brazil", 24], ["argentina", 21]]],
+  [11, [["united kingdom", 24], ["france", 22], ["germany", 25], ["spain", 20], ["portugal", 18], ["netherlands", 21], ["belgium", 19], ["poland", 23]]],
+  [4, [["australia", 20], ["new zealand", 17]]],
 ];
-// [name, column, row, height at rest]
-const CITIES = [
-  ["toronto", 7, 2, 13], ["new york", 8, 2, 17], ["são paulo", 10, 8, 12], ["buenos aires", 9, 9, 9],
-  ["london", 14, 1, 15], ["berlin", 16, 1, 11], ["paris", 15, 2, 12], ["lisbon", 14, 2, 9],
-  ["sydney", 28, 8, 24], ["auckland", 29, 9, 10],
-];
-const NX = LAND[0].length, NY = LAND.length, CELL = 9, FOOT = 4.2, HMAX = 34, PB = 4;
-// The map lies with north away from you and east to the right: column i and row j sit on a
-// lattice turned 45° on the ground, so its columns run across the screen and its rows up it,
-// while every pillar is still a square seen corner-on. Rows are twice as far apart as
-// columns, so the 2:1 view shows every cell square.
-const at = (i, j) => {
-  const a = (i - (NX - 1) / 2) * CELL, c = (j - (NY - 1) / 2) * CELL * 2;
-  return [(a + c) / 2, (c - a) / 2];
-};
-/** The board: a rounded rectangle on the lattice, turned with it. */
-const board = (m, r) => {
-  const hx = ((NX - 1) / 2) * CELL + m, hc = ((NY - 1) / 2) * CELL * 2 + m;
-  return rrect(-hx, -hc, hx, hc, r, 8).map((q) => ({
-    u: (q.u + q.v) / 2, v: (q.v - q.u) / 2, nu: (q.nu + q.nv) * Math.SQRT1_2, nv: (q.nv - q.nu) * Math.SQRT1_2,
-  }));
-};
 
-/** The share of the rise at u reaches from the pointer: 1 → .3 at 40% → .06 at the edge and beyond. */
-const falloff = (u) => (u <= 0.4 ? 1 - (u / 0.4) * 0.7 : u <= 1 ? 0.3 - ((u - 0.4) / 0.6) * 0.24 : 0.06);
+const falloff = (u) => (u <= 0.4 ? 1 - (u / 0.4) * 0.65 : u <= 1 ? 0.35 - ((u - 0.4) / 0.6) * 0.3 : 0.05);
+const shift = (ring, x, y) => ring.map((q) => ({ ...q, u: q.u + x, v: q.v + y }));
 
 function mount({ stage, svg, read }, value) {
   const bag = disposer();
-  const C = Cam(45, 0.5, 1.62);
-  const corners = [[0, 0], [NX - 1, 0], [0, NY - 1], [NX - 1, NY - 1]].map(([i, j]) => at(i, j));
-  fit(C, corners.map(([x, y]) => [x * 1.12, y * 1.12, -PB]).concat([[...at(28, 8), HMAX + 24], [...at(14, 0), HMAX + 16]]), 200, 168);
+  let R = value;
+  const C = Cam(45, 0.5, 1.46);
+  fit(C, [[-6, -6, -PB], [W + 6, 3 * D + 6, -PB], [W + 6, -6, -PB], [-6, 3 * D + 6, -PB], [0, D / 2, 18 + 30 + GROW + 2], [W - 10, D / 2, 18 + 30 + 2]], 200, 172);
   const P = proj(C), front = facing(C);
-  let R = value * CELL, over = null;
+  const g = mk("g", {}, svg);
+  const poles = [];
+  const [br, bi] = rings(-6, -6, W + 6, 3 * D + 6, 8, 2);
+  put(solid(g), prism(P, front, br, bi, -PB, 0));
 
-  const g = mk("g", {}, svg), cols = [];
-  put(solid(g), prism(P, front, board(7, 7), board(5.4, 5.4), -PB, 0));
-  // a dim dot on every patch of sea, so the land reads as land
-  const sea = mk("g", {}, g);
-  // far to near: row by row from the north, which is painting back to front on this lattice
-  for (let j = 0; j < NY; j++) for (let i = 0; i < NX; i++) {
-    const [x, y] = at(i, j);
-    if (LAND[j][i] !== "#") {
-      place(flatDot(sea, C, 0.5, "dot off"), P(x, y, 0));
-      continue;
-    }
-    const city = CITIES.find((c) => c[1] === i && c[2] === j);
-    const h0 = city ? city[3] : 2.2 + ((i * 7 + j * 3) % 5) * 0.5;
-    const [ring, inner] = rings(x - FOOT / 2, y - FOOT / 2, x + FOOT / 2, y + FOOT / 2, 1.2, 0.5);
-    cols.push({ i, j, x, y, city, h0, ring, inner, sp: spring(h0, { eps: 0.04 }), el: solid(g), drawn: NaN });
-  }
+  STEPS.forEach(([h, list], s) => {
+    // the step itself, then its poles, far (left) to near (right)
+    // tight corners, so the three read as one podium on its base
+    const [r, i] = rings(0, s * D, W, (s + 1) * D, 1.6, 1.2);
+    put(solid(g), prism(P, front, r, i, 0, h));
+    const gap = W / list.length;
+    list.forEach(([name, h0], k) => {
+      const x = gap * (k + 0.5) - FW / 2, y = s * D + D / 2;
+      const foot = solid(g);
+      put(foot, prism(P, front, shift(circ(2.8, 16), x, y), shift(circ(2, 16), x, y), h, h + 1.2));
+      poles.push({ name, x, y, base: h + 1.2, h0, sp: spring(h0, { eps: 0.03 }), pole: solid(g), ball: mk("path", {}, g), flag: mk("path", { class: "sil" }, g), stripe: mk("path", { class: "nf lo" }, g), drawn: NaN });
+    });
+  });
 
-  // the mark: a 3 × 3 of dots riding the lit city's lid, just after it in the paint order
-  const mark = mk("g", {}, g), md = [];
-  for (let k = 0; k < 9; k++) md.push(flatDot(mark, C, 0.45, k === 4 ? "dot" : "dot m"));
-  const home = cols.find((c) => c.city && c.city[0] === "sydney");
-  let lit = null, want = home;
-
-  function drawMark() {
-    if (want !== lit) {
-      if (lit) lit.el.sil.classList.remove("hi");
-      lit = want;
-      lit.el.sil.classList.add("hi");
-      lit.el.g.after(mark);
-    }
-    const h = lit.sp.x;
-    md.forEach((el, k) => place(el, P(lit.x + ((k % 3) - 1) * 1.05, lit.y + (Math.floor(k / 3) - 1) * 1.05, h)));
+  /** A flag hanging from the pole's top, in the upright plane through it, with a gentle wave. */
+  function flagAt(p, top) {
+    const wave = (u) => Math.sin((u / FW) * Math.PI * 1.4) * 1.1;
+    const pts = [];
+    for (let u = 0; u <= FW; u += 1) pts.push(P(p.x + u, p.y, top - 1 + wave(u)));
+    for (let u = FW; u >= 0; u -= 1) pts.push(P(p.x + u, p.y, top - 1 - FH + wave(u)));
+    const mid = [];
+    for (let u = 0; u <= FW; u += 1) mid.push(P(p.x + u, p.y, top - 1 - FH / 2 + wave(u)));
+    return [poly(pts), mid];
   }
-  function drawCol(c) {
-    const h = Math.max(0.6, c.sp.x);
-    if (h === c.drawn) return;
-    c.drawn = h;
-    put(c.el, prism(P, front, c.ring, c.inner, 0, h));
+  function draw(p) {
+    const len = p.sp.x;
+    if (len === p.drawn) return;
+    p.drawn = len;
+    const top = p.base + len;
+    put(p.pole, prism(P, front, shift(circ(0.9, 12), p.x, p.y), shift(circ(0.5, 12), p.x, p.y), p.base, top));
+    const [bx, by] = P(p.x, p.y, top + 1.4);
+    p.ball.setAttribute("d", `M${bx - 1.6} ${by}a1.6 1.6 0 1 0 3.2 0a1.6 1.6 0 1 0 -3.2 0`);
+    const [d, mid] = flagAt(p, top);
+    p.flag.setAttribute("d", d);
+    p.stripe.setAttribute("d", seg(mid[1], mid[Math.floor(mid.length / 2)]) + seg(mid[Math.floor(mid.length / 2) + 1], mid[mid.length - 2]));
   }
+  poles.forEach(draw);
 
   const B = register(stage, (dt) => {
     let m = false;
-    for (const c of cols) { if (stepS(c.sp, dt)) m = true; drawCol(c); }
-    drawMark();
+    for (const p of poles) { if (stepS(p.sp, dt)) m = true; draw(p); }
     return m;
   });
   bag.add(B.unregister);
 
-  function retarget() {
-    let near = home, best = Infinity;
-    for (const c of cols) {
-      if (!over) { c.sp.t = c.h0; continue; }
-      const d = Math.hypot(c.x - over[0], c.y - over[1]);
-      // the land rises with nearness; a city rises from its own height
-      c.sp.t = (c.city ? c.h0 : 1.5) + (c.city ? HMAX * 0.8 : HMAX * 0.65) * falloff(d / R);
-      if (c.city && d < best) { best = d; near = c; }
+  const home = poles[0];
+  let lit = null;
+  function light(p) {
+    if (p === lit) return;
+    if (lit) lit.flag.classList.remove("hi");
+    lit = p;
+    lit.flag.classList.add("hi");
+  }
+  light(home);
+
+  function aim(pt) {
+    if (!pt) {
+      for (const p of poles) p.sp.t = p.h0;
+      light(home);
+      read.textContent = "rest";
+    } else {
+      let near = poles[0], best = Infinity;
+      for (const p of poles) {
+        // the pointer, put on this pole's own step
+        const [x, y] = unproj(C, pt[0], pt[1], p.base);
+        const d = Math.hypot(x - p.x, y - p.y);
+        p.sp.t = p.h0 + GROW * falloff(d / R);
+        if (d < best) { best = d; near = p; }
+      }
+      light(near);
+      read.textContent = near.name;
     }
-    want = near;
-    read.textContent = over ? near.city[0] : "rest";
     B.wake();
   }
-
-  bag.add(pointer(stage, {
-    move: (p) => { over = unproj(C, p[0], p[1], 0); retarget(); },
-    leave: () => { over = null; retarget(); },
-  }));
+  bag.add(pointer(stage, { move: aim, leave: () => aim(null) }));
   bag.add(() => svg.replaceChildren());
-  return { set: (v) => { R = v * CELL; if (over) retarget(); }, destroy: bag.dispose };
+  return { set: (v) => { R = v; }, destroy: bag.dispose };
 }
 
 hairline({
   name: "countries",
-  means: "The world as a field of pillars, the cities Oppizi works in standing tall: the land near the pointer rises, and the nearest city is named.",
+  means: "A podium of flags, a step for each stage of growth: the poles near the pointer grow taller, and the nearest is named.",
   rules: [1, 3, 5, 9],
-  range: [3, 5, 7.5],
+  range: [30, 50, 75],
   mount,
 });
 
