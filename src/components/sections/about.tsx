@@ -236,7 +236,7 @@ export function AboutWorld() {
             <Tile delay={0.16}>
               <TileHead icon={<IconMapPins className="size-5" />} title={world.countriesTitle} body={world.countriesBody} />
               <div className="mt-auto space-y-3">
-                {world.regions.map((region) => (
+                {world.regions.map((region, r) => (
                   <div key={region.name} className="space-y-1.5">
                     <p className="text-xs font-semibold text-muted-foreground">{region.name}</p>
                     <ul className="flex flex-wrap gap-1">
@@ -265,6 +265,12 @@ export function AboutWorld() {
                           </button>
                         </li>
                       ))}
+                      {/* The list closes with "and more", so it never reads as the whole of it */}
+                      {r === world.regions.length - 1 && (
+                        <li className="inline-flex h-7 items-center rounded-lg border border-dashed px-2 text-xs text-muted-foreground">
+                          {world.countriesMore}
+                        </li>
+                      )}
                     </ul>
                   </div>
                 ))}

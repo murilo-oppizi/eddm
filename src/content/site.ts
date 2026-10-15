@@ -468,12 +468,12 @@ export const faqs: { q: string; a: string; link?: { text: string; href: string }
 // case-study results are theirs; the EDDM lines tie them to this site. Confirm before launch.
 export const about = {
   description:
-    "EDDM is Every Door Direct Mail by Oppizi, the agentic offline marketing platform that plans, launches and measures campaigns for brands like DoorDash, Uber Eats and Chipotle.",
+    "Oppizi is an agentic offline marketing platform, which plans, launches, and measures campaigns for brands like DoorDash, Uber Eats, and Chipotle. It runs Every Door Direct Mail (EDDM) campaigns in the US as part of its Direct Mail channel suite.",
   hero: {
     eyebrow: "About Oppizi",
-    title: "We're redefining how offline marketing works",
-    body: "Offline shouldn't be guesswork. We built Oppizi to bring agents to offline marketing, to help plan, create and track every campaign. EDDM is how we bring it to the businesses that serve a neighborhood.",
-    primary: { label: "Launch a campaign", href: "https://app.oppizi.com/?oppizi_source=eddm" },
+    title: "We make offline marketing measurable",
+    body: "Oppizi is the AI platform growth teams use to plan, launch, and measure offline marketing in 12+ countries. We run flyering, package inserts, and direct mail, including EDDM®.",
+    primary: { label: "Start a campaign", href: "https://app.oppizi.com/?oppizi_source=eddm" },
     secondary: { label: "Join the team", href: "https://oppizi.com/us/en/work-at-oppizi/corporate-roles/" },
   },
   story: {
@@ -504,7 +504,7 @@ export const about = {
     },
     {
       art: "attention",
-      title: "Attention is earned, not bought",
+      title: "Attention lives in the real world",
       body: "Real-world interactions create focus and presence that digital channels can't replicate. A postcard in hand gets looked at.",
     },
     {
@@ -515,16 +515,18 @@ export const about = {
     {
       art: "quality",
       title: "Scale should not break quality",
-      body: "One neighborhood or a whole city, every campaign gets the same USPS checks, local printing and delivery you can follow.",
+      body: "One neighborhood or a whole city, every campaign gets the same USPS checks, local printing, and delivery you can follow.",
     },
   ],
   world: {
     eyebrow: "Where we work",
     title: "Global, and on the ground",
-    body: "Oppizi runs campaigns across 14 countries from one platform, with local teams and partners in every market.",
+    // Never a capped count: "12+", and the list of markets ends with "and more"
+    body: "Oppizi runs campaigns across 12+ countries from one platform, with local teams and partners in every market.",
     // The bento's big tile, over the globe
-    reach: { title: "14 countries, one platform", body: "Plan, launch and measure every market from the same dashboard." },
+    reach: { title: "12+ countries, one platform", body: "Plan, launch, and measure every market from the same dashboard." },
     countriesTitle: "Our markets",
+    countriesMore: "and more",
     countriesBody: "Point at one to find it on the map.",
     // Each country's main city, for its pin on the globe: [code, name, latitude, longitude]
     regions: [
