@@ -97,7 +97,8 @@ export const steps = [
   },
 ]
 
-// "AI planning" section. The scenarios are illustrative examples. Every cost = homes × $0.31.
+// "AI planning" section. The scenarios are illustrative examples. Every cost is the approved
+// Standard price for that many homes (the price meter's, in `pricing` below).
 export const aiPlanning = {
   eyebrow: "AI planning",
   title: "Tell us your goal. Our agents plan the campaign.",
@@ -111,14 +112,14 @@ export const aiPlanning = {
       icon: "rocket",
       area: "Williamsburg",
       brief:
-        "I run a coffee shop in Williamsburg. I want young families within walking distance. Budget around $1,500.",
+        "I run a coffee shop in Williamsburg. I want young families within walking distance. Budget around $2,000.",
       steps: ["Reading your brief", "Finding routes in Williamsburg", "Matching demographics", "Estimating cost and timing"],
       summary: "Plan ready",
       plan: [
-        { icon: "route", label: "Routes", value: "6 routes · 4,820 homes" },
+        { icon: "route", label: "Routes", value: "6 routes · 4,610 homes" },
         { icon: "users", label: "Audience match", value: "Age 25–44 · 3+ residents" },
         { icon: "calendar", label: "Best timing", value: "Lands Thursday, before the weekend" },
-        { icon: "receipt", label: "Estimated cost", value: "$1,494" },
+        { icon: "receipt", label: "Estimated cost", value: "$1,998" },
       ],
     },
     {
@@ -147,7 +148,7 @@ export const aiPlanning = {
         { icon: "trending", label: "What worked", value: "3 routes drove 70% of scans" },
         { icon: "ban", label: "Drop", value: "2 routes with no scans" },
         { icon: "route", label: "Next mailing", value: "Your 3 best + 4 similar routes" },
-        { icon: "receipt", label: "Estimated cost", value: "5,120 homes · $1,587" },
+        { icon: "receipt", label: "Estimated cost", value: "5,120 homes · $2,197" },
       ],
     },
   ],

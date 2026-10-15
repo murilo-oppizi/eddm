@@ -44,7 +44,8 @@ type Mode = "route" | "area" | "ai";
 /** The AI option: idle (not chosen), loading (cards "thinking"), done (optimized). */
 type AiState = "idle" | "loading" | "done";
 
-// Placeholder numbers throughout; every cost = homes × $0.31 (pricing in site.ts).
+// Placeholder numbers throughout; every cost is the approved Standard price for that many
+// homes (the price meter's pricing in site.ts: about $0.41–0.43 a piece at these sizes).
 const data = {
   label: {
     route: { title: "Route 11211-C014", homes: "512 homes" },
@@ -53,13 +54,13 @@ const data = {
   },
   routes: {
     base: [
-      { place: "Williamsburg, NY 11211", routes: "17", homes: "8,746", cost: "$ 2,711.26" },
-      { place: "Park Slope, NY 11215", routes: "12", homes: "6,204", cost: "$ 1,923.24" },
+      { place: "Williamsburg, NY 11211", routes: "17", homes: "8,746", cost: "$ 3,610.94" },
+      { place: "Park Slope, NY 11215", routes: "12", homes: "6,204", cost: "$ 2,619.56" },
     ],
     // The AI tightens Williamsburg and swaps Park Slope for nearby Greenpoint.
     ai: [
-      { place: "Williamsburg, NY 11211", routes: "14", homes: "7,380", cost: "$ 2,287.80" },
-      { place: "Greenpoint, NY 11222", routes: "9", homes: "4,960", cost: "$ 1,537.60" },
+      { place: "Williamsburg, NY 11211", routes: "14", homes: "7,380", cost: "$ 3,078.20" },
+      { place: "Greenpoint, NY 11222", routes: "9", homes: "4,960", cost: "$ 2,134.40" },
     ],
   },
   // Real filters of the EDDM route picker, combined from its brackets (e.g. Age 35–54 =
