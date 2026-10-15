@@ -22,12 +22,12 @@ export const site = {
 }
 
 // The closing card. Its button opens the Oppizi app, where a campaign is made (the link
-// oppizi.com's own "Launch a campaign" buttons use). The line is
-// the closing card's on oppizi.com's EDDM page (Oct 2026).
+// oppizi.com's own campaign buttons use), and says "Start a campaign": one label for one
+// action, as in the nav. The line is the closing card's on oppizi.com's EDDM page (Oct 2026).
 export const cta = {
   title: "Ready to reach every door?",
   body: "Reach every household in your target area, launch in minutes, and track delivery and performance in one place.",
-  button: { label: "Launch a campaign", href: "https://app.oppizi.com/?oppizi_source=eddm" },
+  button: { label: "Start a campaign", href: "https://app.oppizi.com/?oppizi_source=eddm" },
 }
 
 export const hero = {
