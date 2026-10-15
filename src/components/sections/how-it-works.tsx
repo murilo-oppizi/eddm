@@ -527,11 +527,14 @@ function DesignVisual({ active }: { active: boolean }) {
   );
 }
 
+// No day-by-day schedule: Oppizi's EDDM page (its FAQ) gives only the delivery time, 7–14
+// business days nationally and 2–5 days for highly localized campaigns. The example is a
+// local Brooklyn one (as in step 4), so it says 2–5 days.
 const delivery = [
-  { label: "Printed", when: "Tue", Icon: IconPrinter },
-  { label: "Bundled", when: "Wed", Icon: IconMailFast },
-  { label: "At the post office", when: "Thu", Icon: IconTruckDelivery },
-  { label: "Delivered", when: "Fri–Mon", Icon: IconCheck },
+  { label: "Printed", when: "", Icon: IconPrinter },
+  { label: "Bundled", when: "", Icon: IconMailFast },
+  { label: "At the post office", when: "", Icon: IconTruckDelivery },
+  { label: "Delivered", when: "In 2–5 days", Icon: IconCheck },
 ];
 
 const TICK_MS = 220;

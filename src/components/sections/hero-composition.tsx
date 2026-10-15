@@ -440,6 +440,7 @@ function AudienceCard({ ai }: { ai: AiState }) {
         ) : (
           !loading && (
             <p className="flex items-center gap-1 text-xs text-muted-foreground">
+              {/* A local Brooklyn campaign: Oppizi's EDDM page gives 2–5 days for those */}
               <IconCalendar className="size-3.5" /> Delivers in 2–5 days
             </p>
           )
