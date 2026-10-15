@@ -30,14 +30,18 @@ export default function OpengraphImage() {
           color: "#020618",
         }}
       >
-        {/* Logo: symbol · EDDM | powered by Oppizi */}
+        {/* Logo: symbol · EDDM® | powered by Oppizi */}
         <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
           <svg width="92" height="47" viewBox="2.6 7.1 18.8 9.6">
             {OPPIZI_SYMBOL_PATHS.map((d) => (
               <path key={d} d={d} fill={PINK} fillRule="evenodd" />
             ))}
           </svg>
-          <div style={{ display: "flex", fontSize: 56, fontWeight: 700, letterSpacing: -1 }}>{site.name}</div>
+          {/* EDDM with its ®, raised and small, as in the header (it's USPS's registered mark) */}
+          <div style={{ display: "flex", alignItems: "flex-start", fontSize: 56, fontWeight: 700, letterSpacing: -1 }}>
+            {site.name}
+            <span style={{ fontSize: 24, fontWeight: 600, marginTop: 4, marginLeft: 3, letterSpacing: 0 }}>®</span>
+          </div>
           <div style={{ display: "flex", width: 2, height: 44, background: "#e2e8f0" }} />
           <div style={{ display: "flex", fontSize: 30, color: PINK }}>powered by Oppizi</div>
         </div>
