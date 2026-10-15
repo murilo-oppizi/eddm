@@ -422,15 +422,22 @@ export const pricing = {
   ],
 } as const
 
-// Facts checked against oppizi.com and eddm.com (Sept 2026).
-export const faqs = [
+// Facts checked against oppizi.com and eddm.com (Sept 2026). An answer can link one phrase:
+// `link` names the words and where they go.
+export const faqs: { q: string; a: string; link?: { text: string; href: string } }[] = [
   {
     q: "What is Every Door Direct Mail?",
-    a: "EDDM is a USPS service that lets you send mail to every address on a carrier route without buying a mailing list. It's one of the most affordable ways to reach a local area.",
+    a: "Every Door Direct Mail (EDDM) is a USPS service that delivers your mail to every address on a carrier route, with no mailing list to buy. It's one of the lowest-cost ways to reach a whole neighborhood.",
+  },
+  {
+    // Answers who runs the site, plainly, for visitors and for answer engines
+    q: "Is this site run by USPS?",
+    a: "No. eddm.com is run by Oppizi. EDDM® is a USPS service, and Oppizi plans, prints, and drops off your campaign, then tracks the results.",
+    link: { text: "Oppizi", href: "https://oppizi.com/us/en/" },
   },
   {
     q: "How much does Every Door Direct Mail cost?",
-    a: "You pay per piece, all-in: printing, USPS postage and delivery are included, with no mailing list or data fees. Campaigns start from $0.31 per piece, so reaching 15,000 homes costs about $4,650. You see the full price before you order.",
+    a: "You pay per piece, all-in: printing, USPS postage, and drop-off are included, with no mailing list or data fees. Campaigns average about $0.45 per piece, from about $0.52 at 500 homes down to about $0.41 at 10,000. You see the full price before you order.",
   },
   {
     q: "How fast is EDDM delivery?",
@@ -442,11 +449,11 @@ export const faqs = [
   },
   {
     q: "Can EDDM campaign results be tracked?",
-    a: "Yes. Add a QR code, promo code, dedicated landing page or call tracking number to your postcard, and every scan, visit, call or redemption is tied back to your campaign. Your dashboard shows delivery status and results by neighborhood, so you know where to mail next.",
+    a: "Yes. Add a QR code, promo code, dedicated landing page, or call tracking number to your postcard, and every scan, visit, call, or redemption is tied back to your campaign. Your dashboard shows delivery status and results by neighborhood, so you know where to mail next.",
   },
   {
     q: "Who should use Every Door Direct Mail?",
-    a: "Any business that serves a local area: restaurants, real estate agents, salons, florists, gyms, retail stores and home service providers. It works especially well for grand openings, limited-time offers and building awareness in a new neighborhood.",
+    a: "Any business that serves a local area: restaurants, real estate agents, salons, florists, gyms, retail stores, and home service providers. It works especially well for grand openings, limited-time offers, and building awareness in a new neighborhood.",
   },
   {
     q: "Do I need a design?",
