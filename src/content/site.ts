@@ -99,7 +99,7 @@ export const steps = [
   },
 ]
 
-// "AI planning" section. The scenarios are illustrative examples. Every cost is the approved
+// "AI planning" section. The scenarios are illustrative examples. Every cost is the platform's
 // Standard price for that many homes (the price meter's, in `pricing` below).
 export const aiPlanning = {
   eyebrow: "AI planning",
@@ -118,10 +118,10 @@ export const aiPlanning = {
       steps: ["Reading your brief", "Finding routes in Williamsburg", "Matching demographics", "Estimating cost and timing"],
       summary: "Plan ready",
       plan: [
-        { icon: "route", label: "Routes", value: "6 routes · 4,610 homes" },
+        { icon: "route", label: "Routes", value: "6 routes · 4,120 homes" },
         { icon: "users", label: "Audience match", value: "Age 25–44 · 3+ residents" },
         { icon: "calendar", label: "Best timing", value: "Lands Thursday, before the weekend" },
-        { icon: "receipt", label: "Estimated cost", value: "$1,998" },
+        { icon: "receipt", label: "Estimated cost", value: "$1,988" },
       ],
     },
     {
@@ -150,7 +150,7 @@ export const aiPlanning = {
         { icon: "trending", label: "What worked", value: "3 routes drove 70% of scans" },
         { icon: "ban", label: "Drop", value: "2 routes with no scans" },
         { icon: "route", label: "Next mailing", value: "Your 3 best + 4 similar routes" },
-        { icon: "receipt", label: "Estimated cost", value: "5,120 homes · $2,197" },
+        { icon: "receipt", label: "Estimated cost", value: "5,120 homes · $2,442" },
       ],
     },
   ],
@@ -457,7 +457,7 @@ export const faqs: { q: string; a: string; link?: { text: string; href: string }
   },
   {
     q: "How much does Every Door Direct Mail cost?",
-    a: "You pay per piece, all-in: printing, USPS postage, and drop-off are included, with no mailing list or data fees. Campaigns average about $0.45 per piece, from about $0.52 at 500 homes down to about $0.41 at 10,000. You see the full price before you order.",
+    a: "You pay per piece, all-in: printing, USPS postage, and drop-off are included, with no mailing list or data fees. A Standard postcard costs about $0.58 per piece at 1,000 homes, down to about $0.47 at 10,000. You see the full price before you order.",
   },
   {
     q: "How fast is EDDM delivery?",

@@ -111,7 +111,7 @@ export function AboutHeroArt() {
       <Chip
         icon={<IconCircleCheck className="size-[18px]" aria-hidden />}
         label="Delivered to"
-        value="4,610 homes"
+        value="4,120 homes"
         className="top-[14%] right-[-4%]"
         delay={0.7}
         drift={1.4}

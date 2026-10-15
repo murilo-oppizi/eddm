@@ -45,7 +45,7 @@ type Mode = "route" | "area" | "ai";
 type AiState = "idle" | "loading" | "done";
 
 // Placeholder numbers throughout; every cost is the approved Standard price for that many
-// homes (the price meter's pricing in site.ts: about $0.41–0.43 a piece at these sizes).
+// homes (the platform's, as the price meter has it: about $0.47–0.48 a piece at these sizes).
 const data = {
   label: {
     route: { title: "Route 11211-C014", homes: "512 homes" },
@@ -54,13 +54,13 @@ const data = {
   },
   routes: {
     base: [
-      { place: "Williamsburg, NY 11211", routes: "17", homes: "8,746", cost: "$ 3,610.94" },
-      { place: "Park Slope, NY 11215", routes: "12", homes: "6,204", cost: "$ 2,619.56" },
+      { place: "Williamsburg, NY 11211", routes: "17", homes: "8,746", cost: "$ 4,108.87" },
+      { place: "Park Slope, NY 11215", routes: "12", homes: "6,204", cost: "$ 2,954.34" },
     ],
     // The AI tightens Williamsburg and swaps Park Slope for nearby Greenpoint.
     ai: [
-      { place: "Williamsburg, NY 11211", routes: "14", homes: "7,380", cost: "$ 3,078.20" },
-      { place: "Greenpoint, NY 11222", routes: "9", homes: "4,960", cost: "$ 2,134.40" },
+      { place: "Williamsburg, NY 11211", routes: "14", homes: "7,380", cost: "$ 3,491.48" },
+      { place: "Greenpoint, NY 11222", routes: "9", homes: "4,960", cost: "$ 2,377.82" },
     ],
   },
   // Real filters of the EDDM route picker, combined from its brackets (e.g. Age 35–54 =
