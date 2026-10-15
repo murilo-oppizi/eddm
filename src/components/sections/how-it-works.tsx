@@ -98,7 +98,7 @@ function Heading() {
     <SectionHeading
       eyebrow="How it works"
       title="From map to mailbox in four steps"
-      body="We handle printing and USPS delivery for you."
+      body="We handle printing and USPS drop-off for you."
     />
   );
 }

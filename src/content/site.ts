@@ -76,11 +76,11 @@ export const steps = [
   },
   {
     title: "We print and deliver",
-    body: "We print, bundle and drop your mail at the post office. Your mail carrier delivers it to every door on the route.",
+    body: "We print, bundle, and drop your mail at the post office. Your mail carrier delivers it to every door on the route.",
   },
   {
     title: "Track your results",
-    body: "Follow every stage in your dashboard, then see scans, calls and visits by neighborhood, so you know where to mail next.",
+    body: "Follow every stage in your dashboard, then see scans, calls, and visits by neighborhood, so you know where to mail next.",
   },
 ]
 
@@ -88,7 +88,7 @@ export const steps = [
 export const aiPlanning = {
   eyebrow: "AI planning",
   title: "Tell us your goal. Our agents plan the campaign.",
-  body: "Describe your business in plain words and get routes, timing and budget in seconds.",
+  body: "Describe your business in plain words and get routes, timing, and budget in seconds.",
   placeholder: "Describe your business, who you want to reach and your budget…",
   // Three kinds of ask: launching a campaign, finding routes (answered on a map), and
   // learning from results. The last one stops for the visitor to pick between two options.
@@ -383,10 +383,10 @@ export const audiences = {
 // Facts checked against oppizi.com and eddm.com (Sept 2026).
 export const features = [
   { icon: "map", title: "Map-based targeting", body: "Choose exactly which streets and neighborhoods hear from you." },
-  { icon: "users", title: "Real demographics", body: "Filter routes by age, income and household size to reach the right homes." },
+  { icon: "users", title: "Real demographics", body: "Filter routes by age, income, and household size to reach the right homes." },
   { icon: "printer", title: "Printed locally", body: "Printed within 50 miles of your campaign by our network of 700+ print partners." },
   { icon: "truck", title: "USPS drop-off handled", body: "We prepare the paperwork and deliver bundles to the post office." },
-  { icon: "chart", title: "Track your results", body: "Follow delivery live, then see scans, calls and visits by neighborhood." },
+  { icon: "chart", title: "Live delivery tracking", body: "Follow delivery live, then see scans, calls, and visits by neighborhood." },
   { icon: "sparkles", title: "AI-optimized routes", body: "Describe your ideal customer and our AI agents suggest the best routes to reach them." },
 ] as const
 
