@@ -32,8 +32,8 @@ export const cta = {
 
 export const hero = {
   eyebrow: "USPS Every Door Direct Mail®",
-  title: "Put your business in every mailbox on the block.",
-  body: "No mailing lists, no guesswork. Choose the neighborhoods you want on a map, upload or design your postcard, and we print and deliver it to USPS for you.",
+  title: "Put your business in every mailbox.",
+  body: "EDDM® is a USPS service Oppizi runs for you, with AI route planning, demographic targeting, local printing, and results tracking.",
   checks: ["USPS-compliant", "No mailing list needed", "Built-in AI agents"],
 }
 
