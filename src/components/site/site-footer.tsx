@@ -29,15 +29,21 @@ export function SiteFooter() {
           <ul className="space-y-2 text-sm text-muted-foreground">
             <li><Link href="/about" className="hover:text-foreground">About</Link></li>
             <li><Link href="/contact" className="hover:text-foreground">Contact</Link></li>
-            <li><Link href="/styleguide" className="hover:text-foreground">Styleguide</Link></li>
+            {/* The parent brand (the styleguide is an internal page, so it isn't linked here) */}
+            <li><a href="https://oppizi.com/us/en/" className="hover:text-foreground">Explore Oppizi</a></li>
           </ul>
         </div>
       </div>
       <Separator />
-      <div className="container-page flex flex-col justify-between gap-2 py-6 text-xs text-muted-foreground sm:flex-row">
-        {/* The US legal entity, per oppizi.com's imprint ("EDDM" itself is a USPS trademark). */}
+      <div className="container-page flex flex-col gap-2 py-6 text-xs text-muted-foreground">
+        {/* The US legal entity, per oppizi.com's imprint. Who owns the site, how the mail is
+            delivered, and whose trademark EDDM is. */}
         <p>© {new Date().getFullYear()} Oppizi US Inc. All rights reserved.</p>
-        <p>EDDM® and Every Door Direct Mail® are trademarks of the United States Postal Service.</p>
+        <p className="max-w-3xl text-pretty">
+          eddm.com is owned and operated by Oppizi US Inc. Every Door Direct Mail is one of the channels Oppizi
+          offers, delivered through the United States Postal Service. EDDM® and Every Door Direct Mail® are
+          registered trademarks of the United States Postal Service.
+        </p>
       </div>
     </footer>
   );
