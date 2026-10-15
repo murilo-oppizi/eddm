@@ -36,7 +36,7 @@ export function Logo({ className }: { className?: string }) {
       <OppiziSymbol cropped className="h-4 w-auto text-brand" />
       <span className="text-xl leading-none font-bold tracking-tight">
         {site.name}
-        <span className="relative -top-[0.6em] ml-px text-[0.45em] font-semibold">®</span>
+        <span className="relative -top-[0.4em] text-xs font-medium">®</span>
       </span>
       <span aria-hidden className="h-4 w-px bg-border" />
       <span className="text-xs leading-none font-medium text-brand">powered by Oppizi</span>
