@@ -21,7 +21,6 @@ import {
   useMotionValue,
   useInView,
   useMotionValueEvent,
-  useReducedMotion,
   useScroll,
   useTransform,
   type MotionValue,
@@ -32,6 +31,7 @@ import { IllustratedMap } from "@/components/sections/illustrated-map";
 import { SectionHeading } from "@/components/sections/section-heading";
 import { steps } from "@/content/site";
 import { cn } from "@/lib/utils";
+import { useReducedMotionSafe } from "@/lib/use-reduced-motion";
 
 // "How it works" as the mail's journey from map to mailbox. On desktop the section
 // pins: a marker travels a dashed mail route past four stops as you scroll (its icon
@@ -53,7 +53,7 @@ const SeenSteps = createContext<{ has: (i: number) => boolean; add: (i: number) 
 });
 
 export function HowItWorks() {
-  const reduceMotion = useReducedMotion();
+  const reduceMotion = useReducedMotionSafe();
   const section = useRef<HTMLElement>(null);
   const [seen, setSeen] = useState(0); // bitmask of step indices
   // While you're above the section, nothing counts as seen (a visual can still report
@@ -378,7 +378,7 @@ function StillGrid() {
 function StepCard({ index, active, numbered = false }: { index: number; active: boolean; numbered?: boolean }) {
   const step = steps[index];
   // Visuals play once they're on screen (and replay when you come back to them).
-  const reduce = useReducedMotion();
+  const reduce = useReducedMotionSafe();
   const visual = useRef<HTMLDivElement>(null);
   const inView = useInView(visual, { amount: 0.6 });
   return (
@@ -400,7 +400,7 @@ const Instant = createContext(false);
 
 /** True when a visual should skip its entrance: already seen, or reduced motion. */
 function useInstant() {
-  const reduce = useReducedMotion();
+  const reduce = useReducedMotionSafe();
   return useContext(Instant) || !!reduce;
 }
 
