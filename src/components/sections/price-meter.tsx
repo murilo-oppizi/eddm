@@ -28,7 +28,7 @@ import { cn } from "@/lib/utils";
 // catches the light like glass (rims along its edges, a sheen), and its keys are small
 // frosted panes over it, each with a rim of light. A white screen shows the estimate in rolling digits; a slider with − / +
 // sets the homes; a segmented control picks the postcard size; a big key asks for the
-// quote. The first time it's on screen the fader glides up to 15,000 once.
+// quote. The first time it's on screen the fader glides up to 10,000 once.
 // It rests still, like an object on a desk, and its keys clack (Cream switch samples;
 // the speaker grille turns the sound off). Asking for the quote
 // prints a postage stamp with the estimate out of a slot at the bottom; it then floats
@@ -39,16 +39,19 @@ const { min, max, step, initial } = pricing.homes;
 const NOTCH_EVERY = 5000; // the slider ticks a little firmer at each of these
 const ease = [0.22, 1, 0.36, 1] as const;
 
-/** Oppizi's calculator total at the anchor counts, straight lines in between. */
+/** The approved total at the anchor counts, straight lines in between; past the last
+ *  anchor it goes on at the last stretch's rate (to verify, see pricing in site.ts). */
 function totalFor(size: Size, homes: number) {
   const { anchors } = pricing;
-  for (let k = 0; k < anchors.length - 1; k++) {
+  const last = anchors.length - 1;
+  for (let k = 0; k < last; k++) {
     if (homes <= anchors[k + 1]) {
       const f = (homes - anchors[k]) / (anchors[k + 1] - anchors[k]);
       return Math.round(size.totals[k] + f * (size.totals[k + 1] - size.totals[k]));
     }
   }
-  return size.totals[size.totals.length - 1];
+  const rate = (size.totals[last] - size.totals[last - 1]) / (anchors[last] - anchors[last - 1]);
+  return Math.round(size.totals[last] + (homes - anchors[last]) * rate);
 }
 
 const usd = (n: number) => `$${Math.round(n).toLocaleString("en-US")}`;
@@ -464,7 +467,7 @@ export function PriceMeter() {
             <div className="flex items-center gap-3">
               <button
                 type="button"
-                aria-label="1,000 fewer homes"
+                aria-label={`${fmt(step)} fewer homes`}
                 aria-keyshortcuts="ArrowLeft"
                 onPointerDown={() => pressKey("space")}
                 onClick={(e) => {
@@ -498,7 +501,7 @@ export function PriceMeter() {
               />
               <button
                 type="button"
-                aria-label="1,000 more homes"
+                aria-label={`${fmt(step)} more homes`}
                 aria-keyshortcuts="ArrowRight"
                 onPointerDown={() => pressKey("space")}
                 onClick={(e) => {

@@ -390,24 +390,25 @@ export const features = [
   { icon: "sparkles", title: "AI-optimized routes", body: "Describe your ideal customer and our AI agents suggest the best routes to reach them." },
 ] as const
 
-// Pricing calculator. Totals are what Oppizi's live EDDM cost calculator shows at these
-// home counts (oppizi.com/…/every-door-direct-mail/cost-calculator, read Sept 24 2026),
-// with straight lines in between (its prices rise almost linearly). They replace the
-// "$0.31 · $4,650 for 15,000" from the same page's static text, which the calculator
-// contradicts (47¢ · $6,987). TO CONFIRM with marketing.
+// Pricing calculator, on the pricing approved October 13: Standard (6.25 × 9) totals at
+// each anchor home count, straight lines in between (500 homes $0.52, 1,000 $0.50, 2,500
+// $0.47, 5,000 $0.43, 10,000 $0.41). Past 10,000 the meter goes on at the 5,000–10,000
+// rate. TO VERIFY with Reedik (feedback Layer 2, item B): the prices above 10,000 homes,
+// and the other sizes, which keep the gap to Standard that Oppizi's old calculator showed
+// at the same home count (its Sept 2026 figures).
 export const pricing = {
   eyebrow: "Pricing",
   title: "Know your cost up front",
-  body: "Printing, USPS postage and delivery, all included. No mailing lists or setup fees.",
-  homes: { min: 1000, max: 30000, step: 1000, initial: 15000 },
-  anchors: [1000, 5000, 10000, 15000, 20000, 30000],
+  body: "Printing, USPS postage, and drop-off, all included. No mailing lists or setup fees.",
+  homes: { min: 500, max: 30000, step: 500, initial: 10000 },
+  anchors: [500, 1000, 2500, 5000, 10000],
   // dims and w × h are in inches (landscape); w × h draws the little size glyphs.
   sizes: [
-    { name: "Small", dims: "4.25 × 11", w: 11, h: 4.25, totals: [534, 2238, 4391, 6567, 8692, 13029] },
-    { name: "Standard", dims: "6.25 × 9", w: 9, h: 6.25, bestSeller: true, totals: [578, 2385, 4675, 6987, 9248, 13857] },
-    { name: "Large", dims: "6.25 × 11", w: 11, h: 6.25, totals: [635, 2576, 5042, 7532, 9968, 14931] },
-    { name: "Jumbo", dims: "8.25 × 11", w: 11, h: 8.25, totals: [750, 2958, 5776, 8622, 11408, 17076] },
-    { name: "Oversized", dims: "15 × 12", w: 15, h: 12, totals: [1150, 4293, 8346, 12434, 16446, 24582] },
+    { name: "Small", dims: "4.25 × 11", w: 11, h: 4.25, totals: [240, 460, 1090, 2015, 3850] },
+    { name: "Standard", dims: "6.25 × 9", w: 9, h: 6.25, bestSeller: true, totals: [260, 500, 1175, 2150, 4100] },
+    { name: "Large", dims: "6.25 × 11", w: 11, h: 6.25, totals: [285, 550, 1285, 2320, 4420] },
+    { name: "Jumbo", dims: "8.25 × 11", w: 11, h: 8.25, totals: [335, 650, 1500, 2665, 5065] },
+    { name: "Oversized", dims: "15 × 12", w: 15, h: 12, totals: [515, 995, 2255, 3870, 7320] },
   ],
   initialSize: "Standard",
   more: "Need more than 30,000 homes?",
