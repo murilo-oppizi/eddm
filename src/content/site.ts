@@ -461,7 +461,7 @@ export const faqs: { q: string; a: string; link?: { text: string; href: string }
   },
   {
     q: "How fast is EDDM delivery?",
-    a: "Most campaigns land in mailboxes within 7–14 business days nationally, and 2–5 days for highly local campaigns. Once your campaign goes live, printing and USPS submission are handled automatically, and you can follow every step in your dashboard.",
+    a: "Your postcards are in homes 5–7 days after you submit your campaign. Once your campaign goes live, printing and USPS submission are handled automatically, and you can follow every step in your dashboard.",
   },
   {
     q: "Can I choose who receives my mail?",
