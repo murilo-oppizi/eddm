@@ -1,15 +1,20 @@
 import Link from "next/link";
 
 import { Separator } from "@/components/ui/separator";
-import { Logo } from "@/components/site/logo";
+import Image from "next/image";
 import { oppizi, site } from "@/content/site";
+import { asset } from "@/lib/asset";
 
 export function SiteFooter() {
   return (
     <footer className="border-t bg-muted/40">
       <div className="container-page grid gap-10 py-12 md:grid-cols-[2fr_1fr_1fr]">
         <div className="space-y-3">
-          <Logo />
+          {/* The parent brand's logo (oppizi.com's own footer logo), not the EDDM lockup: the
+              last brand on every page is the company that runs the site */}
+          <a href={oppizi.home} className="inline-block">
+            <Image src={asset("/brand/oppizi-logo.svg")} alt="Oppizi" width={97} height={27} unoptimized className="h-7 w-auto" />
+          </a>
           <p className="max-w-sm text-sm text-muted-foreground">{site.description}</p>
         </div>
         <div className="space-y-3">

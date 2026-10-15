@@ -24,16 +24,20 @@ export function OppiziSymbol({ className, cropped = false }: { className?: strin
   );
 }
 
-/** EDDM, powered by Oppizi: the pink symbol, "EDDM", a hairline, then the endorsement. */
+/** EDDM® powered by Oppizi: the pink symbol, "EDDM" with its ® (it's USPS's registered
+ *  mark, not ours), a hairline, then the endorsement. */
 export function Logo({ className }: { className?: string }) {
   return (
     <Link
       href="/"
-      aria-label={`${site.name}, powered by Oppizi — home`}
+      aria-label={`${site.name}® powered by Oppizi, home`}
       className={cn("flex items-center gap-2 font-heading", className)}
     >
       <OppiziSymbol cropped className="h-4 w-auto text-brand" />
-      <span className="text-xl leading-none font-bold tracking-tight">{site.name}</span>
+      <span className="text-xl leading-none font-bold tracking-tight">
+        {site.name}
+        <span className="relative -top-[0.6em] ml-px text-[0.45em] font-semibold">®</span>
+      </span>
       <span aria-hidden className="h-4 w-px bg-border" />
       <span className="text-xs leading-none font-medium text-brand">powered by Oppizi</span>
     </Link>

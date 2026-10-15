@@ -5,7 +5,8 @@ import { hero, site } from "@/content/site";
 
 // The preview card shown when a link to the site is shared (Slack, LinkedIn, iMessage…):
 // the logo, the hero headline and its three checks. Rendered to a PNG at build time.
-export const alt = `${site.name}, powered by Oppizi: ${hero.title}`;
+// Says who runs it without leading with USPS's mark
+export const alt = "Put your business in every mailbox, with Oppizi.";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 // Rendered once at build time (also what lets the static GitHub Pages export include it).
