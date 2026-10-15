@@ -28,12 +28,13 @@ export const metadata: Metadata = {
   // The live domain, so share images and links resolve to absolute URLs.
   metadataBase: new URL("https://eddm.com"),
   title: {
-    default: `${site.name} — ${site.tagline}`,
+    default: site.title,
     template: `%s · ${site.name}`,
   },
   description: site.description,
   // How links look when shared; the image is app/opengraph-image.tsx.
   openGraph: {
+    title: site.title,
     type: "website",
     siteName: `${site.name} by Oppizi`,
     locale: "en_US",

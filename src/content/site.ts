@@ -3,9 +3,11 @@
 
 export const site = {
   name: "EDDM",
-  tagline: "Every Door Direct Mail, made simple.",
+  // The page title on the homepage and in shared links: no em dash, sentence case, Oppizi
+  // named as the operator.
+  title: "Every Door Direct Mail (EDDM) made simple with Oppizi",
   description:
-    "Reach every home in the neighborhoods you choose. Pick routes on a map, design your postcard, and we handle printing and USPS delivery.",
+    "Reach every home in the neighborhoods you choose. Pick routes on a map, design your postcard, and Oppizi handles printing and USPS drop-off.",
   // Homepage sections, linked from "/" so the links also work from the other pages.
   nav: [
     { label: "How it works", href: "/#how-it-works" },
