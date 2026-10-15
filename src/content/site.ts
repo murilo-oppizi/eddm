@@ -445,7 +445,7 @@ export const faqs: { q: string; a: string; link?: { text: string; href: string }
   },
   {
     q: "Can I choose who receives my mail?",
-    a: "You choose carrier routes, not individual people. Filter routes by demographics like age, income and household size, or describe your ideal customer and our AI agents suggest the best routes for you.",
+    a: "You choose carrier routes, not individual people. Filter routes by demographics like age, income, and household size, or describe your ideal customer and our AI agents suggest the best routes for you.",
   },
   {
     q: "Can EDDM campaign results be tracked?",
