@@ -39,19 +39,13 @@ const { min, max, step, initial } = pricing.homes;
 const NOTCH_EVERY = 5000; // the slider ticks a little firmer at each of these
 const ease = [0.22, 1, 0.36, 1] as const;
 
-/** The approved total at the anchor counts, straight lines in between; past the last
- *  anchor it goes on at the last stretch's rate (to verify, see pricing in site.ts). */
+/** What the platform charges: the per-piece price of the largest tier at or below the volume,
+ *  times the volume (pricing in site.ts). */
 function totalFor(size: Size, homes: number) {
-  const { anchors } = pricing;
-  const last = anchors.length - 1;
-  for (let k = 0; k < last; k++) {
-    if (homes <= anchors[k + 1]) {
-      const f = (homes - anchors[k]) / (anchors[k + 1] - anchors[k]);
-      return Math.round(size.totals[k] + f * (size.totals[k + 1] - size.totals[k]));
-    }
-  }
-  const rate = (size.totals[last] - size.totals[last - 1]) / (anchors[last] - anchors[last - 1]);
-  return Math.round(size.totals[last] + (homes - anchors[last]) * rate);
+  const { tiers } = pricing;
+  let k = 0;
+  while (k + 1 < tiers.length && tiers[k + 1] <= homes) k++;
+  return size.perUnit[k] * homes;
 }
 
 const usd = (n: number) => `$${Math.round(n).toLocaleString("en-US")}`;

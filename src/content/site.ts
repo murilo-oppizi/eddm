@@ -1,3 +1,5 @@
+import eddmPricing from "./eddm-pricing.json";
+
 // All homepage copy lives here so it can be edited without touching layout code.
 // Numbers and claims are placeholders — confirm with marketing before launch.
 
@@ -409,25 +411,24 @@ export const features = [
   },
 ] as const
 
-// Pricing calculator, on the pricing approved October 13: Standard (6.25 × 9) totals at
-// each anchor home count, straight lines in between (500 homes $0.52, 1,000 $0.50, 2,500
-// $0.47, 5,000 $0.43, 10,000 $0.41). Past 10,000 the meter goes on at the 5,000–10,000
-// rate. TO VERIFY with Reedik (feedback Layer 2, item B): the prices above 10,000 homes,
-// and the other sizes, which keep the gap to Standard that Oppizi's old calculator showed
-// at the same home count (its Sept 2026 figures).
+// Pricing calculator, on the platform's own EDDM prices: eddm-pricing.json, fetched from the
+// Developer API's EDDM cost quote by scripts/fetch-eddm-pricing.mjs (rerun it when the
+// platform's table changes). The platform prices in tiers: a volume pays the per-piece price
+// of the largest tier at or below it, times the volume, from its minimum (1,000) upward.
 export const pricing = {
   eyebrow: "Pricing",
   title: "Know your cost up front",
   body: "Printing, USPS postage, and drop-off, all included. No mailing lists or setup fees.",
-  homes: { min: 500, max: 30000, step: 500, initial: 10000 },
-  anchors: [500, 1000, 2500, 5000, 10000],
-  // dims and w × h are in inches (landscape); w × h draws the little size glyphs.
+  homes: { min: eddmPricing.minVolume, max: 30000, step: 500, initial: 10000 },
+  tiers: eddmPricing.tiers,
+  // key is the platform's name for the format; dims are as the platform gives them, in
+  // inches; w × h (landscape) draws the little size glyphs.
   sizes: [
-    { name: "Small", dims: "4.25 × 11", w: 11, h: 4.25, totals: [240, 460, 1090, 2015, 3850] },
-    { name: "Standard", dims: "6.25 × 9", w: 9, h: 6.25, bestSeller: true, totals: [260, 500, 1175, 2150, 4100] },
-    { name: "Large", dims: "6.25 × 11", w: 11, h: 6.25, totals: [285, 550, 1285, 2320, 4420] },
-    { name: "Jumbo", dims: "8.25 × 11", w: 11, h: 8.25, totals: [335, 650, 1500, 2665, 5065] },
-    { name: "Oversized", dims: "15 × 12", w: 15, h: 12, totals: [515, 995, 2255, 3870, 7320] },
+    { name: "Small", key: "SMALL", dims: "4.25 × 11", w: 11, h: 4.25, perUnit: eddmPricing.perUnit.SMALL },
+    { name: "Standard", key: "BEST_SELLER", dims: "6.25 × 9", w: 9, h: 6.25, bestSeller: true, perUnit: eddmPricing.perUnit.BEST_SELLER },
+    { name: "Large", key: "LARGE", dims: "6.25 × 11", w: 11, h: 6.25, perUnit: eddmPricing.perUnit.LARGE },
+    { name: "Jumbo", key: "JUMBO", dims: "8.5 × 11", w: 11, h: 8.5, perUnit: eddmPricing.perUnit.JUMBO },
+    { name: "Oversized", key: "OVERSIZED", dims: "12 × 15", w: 15, h: 12, perUnit: eddmPricing.perUnit.OVERSIZED },
   ],
   initialSize: "Standard",
   more: "Need more than 30,000 homes?",
