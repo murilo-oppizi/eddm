@@ -5,22 +5,8 @@ import {
   AccordionTrigger,
 } from "@/components/ui/accordion";
 import { SectionHeading } from "@/components/sections/section-heading";
+import { LinkedText } from "@/components/site/linked-text";
 import { faqs } from "@/content/site";
-
-/** An answer, with its one linked phrase (if it has one) as a link. */
-function Answer({ a, link }: (typeof faqs)[number]) {
-  const at = link ? a.indexOf(link.text) : -1;
-  if (!link || at < 0) return <>{a}</>;
-  return (
-    <>
-      {a.slice(0, at)}
-      <a href={link.href} className="font-medium text-foreground underline underline-offset-4 hover:text-brand">
-        {link.text}
-      </a>
-      {a.slice(at + link.text.length)}
-    </>
-  );
-}
 
 export function Faq() {
   return (
@@ -36,7 +22,7 @@ export function Faq() {
             <AccordionItem key={item.q} value={item.q}>
               <AccordionTrigger className="py-4 text-base">{item.q}</AccordionTrigger>
               <AccordionContent className="text-base text-muted-foreground">
-                <Answer {...item} />
+                <LinkedText text={item.a} link={item.link} />
               </AccordionContent>
             </AccordionItem>
           ))}

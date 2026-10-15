@@ -1,6 +1,17 @@
 // All homepage copy lives here so it can be edited without touching layout code.
 // Numbers and claims are placeholders — confirm with marketing before launch.
 
+// Links to oppizi.com, the parent brand (feedback rows 35-41, URLs checked October 13,
+// 2026). Never to its EDDM channel page, cost calculator or EDDM blogs: they target the
+// same searches as eddm.com, and linking them makes the two sites compete.
+export const oppizi = {
+  home: "https://oppizi.com/us/en/",
+  about: "https://oppizi.com/us/en/resources/about-us/",
+  agents: "https://oppizi.com/us/en/solutions/use-cases/agentic-technology/",
+  os: "https://oppizi.com/us/en/platform/oppizi-os/",
+  studio: "https://oppizi.com/us/en/platform/creative-studio/",
+}
+
 export const site = {
   name: "EDDM",
   // The page title on the homepage and in shared links: no em dash, sentence case, Oppizi
@@ -34,6 +45,8 @@ export const hero = {
   eyebrow: "USPS Every Door Direct Mail®",
   title: "Put your business in every mailbox.",
   body: "EDDM® is a USPS service Oppizi runs for you, with AI route planning, demographic targeting, local printing, and results tracking.",
+  // The first mention of the operator, above the fold
+  link: { text: "Oppizi", href: oppizi.home },
   checks: ["USPS-compliant", "No mailing list needed", "Built-in AI agents"],
 }
 
@@ -387,7 +400,12 @@ export const features = [
   { icon: "printer", title: "Printed locally", body: "Printed within 50 miles of your campaign by our network of 700+ print partners." },
   { icon: "truck", title: "USPS drop-off handled", body: "We prepare the paperwork and deliver bundles to the post office." },
   { icon: "chart", title: "Live delivery tracking", body: "Follow delivery live, then see scans, calls, and visits by neighborhood." },
-  { icon: "sparkles", title: "AI-optimized routes", body: "Describe your ideal customer and our AI agents suggest the best routes to reach them." },
+  {
+    icon: "sparkles",
+    title: "AI-optimized routes",
+    body: "Describe your ideal customer and our AI agents suggest the best routes to reach them.",
+    link: { text: "our AI agents", href: oppizi.agents },
+  },
 ] as const
 
 // Pricing calculator, on the pricing approved October 13: Standard (6.25 × 9) totals at
@@ -433,7 +451,7 @@ export const faqs: { q: string; a: string; link?: { text: string; href: string }
     // Answers who runs the site, plainly, for visitors and for answer engines
     q: "Is this site run by USPS?",
     a: "No. eddm.com is run by Oppizi. EDDM® is a USPS service, and Oppizi plans, prints, and drops off your campaign, then tracks the results.",
-    link: { text: "Oppizi", href: "https://oppizi.com/us/en/" },
+    link: { text: "Oppizi", href: oppizi.home },
   },
   {
     q: "How much does Every Door Direct Mail cost?",
@@ -450,6 +468,7 @@ export const faqs: { q: string; a: string; link?: { text: string; href: string }
   {
     q: "Can EDDM campaign results be tracked?",
     a: "Yes. Add a QR code, promo code, dedicated landing page, or call tracking number to your postcard, and every scan, visit, call, or redemption is tied back to your campaign. Your dashboard shows delivery status and results by neighborhood, so you know where to mail next.",
+    link: { text: "Your dashboard", href: oppizi.os },
   },
   {
     q: "Who should use Every Door Direct Mail?",
@@ -458,6 +477,7 @@ export const faqs: { q: string; a: string; link?: { text: string; href: string }
   {
     q: "Do I need a design?",
     a: "No. Start from a USPS-compliant template in our design tool, which gives AI suggestions as you go, or upload your own artwork. Either way, we check it meets USPS requirements before it prints.",
+    link: { text: "our design tool", href: oppizi.studio },
   },
 ]
 
@@ -473,6 +493,7 @@ export const about = {
     eyebrow: "About Oppizi",
     title: "We make offline marketing measurable",
     body: "Oppizi is the AI platform growth teams use to plan, launch, and measure offline marketing in 12+ countries. We run flyering, package inserts, and direct mail, including EDDM®.",
+    link: { text: "Oppizi", href: oppizi.about },
     primary: { label: "Start a campaign", href: "https://app.oppizi.com/?oppizi_source=eddm" },
     secondary: { label: "Join the team", href: "https://oppizi.com/us/en/work-at-oppizi/corporate-roles/" },
   },

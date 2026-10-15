@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { HeroComposition } from "@/components/sections/hero-composition";
 import { hero, site } from "@/content/site";
+import { LinkedText } from "@/components/site/linked-text";
 
 export function Hero() {
   return (
@@ -13,7 +14,9 @@ export function Hero() {
         <div className="space-y-6">
           <Badge variant="secondary">{hero.eyebrow}</Badge>
           <h1 className="text-4xl font-bold sm:text-5xl lg:text-6xl">{hero.title}</h1>
-          <p className="max-w-xl text-lg text-muted-foreground">{hero.body}</p>
+          <p className="max-w-xl text-lg text-muted-foreground">
+            <LinkedText text={hero.body} link={hero.link} />
+          </p>
           <ul className="flex flex-wrap gap-x-6 gap-y-2">
             {hero.checks.map((item) => (
               <li key={item} className="flex items-center gap-2 text-sm font-medium">

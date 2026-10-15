@@ -23,6 +23,7 @@ import { AboutHeroArt } from "@/components/sections/about-hero-art";
 import { Flag, WorldMap } from "@/components/sections/world-map";
 import { Button } from "@/components/ui/button";
 import { about } from "@/content/site";
+import { LinkedText } from "@/components/site/linked-text";
 import { asset } from "@/lib/asset";
 import { cn } from "@/lib/utils";
 
@@ -76,7 +77,9 @@ export function AboutHero() {
             <h1 className="text-4xl font-bold tracking-tight text-balance sm:text-6xl sm:leading-[1.05]">
               {hero.title}
             </h1>
-            <p className="max-w-xl text-lg text-pretty text-muted-foreground">{hero.body}</p>
+            <p className="max-w-xl text-lg text-pretty text-muted-foreground">
+              <LinkedText text={hero.body} link={hero.link} />
+            </p>
             <div className="flex flex-col gap-3 pt-2 sm:flex-row">
               <Button size="xl" render={<a href={hero.primary.href} />} nativeButton={false} className="group">
                 {hero.primary.label}

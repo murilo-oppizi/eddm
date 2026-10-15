@@ -10,6 +10,7 @@ import {
 
 import { SectionHeading } from "@/components/sections/section-heading";
 import { features } from "@/content/site";
+import { LinkedText } from "@/components/site/linked-text";
 
 const icons: Record<(typeof features)[number]["icon"], TablerIcon> = {
   map: IconMap,
@@ -39,7 +40,9 @@ export function Features() {
                 </span>
                 <div>
                   <h3 className="text-lg font-semibold">{feature.title}</h3>
-                  <p className="mt-1 text-muted-foreground">{feature.body}</p>
+                  <p className="mt-1 text-muted-foreground">
+                    <LinkedText text={feature.body} link={"link" in feature ? feature.link : undefined} />
+                  </p>
                 </div>
               </div>
             );
