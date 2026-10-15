@@ -36,7 +36,8 @@ export const metadata: Metadata = {
   openGraph: {
     title: site.title,
     type: "website",
-    siteName: `${site.name} by Oppizi`,
+    // EDDM is USPS's trademark, run by Oppizi: "powered by", never "EDDM by Oppizi"
+    siteName: "EDDM® powered by Oppizi",
     locale: "en_US",
   },
   twitter: { card: "summary_large_image" },
