@@ -28,17 +28,21 @@ export function TrustRow() {
 
         <LogoMarquee />
 
-        <dl className="grid grid-cols-2 gap-y-8 border-t pt-10 md:grid-cols-4 md:divide-x">
-          {trust.stats.map((stat) => (
-            <div key={stat.label} className="px-4 text-center">
-              <dt className="sr-only">{stat.label}</dt>
-              <dd className="font-heading text-3xl font-bold tracking-tight tabular-nums sm:text-4xl">
-                {stat.value}
-              </dd>
-              <dd className="mt-1 text-sm text-muted-foreground">{stat.label}</dd>
-            </div>
-          ))}
-        </dl>
+        {/* Company-wide figures, not EDDM's: the line above them says so */}
+        <div className="space-y-8 border-t pt-10">
+          <p className="text-center text-sm font-medium text-muted-foreground">{trust.statsLabel}</p>
+          <dl className="grid grid-cols-3 sm:divide-x">
+            {trust.stats.map((stat) => (
+              <div key={stat.label} className="px-2 text-center sm:px-4">
+                <dt className="sr-only">{stat.label}</dt>
+                <dd className="font-heading text-2xl font-bold tracking-tight tabular-nums sm:text-4xl">
+                  {stat.value}
+                </dd>
+                <dd className="mt-1 text-xs text-balance text-muted-foreground sm:text-sm">{stat.label}</dd>
+              </div>
+            ))}
+          </dl>
+        </div>
       </div>
     </section>
   );

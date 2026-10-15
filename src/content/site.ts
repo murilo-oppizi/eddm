@@ -37,10 +37,11 @@ export const hero = {
   checks: ["USPS-compliant", "No mailing list needed", "Built-in AI agents"],
 }
 
-// Client logos and numbers from oppizi.com (Sept 2026). The numbers are Oppizi-wide,
-// across all offline channels, not EDDM only. Logos: oppizi.com/brand/clients/*.svg.
+// Client logos and numbers from oppizi.com (Sept 2026). The clients and the numbers are
+// Oppizi-wide, across every channel, not EDDM only, so both say so. Logos:
+// oppizi.com/brand/clients/*.svg. Only clients that operate in the US.
 export const trust = {
-  label: "Trusted by growth teams at",
+  label: "Oppizi is trusted by growth teams at",
   clients: [
     { name: "DoorDash", src: "/brand/clients/doordash.svg", width: 241, height: 29 },
     { name: "Uber Eats", src: "/brand/clients/uber.svg", width: 160, height: 28 }, // the file is the Uber Eats wordmark
@@ -50,15 +51,15 @@ export const trust = {
     { name: "Uniqlo", src: "/brand/clients/uniqlo.svg", width: 50, height: 49 },
     { name: "ClassPass", src: "/brand/clients/classpass.svg", width: 178, height: 27 },
     { name: "Gopuff", src: "/brand/clients/gopuff.svg", width: 142, height: 47 },
-    { name: "Wolt", src: "/brand/clients/wolt.svg", width: 88, height: 32 },
     { name: "Wonder", src: "/brand/clients/wonder.svg", width: 140, height: 26 },
     { name: "Getaround", src: "/brand/clients/getaround.svg", width: 157, height: 35 },
   ],
+  statsLabel: "Oppizi across every channel",
+  // No conversion counts: published, they back into a conversion rate.
   stats: [
-    { value: "306M+", label: "Pieces delivered since 2014" },
+    { value: "306M+", label: "Pieces distributed globally since 2014" },
     { value: "1,000+", label: "Companies served" },
     { value: "12+", label: "Countries" },
-    { value: "672K+", label: "Direct mail conversions tracked" },
   ],
 }
 
